@@ -1,0 +1,3 @@
+/data/
+/resnet18_cifar10/
+**/**.pth

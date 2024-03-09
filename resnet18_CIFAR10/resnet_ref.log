@@ -1,0 +1,77 @@
+
+Python version : 3.12.1 | packaged by Anaconda, Inc. | (main, Jan 19 2024, 15:51:05) [GCC 11.2.0]
+Pytorch version :  2.2.1
+cuda available :  True
+Using device: cuda:0 | NVIDIA GeForce RTX 3090
+cudnn version :  8902
+cudnn enabled: True
+
+Parsed Arguments:
+ResNet 18
+Learning Rate: 0.001
+Momentum: 0.9
+Batch Size: 128
+Number of Epochs: 100
+Save Model Every n Epochs: 5
+Continue From: -1
+No savepoint found. Starting from scratch
+
+Epoch   1/100 (4.54s) | train_loss: 1.5634 | train_acc: 56.28% | eval_loss: 3.8218 | eval_acc: 72.94%
+Epoch   2/100 (4.07s) | train_loss: 0.7512 | train_acc: 74.05% | eval_loss: 2.7416 | eval_acc: 81.02%
+Epoch   3/100 (4.09s) | train_loss: 0.5919 | train_acc: 79.28% | eval_loss: 2.1057 | eval_acc: 85.58%
+Epoch   4/100 (4.04s) | train_loss: 0.4739 | train_acc: 83.26% | eval_loss: 1.6206 | eval_acc: 89.18%
+Epoch   5/100 (4.11s) | train_loss: 0.3764 | train_acc: 86.76% | eval_loss: 1.1344 | eval_acc: 92.91%
+Epoch   6/100 (4.08s) | train_loss: 0.2971 | train_acc: 89.67% | eval_loss: 0.8026 | eval_acc: 95.13%
+Epoch   7/100 (4.05s) | train_loss: 0.2300 | train_acc: 92.01% | eval_loss: 0.5726 | eval_acc: 96.64%
+Epoch   8/100 (4.47s) | train_loss: 0.1744 | train_acc: 93.88% | eval_loss: 0.3494 | eval_acc: 98.06%
+Epoch   9/100 (4.18s) | train_loss: 0.1363 | train_acc: 95.21% | eval_loss: 0.2343 | eval_acc: 98.82%
+Epoch  10/100 (4.17s) | train_loss: 0.1045 | train_acc: 96.38% | eval_loss: 0.2063 | eval_acc: 98.83%
+Epoch  11/100 (4.19s) | train_loss: 0.0926 | train_acc: 96.87% | eval_loss: 0.1527 | eval_acc: 99.20%
+Epoch  12/100 (4.17s) | train_loss: 0.0783 | train_acc: 97.37% | eval_loss: 0.1013 | eval_acc: 99.47%
+Epoch  13/100 (4.17s) | train_loss: 0.0627 | train_acc: 97.90% | eval_loss: 0.0857 | eval_acc: 99.55%
+Epoch  14/100 (4.10s) | train_loss: 0.0608 | train_acc: 97.88% | eval_loss: 0.0889 | eval_acc: 99.51%
+Epoch  15/100 (4.20s) | train_loss: 0.0555 | train_acc: 98.08% | eval_loss: 0.0707 | eval_acc: 99.62%
+Epoch  16/100 (4.12s) | train_loss: 0.0458 | train_acc: 98.39% | eval_loss: 0.0531 | eval_acc: 99.72%
+Epoch  17/100 (4.03s) | train_loss: 0.0413 | train_acc: 98.54% | eval_loss: 0.0433 | eval_acc: 99.76%
+
+Python version : 3.12.1 | packaged by Anaconda, Inc. | (main, Jan 19 2024, 15:51:05) [GCC 11.2.0]
+Pytorch version :  2.2.1
+cuda available :  True
+Using device: cuda:0 | NVIDIA GeForce RTX 3090
+cudnn version :  8902
+cudnn enabled: True
+
+Parsed Arguments:
+ResNet 18
+Learning Rate: 0.001
+Momentum: 0.9
+Batch Size: 128
+Number of Epochs: 100
+Save Model Every n Epochs: 5
+Continue From: -1
+Continuing from latest savepoint 15 epochs
+
+Epoch  16/100 (4.42s) | train_loss: 0.0383 | train_acc: 98.66% | eval_loss: 0.0424 | eval_acc: 99.78%
+Epoch  17/100 (4.03s) | train_loss: 0.0409 | train_acc: 98.63% | eval_loss: 0.0544 | eval_acc: 99.67%
+Epoch  18/100 (4.05s) | train_loss: 0.0376 | train_acc: 98.73% | eval_loss: 0.0371 | eval_acc: 99.82%
+
+Python version : 3.12.1 | packaged by Anaconda, Inc. | (main, Jan 19 2024, 15:51:05) [GCC 11.2.0]
+Pytorch version :  2.2.1
+cuda available :  True
+Using device: cuda:0 | NVIDIA GeForce RTX 3090
+cudnn version :  8902
+cudnn enabled: True
+
+Parsed Arguments:
+- ResNet 18
+- Learning Rate: 0.001
+- Momentum: 0.9
+- Batch Size: 128
+- Number of Epochs: 100
+- Save Model Every n Epochs: 5
+- Continue From: -1
+Continuing from latest savepoint 15 epochs
+
+Epoch  16/100 (4.47s) | train_loss: 0.0414 | train_acc: 98.61% | eval_loss: 0.0487 | eval_acc: 99.74%
+Epoch  17/100 (4.10s) | train_loss: 0.0409 | train_acc: 98.62% | eval_loss: 0.0428 | eval_acc: 99.80%
+Epoch  18/100 (3.99s) | train_loss: 0.0297 | train_acc: 99.02% | eval_loss: 0.0310 | eval_acc: 99.88%
