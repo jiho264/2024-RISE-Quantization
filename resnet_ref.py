@@ -8,21 +8,21 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 
-from src.utils import SingleEpochTrain, SingleEpochEval
+from src.utils import SingleEpochTrain, SingleEpochEval, GetDataset
 
 
 def main() -> None:
 
-    print("")
-    print("Python version :", sys.version)
-    print("Pytorch version : ", torch.__version__)
-    print("cuda available : ", torch.cuda.is_available())
+    # print("")
+    # print("Python version :", sys.version)
+    # print("Pytorch version : ", torch.__version__)
+    # print("cuda available : ", torch.cuda.is_available())
     device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-    print(f"Using device: {device} |", torch.cuda.get_device_name(0))
-    print("cudnn version : ", torch.backends.cudnn.version())
-    print("cudnn enabled:", torch.backends.cudnn.enabled)
+    # print(f"Using device: {device} |", torch.cuda.get_device_name(0))
+    # print("cudnn version : ", torch.backends.cudnn.version())
+    # print("cudnn enabled:", torch.backends.cudnn.enabled)
 
-    print("")
+    # print("")
     # Create an argument parser
     parser = argparse.ArgumentParser(description="ResNet Training")
 
@@ -49,7 +49,7 @@ def main() -> None:
     args = parser.parse_args()
 
     assert args.num_layers in [18, 34, 50, 101, 152]
-    assert args.dataset in ["CIFAR10", "CIFAR100"]
+    assert args.dataset in ["CIFAR10", "CIFAR100", "ImageNet2012"]
     assert args.lr > 0
     assert args.momentum > 0
     assert args.batch_size > 0
@@ -58,16 +58,16 @@ def main() -> None:
     assert args.continue_from >= -1
 
     # Print the parsed arguments
-    print("Parsed Arguments:")
-    print("- ResNet", args.num_layers)
-    print("- Learning Rate:", args.lr)
-    print("- Momentum:", args.momentum)
-    print("- Batch Size:", args.batch_size)
-    print("- Number of Epochs:", args.num_epochs)
-    print("- Save Model Every n Epochs:", args.save_every)
-    print(
-        "- Continue From:", args.continue_from, "(Possible values: -1 (latest), 0, n)"
-    )
+    # print("Parsed Arguments:")
+    # print("- ResNet", args.num_layers)
+    # print("- Learning Rate:", args.lr)
+    # print("- Momentum:", args.momentum)
+    # print("- Batch Size:", args.batch_size)
+    # print("- Number of Epochs:", args.num_epochs)
+    # print("- Save Model Every n Epochs:", args.save_every)
+    # print(
+    #     "- Continue From:", args.continue_from, "(Possible values: -1 (latest), 0, n)"
+    # )
 
     folder_path = f"resnet{args.num_layers}_{args.dataset}"
     file_name = f"resnet{args.num_layers}_{args.dataset}_epoch"  # resnet18_cifar10_epoch{epoch}.pth
@@ -123,48 +123,15 @@ def main() -> None:
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
-    # Load CIFAR-10 dataset
-    transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-    )
+    # print("")
+    # print(criterion)
+    # print(optimizer)
 
-    trainset = torchvision.datasets.CIFAR10(
-        root="./data", train=True, download=False, transform=transform
-    )
-    trainloader = torch.utils.data.DataLoader(
-        trainset,
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=8,
-        pin_memory=True,
-        pin_memory_device=device,
-    )
-
-    testset = torchvision.datasets.CIFAR10(
-        root="./data", train=False, download=False, transform=transform
-    )
-    testloader = torch.utils.data.DataLoader(
-        testset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=8,
-        pin_memory=True,
-        pin_memory_device=device,
-    )
-
-    classes = (
-        "plane",
-        "car",
-        "bird",
-        "cat",
-        "deer",
-        "dog",
-        "frog",
-        "horse",
-        "ship",
-        "truck",
-    )
-    print("")
+    # Load the CIFAR-10 dataset
+    # print("")
+    trainloader, testloader = GetDataset(args.dataset, device, args.batch_size)
+    # print(trainloader.dataset)
+    # print(testloader.dataset)
 
     # Training loop
     model.train()
