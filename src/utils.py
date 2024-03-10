@@ -1,4 +1,4 @@
-import torch, time
+import torch, time, os
 
 
 def SingleEpochTrain(
@@ -158,3 +158,46 @@ def GetDataset(dataset_name, device, batch_size, num_workers=8):
         )
 
         return trainloader, testloader
+
+
+def SaveLoader(model, device, continue_from, folder_path, file_name) -> int:
+    if continue_from == 0:
+        print("Starting from scratch")
+        latest_epoch = 0
+    elif continue_from == -1:
+
+        file_extension = ".pth"
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        # Get a list of all pth files in the folder
+        pth_files = [
+            file for file in os.listdir(folder_path) if file.endswith(file_extension)
+        ]
+
+        if pth_files == []:
+            print("No savepoint found. Starting from scratch")
+            latest_epoch = 0
+        else:
+            # Sort the pth files based on the epoch number
+            sorted_files = sorted(
+                pth_files, key=lambda x: int(x.split("_epoch")[1].split(".pth")[0])
+            )
+
+            # Get the file with the highest epoch number
+            latest_file = sorted_files[-1]
+
+            # Extract the epoch number from the file name
+            latest_epoch = int(latest_file.split("_epoch")[1].split(".pth")[0])
+            model.load_state_dict(
+                torch.load(
+                    f"{folder_path}/{file_name}{latest_epoch}.pth", map_location=device
+                )
+            )
+            print(f"Continuing from latest savepoint {latest_epoch} epochs")
+
+    else:
+        print(f"Continuing from {continue_from} epochs")
+        latest_epoch = continue_from
+
+    return latest_epoch

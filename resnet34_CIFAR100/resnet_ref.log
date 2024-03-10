@@ -19,3 +19,12 @@ Epoch  17/100 (5.49s) | train_loss: 2.3244 | train_acc: 38.73% | eval_loss: 2.51
 Epoch  18/100 (5.47s) | train_loss: 2.2741 | train_acc: 39.84% | eval_loss: 2.5020 | eval_acc: 36.04%
 Epoch  19/100 (5.51s) | train_loss: 2.2247 | train_acc: 40.72% | eval_loss: 2.5151 | eval_acc: 36.19%
 Epoch  20/100 (5.53s) | train_loss: 2.1764 | train_acc: 42.06% | eval_loss: 2.4562 | eval_acc: 37.08%
+Continuing from latest savepoint 20 epochs
+Epoch  21/100 (5.85s) | train_loss: 2.1260 | train_acc: 42.98% | eval_loss: 2.4323 | eval_acc: 37.94%
+Epoch  22/100 (5.47s) | train_loss: 2.0796 | train_acc: 44.02% | eval_loss: 2.4278 | eval_acc: 38.46%
+Epoch  23/100 (5.43s) | train_loss: 2.0324 | train_acc: 44.99% | eval_loss: 2.3938 | eval_acc: 39.04%
+Epoch  24/100 (5.48s) | train_loss: 1.9877 | train_acc: 46.05% | eval_loss: 2.3932 | eval_acc: 38.99%
+Epoch  25/100 (5.48s) | train_loss: 1.9457 | train_acc: 46.94% | eval_loss: 2.3943 | eval_acc: 39.00%
+Epoch  26/100 (5.49s) | train_loss: 1.9043 | train_acc: 48.06% | eval_loss: 2.3792 | eval_acc: 39.09%
+Continuing from latest savepoint 25 epochs
+Epoch  26/100 (5.93s) | train_loss: 1.8969 | train_acc: 48.42% | eval_loss: 2.3923 | eval_acc: 39.49%
