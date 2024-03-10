@@ -1,8 +1,0 @@
-No savepoint found. Starting from scratch
-No savepoint found. Starting from scratch
-No savepoint found. Starting from scratch
-Epoch   1/100 (23.73s) | train_loss: 6.3980 | train_acc: 1.01% | eval_loss: 5.5521 | eval_acc: 2.08%
-Epoch   2/100 (23.14s) | train_loss: 5.1009 | train_acc: 2.16% | eval_loss: 4.7657 | eval_acc: 2.69%
-Epoch   3/100 (23.26s) | train_loss: 4.6875 | train_acc: 2.69% | eval_loss: 4.5690 | eval_acc: 3.73%
-Epoch   4/100 (23.47s) | train_loss: 4.5422 | train_acc: 3.45% | eval_loss: 4.4535 | eval_acc: 4.32%
-Epoch   5/100 (23.41s) | train_loss: 4.4378 | train_acc: 4.14% | eval_loss: 4.3656 | eval_acc: 4.97%

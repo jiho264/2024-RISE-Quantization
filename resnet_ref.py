@@ -34,6 +34,9 @@ def main() -> None:
         default=-1,
         help="continue training from a savepoint",
     )
+    parser.add_argument(
+        "--qat", type=bool, default=False, help="Enable Quantization Aware Training"
+    )
     # parser.add_argument("--verbose", type=bool, default=False, help="verbose mode")
 
     # Parse the arguments
@@ -50,7 +53,11 @@ def main() -> None:
 
     # %%
     device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-    folder_path = f"resnet{args.num_layers}_{args.dataset}"
+    if args.qat == True:
+        folder_path = f"resnet{args.num_layers}_{args.dataset}_QAT"
+    else:
+        folder_path = f"resnet{args.num_layers}_{args.dataset}"
+
     file_name = f"resnet{args.num_layers}_{args.dataset}_epoch"  # resnet18_cifar10_epoch{epoch}.pth
 
     # Load the ResNet-50 model
