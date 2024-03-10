@@ -53,13 +53,6 @@ def main() -> None:
 
     # %%
     device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-    if args.qat == True:
-        folder_path = f"resnet{args.num_layers}_{args.dataset}_QAT"
-    else:
-        folder_path = f"resnet{args.num_layers}_{args.dataset}"
-
-    file_name = f"resnet{args.num_layers}_{args.dataset}_epoch"  # resnet18_cifar10_epoch{epoch}.pth
-
     # Load the ResNet-50 model
     layers_mapping = {
         18: resnet18,
@@ -70,6 +63,14 @@ def main() -> None:
     }
 
     model = layers_mapping[args.num_layers]().to(device)
+
+    if args.qat == True:
+        folder_path = f"resnet{args.num_layers}_{args.dataset}_QAT"
+    else:
+        folder_path = f"resnet{args.num_layers}_{args.dataset}"
+
+    file_name = f"resnet{args.num_layers}_{args.dataset}_epoch"  # resnet18_cifar10_epoch{epoch}.pth
+
     latest_epoch = SaveLoader(model, device, args.continue_from, folder_path, file_name)
     assert latest_epoch != None
 
