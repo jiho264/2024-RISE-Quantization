@@ -13,17 +13,7 @@ from src.utils import SingleEpochTrain, SingleEpochEval, GetDataset
 
 def main() -> None:
 
-    # print("")
-    # print("Python version :", sys.version)
-    # print("Pytorch version : ", torch.__version__)
-    # print("cuda available : ", torch.cuda.is_available())
-    device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-    # print(f"Using device: {device} |", torch.cuda.get_device_name(0))
-    # print("cudnn version : ", torch.backends.cudnn.version())
-    # print("cudnn enabled:", torch.backends.cudnn.enabled)
-
-    # print("")
-    # Create an argument parser
+    # %% Create an argument parser
     parser = argparse.ArgumentParser(description="ResNet Training")
 
     # Add arguments
@@ -44,6 +34,7 @@ def main() -> None:
         default=-1,
         help="continue training from a savepoint",
     )
+    # parser.add_argument("--verbose", type=bool, default=False, help="verbose mode")
 
     # Parse the arguments
     args = parser.parse_args()
@@ -57,21 +48,13 @@ def main() -> None:
     assert args.save_every > 0
     assert args.continue_from >= -1
 
+    device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+
     # Print the parsed arguments
-    # print("Parsed Arguments:")
-    # print("- ResNet", args.num_layers)
-    # print("- Learning Rate:", args.lr)
-    # print("- Momentum:", args.momentum)
-    # print("- Batch Size:", args.batch_size)
-    # print("- Number of Epochs:", args.num_epochs)
-    # print("- Save Model Every n Epochs:", args.save_every)
-    # print(
-    #     "- Continue From:", args.continue_from, "(Possible values: -1 (latest), 0, n)"
-    # )
 
     folder_path = f"resnet{args.num_layers}_{args.dataset}"
     file_name = f"resnet{args.num_layers}_{args.dataset}_epoch"  # resnet18_cifar10_epoch{epoch}.pth
-    # use save?
+    # %% use save?
 
     if args.continue_from == 0:
         print("Starting from scratch")
@@ -109,31 +92,68 @@ def main() -> None:
         latest_epoch = args.continue_from
 
     # Load the ResNet-50 model
+    layers_mapping = {
+        18: resnet18,
+        34: resnet34,
+        50: resnet50,
+        101: resnet101,
+        152: resnet152,
+    }
+    weights_mapping = {
+        18: resnet.ResNet18_Weights.DEFAULT,
+        34: resnet.ResNet34_Weights.DEFAULT,
+        50: resnet.ResNet50_Weights.DEFAULT,
+        101: resnet.ResNet101_Weights.DEFAULT,
+        152: resnet.ResNet152_Weights.DEFAULT,
+    }
     if latest_epoch == 0:
-        model = resnet18(weights=resnet.ResNet18_Weights.DEFAULT).to(device)
+        # model = layers_mapping[args.num_layers](weights=weights_mapping[args.num_layers]).to(device)
+        model = layers_mapping[args.num_layers]().to(device)  # start from scratch
     else:
-        model = resnet18().to(device)
+        model = layers_mapping[args.num_layers]().to(device)
         model.load_state_dict(
             torch.load(
                 f"{folder_path}/{file_name}{latest_epoch}.pth", map_location=device
             )
         )
 
-    # Set up training and evaluation processes
+    # %%Set up training and evaluation processes
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
+    trainloader, testloader = GetDataset(args.dataset, device, args.batch_size)
+
+    # if args.verbose == True:
+    # print("")
+    # print("Python version :", sys.version)
+    # print("Pytorch version : ", torch.__version__)
+    # print("cuda available : ", torch.cuda.is_available())
+    # print(f"Using device: {device} |", torch.cuda.get_device_name(0))
+    # print("cudnn version : ", torch.backends.cudnn.version())
+    # print("cudnn enabled:", torch.backends.cudnn.enabled)
+    # print("Parsed Arguments:")
+    # print("- ResNet", args.num_layers)
+    # print("- Learning Rate:", args.lr)
+    # print("- Momentum:", args.momentum)
+    # print("- Batch Size:", args.batch_size)
+    # print("- Number of Epochs:", args.num_epochs)
+    # print("- Save Model Every n Epochs:", args.save_every)
+    # print(
+    #     "- Continue From:",
+    #     args.continue_from,
+    #     "(Possible values: -1 (latest), 0, n)",
+    # )
     # print("")
     # print(criterion)
     # print(optimizer)
 
-    # Load the CIFAR-10 dataset
+    # # Load the CIFAR-10 dataset
     # print("")
-    trainloader, testloader = GetDataset(args.dataset, device, args.batch_size)
     # print(trainloader.dataset)
     # print(testloader.dataset)
 
-    # Training loop
+    # %% Training loop
     model.train()
     for epoch in range(args.num_epochs):  # Change the number of epochs as needed
         now_epoch = epoch + 1 + latest_epoch
@@ -150,6 +170,7 @@ def main() -> None:
             model=model, testloader=testloader, criterion=criterion, device=device
         )
         end_time = time.time()
+        scheduler.step()
         print(
             f"Epoch {str(now_epoch).rjust(len(str(args.num_epochs)))}/{args.num_epochs} ({end_time - start_time:.2f}s) | train_loss: {train_loss:.4f} | train_acc: {train_acc:.2f}% | eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%"
         )
