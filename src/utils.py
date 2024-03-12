@@ -124,7 +124,9 @@ def GetDataset(
     return train_loader, test_loader
 
 
-def CheckPointLoader(model, device: str, folder_path: str, file_name: str) -> int:
+def CheckPointLoader(
+    model, device: str, folder_path: str, file_name: str, only_eval: bool = False
+) -> int:
     """Check if there is a savepoint and load it
         - If there is no savepoint, start from pre-trained model
         - otherwise, continue from the latest savepoint in the folder
@@ -151,7 +153,10 @@ def CheckPointLoader(model, device: str, folder_path: str, file_name: str) -> in
     if pth_files == []:
         # print("No savepoint found. Starting from scratch")
         print("No savepoint found. Starting from Pretrained Model")
-        print("Let's do transfer learning!")
+        if only_eval == True:
+            print("evaluate acc of pretrained model.")
+        else:
+            print("Let's do transfer learning!")
         latest_epoch = 0
     else:
         # Sort the pth files based on the epoch number

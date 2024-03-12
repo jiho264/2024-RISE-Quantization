@@ -1,0 +1,3 @@
+No savepoint found. Starting from Pretrained Model
+Let's do transfer learning!
+eval_loss: 1.4146 | eval_acc: 80.34%

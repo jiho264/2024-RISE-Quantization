@@ -1,6 +1,4 @@
-import torch, time
-import torch
-import argparse
+import torch, time, argparse
 import torch.nn as nn
 import torch.optim as optim
 
@@ -15,7 +13,24 @@ from src.utils import (
 
 
 def main() -> None:
+    """Main function for training ResNet model.
 
+    Args:
+        --num_layers (int): number of layers
+        --dataset (str): name of the dataset
+        --lr (float): learning rate
+        --momentum (float): momentum
+        --batch_size (int): batch size
+        --num_epochs (int): number of epochs
+        --save_every (int): save model every n epochs
+        --qat (bool): Enable Quantization Aware Training
+        --only_eval (bool): only evaluation mode
+        --verbose (bool): print mini-batch loss and accuracy
+
+
+    Returns:
+        None.
+    """
     # %% Create an argument parser
     parser = argparse.ArgumentParser(description="ResNet Training")
 
@@ -72,6 +87,7 @@ def main() -> None:
         device=device,
         folder_path=_folder_path,
         file_name=_file_name,
+        only_eval=args.only_eval,
     )
 
     # %%Set up training and evaluation processes
