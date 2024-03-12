@@ -1,6 +1,24 @@
-import torch, time, os, torchvision
+import torch, time, os, tqdm
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
+from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
+import torchvision.models.resnet as resnet
+
+
+layers_mapping = {
+    18: resnet18,
+    34: resnet34,
+    50: resnet50,
+    101: resnet101,
+    152: resnet152,
+}
+pretrained_weights_mapping = {
+    18: resnet.ResNet18_Weights.DEFAULT,
+    34: resnet.ResNet34_Weights.DEFAULT,
+    50: resnet.ResNet50_Weights.DEFAULT,
+    101: resnet.ResNet101_Weights.DEFAULT,
+    152: resnet.ResNet152_Weights.DEFAULT,
+}
 
 
 def GetDataset(
@@ -184,8 +202,9 @@ def SingleEpochTrain(
     correct = 0
     total = 0
     start_time = time.time()
-    for i, (images, labels) in enumerate(trainloader, start=0):
-
+    # for i, (images, labels) in enumerate(trainloader, start=0):
+    i = 0
+    for images, labels in tqdm.tqdm(trainloader):
         images, labels = images.to(device), labels.to(device)
 
         # Zero the parameter gradients
@@ -210,7 +229,7 @@ def SingleEpochTrain(
             print(
                 f"Batch {str(i).rjust(len(str(len(trainloader))))}/{len(trainloader)} ({now_time - start_time:.2f}s) | train_loss: {loss.item():.4f} | train_acc: {correct/total*100:.2f}%"
             )
-
+        i += 1
     train_loss = running_loss / len(trainloader)
     train_acc = 100.0 * correct / total
 
@@ -241,7 +260,7 @@ def SingleEpochEval(
     correct = 0
     total = 0
     with torch.no_grad():
-        for i, (images, labels) in enumerate(testloader, start=0):
+        for images, labels in tqdm.tqdm(testloader):
 
             images, labels = images.to(device), labels.to(device)
 

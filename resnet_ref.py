@@ -1,14 +1,17 @@
-import torch, sys, time, os
+import torch, time
 import torch
-import torchvision
-from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
 import argparse
-import torchvision.models.resnet as resnet
 import torch.nn as nn
 import torch.optim as optim
-import torchvision.transforms as transforms
 
-from src.utils import SingleEpochTrain, SingleEpochEval, GetDataset, CheckPointLoader
+from src.utils import (
+    SingleEpochTrain,
+    SingleEpochEval,
+    GetDataset,
+    CheckPointLoader,
+    layers_mapping,
+    pretrained_weights_mapping,
+)
 
 
 def main() -> None:
@@ -31,36 +34,27 @@ def main() -> None:
     parser.add_argument(
         "--qat", type=bool, default=False, help="Enable Quantization Aware Training"
     )
-    # parser.add_argument("--verbose", type=bool, default=False, help="verbose mode")
+    parser.add_argument("--only_eval", type=bool, default=False, help="verbose mode")
+
+    parser.add_argument("--verbose", type=bool, default=False, help="verbose mode")
 
     # Parse the arguments
     args = parser.parse_args()
 
     assert args.num_layers in [18, 34, 50, 101, 152]
-    assert args.dataset in ["CIFAR10", "CIFAR100", "ImageNet2012"]
+    assert args.dataset in ["CIFAR10", "CIFAR100", "ImageNet"]
     assert args.lr > 0
     assert args.momentum > 0
     assert args.batch_size > 0
     assert args.num_epochs > 0
     assert args.save_every > 0
+    assert args.verbose in [True, False]
+    assert args.only_eval in [True, False]
+    assert args.qat in [True, False]
 
     # %%
     device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
     # Load the ResNet-50 model
-    layers_mapping = {
-        18: resnet18,
-        34: resnet34,
-        50: resnet50,
-        101: resnet101,
-        152: resnet152,
-    }
-    pretrained_weights_mapping = {
-        18: resnet.ResNet18_Weights.DEFAULT,
-        34: resnet.ResNet34_Weights.DEFAULT,
-        50: resnet.ResNet50_Weights.DEFAULT,
-        101: resnet.ResNet101_Weights.DEFAULT,
-        152: resnet.ResNet152_Weights.DEFAULT,
-    }
 
     model = layers_mapping[args.num_layers](
         weights=pretrained_weights_mapping[args.num_layers]
@@ -76,7 +70,6 @@ def main() -> None:
     _latest_epoch = CheckPointLoader(
         model=model,
         device=device,
-        continue_from=args.continue_from,
         folder_path=_folder_path,
         file_name=_file_name,
     )
@@ -92,33 +85,38 @@ def main() -> None:
     )
 
     # %% Training loop
-    model.train()
-    for epoch in range(args.num_epochs):  # Change the number of epochs as needed
-        now_epoch = epoch + 1 + _latest_epoch
-        start_time = time.time()
-        train_loss, train_acc = SingleEpochTrain(
-            model=model,
-            trainloader=trainloader,
-            criterion=criterion,
-            optimizer=optimizer,
-            device=device,
-            verb=False,
-        )
+    if args.only_eval == False:
+        for epoch in range(args.num_epochs):  # Change the number of epochs as needed
+            now_epoch = epoch + 1 + _latest_epoch
+            start_time = time.time()
+            train_loss, train_acc = SingleEpochTrain(
+                model=model,
+                trainloader=trainloader,
+                criterion=criterion,
+                optimizer=optimizer,
+                device=device,
+                verb=args.verbose,
+            )
+            eval_loss, eval_acc = SingleEpochEval(
+                model=model, testloader=testloader, criterion=criterion, device=device
+            )
+            end_time = time.time()
+
+            print(
+                f"Epoch {str(now_epoch).rjust(len(str(args.num_epochs)))}/{args.num_epochs} ({end_time - start_time:.2f}s) | train_loss: {train_loss:.4f} | train_acc: {train_acc:.2f}% | eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%"
+            )
+            if (now_epoch) % args.save_every == 0:
+                torch.save(
+                    model.state_dict(),
+                    f"{_folder_path}/{_file_name}{now_epoch}.pth",
+                )
+
+        print("Finished training")
+    else:
         eval_loss, eval_acc = SingleEpochEval(
             model=model, testloader=testloader, criterion=criterion, device=device
         )
-        end_time = time.time()
-
-        print(
-            f"Epoch {str(now_epoch).rjust(len(str(args.num_epochs)))}/{args.num_epochs} ({end_time - start_time:.2f}s) | train_loss: {train_loss:.4f} | train_acc: {train_acc:.2f}% | eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%"
-        )
-        if (now_epoch) % args.save_every == 0:
-            torch.save(
-                model.state_dict(),
-                f"{_folder_path}/{_file_name}{now_epoch}.pth",
-            )
-
-    print("Finished training")
+        print(f"eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%")
     return None
 
 
