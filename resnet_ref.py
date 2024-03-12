@@ -1,92 +1,9 @@
-import torch, time, argparse
+import torch, time
 import torch.nn as nn
 import torch.optim as optim
 
-from src.utils import (
-    SingleEpochTrain,
-    SingleEpochEval,
-    GetDataset,
-    CheckPointLoader,
-    layers_mapping,
-    pretrained_weights_mapping,
-    print_size_of_model,
-)
-
-# %% override the torchvision.models.resnet
-from torchvision.models.resnet import (
-    ResNet,
-    ResNet50_Weights,
-    Bottleneck,
-    BasicBlock,
-)
-from functools import partial
-from typing import Any, Callable, List, Optional, Type, Union
-
-import torch
-import torch.nn as nn
-from torch import Tensor
-
-from torchvision.transforms._presets import ImageClassification
-from torchvision.utils import _log_api_usage_once
-from torchvision.models._api import register_model, Weights, WeightsEnum
-from torchvision.models._meta import _IMAGENET_CATEGORIES
-from torchvision.models._utils import _ovewrite_named_param, handle_legacy_interface
-
-"""
-Todo : 
-- [x] forward 함수 앞뒤로 quantization 추가
-- [ ] skip add에서 그냥 +를 nn.quantized.FloatFunctional()으로 바꾸기
-- [x] ReLU 6면 int계산 안 되는데, 일반 ReLU인 것은 확인 완료
-"""
-
-
-# class BasicBlock_quan(BasicBlock): << 원하면 Block 내부 override해서 사용
-class ResNet_quan(ResNet):
-    def __init__(
-        self,
-        block: Any,
-        layers: list[int],
-        num_classes: int = 1000,
-        weights: Optional[str] = None,
-    ) -> None:
-        super(ResNet_quan, self).__init__(block, layers, num_classes)
-        if weights is not None:
-            self.load_state_dict(torch.load(weights))
-        self.quant = torch.quantization.QuantStub()
-        self.dequant = torch.quantization.DeQuantStub()
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.quant(x)
-        x = super(ResNet_quan, self).forward(x)
-        x = self.dequant(x)
-        return x
-
-
-def _resnet_quan(
-    block: Type[Union[BasicBlock, Bottleneck]],
-    layers: List[int],
-    weights: Optional[WeightsEnum],
-    progress: bool,
-    **kwargs: Any,
-) -> ResNet:
-    if weights is not None:
-        _ovewrite_named_param(kwargs, "num_classes", len(weights.meta["categories"]))
-
-    model = ResNet_quan(block, layers, **kwargs)
-
-    if weights is not None:
-        model.load_state_dict(
-            weights.get_state_dict(progress=progress, check_hash=True)
-        )
-
-    return model
-
-
-def resnet50_quan(
-    *, weights: Optional[ResNet50_Weights] = None, progress: bool = True, **kwargs: Any
-) -> ResNet:
-    weights = ResNet50_Weights.verify(weights)
-    return _resnet_quan(Bottleneck, [3, 4, 6, 3], weights, progress, **kwargs)
+from src.utils import *
+from override_resnet import *
 
 
 # %% my code
@@ -109,49 +26,31 @@ def main() -> None:
     Returns:
         None.
     """
-    # %% Create an argument parser
-    parser = argparse.ArgumentParser(description="ResNet Training")
-
-    # Add arguments
-    parser.add_argument("--num_layers", type=int, default=50, help="number of layers")
-    parser.add_argument(
-        "--dataset", type=str, default="CIFAR10", help="name of the dataset"
-    )
-    parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
-    parser.add_argument("--momentum", type=float, default=0.9, help="momentum")
-    parser.add_argument("--batch_size", type=int, default=128, help="batch size")
-    parser.add_argument("--num_epochs", type=int, default=100, help="number of epochs")
-    parser.add_argument(
-        "--save_every", type=int, default=5, help="save model every n epochs"
-    )
-    parser.add_argument(
-        "--qat", type=bool, default=False, help="Enable Quantization Aware Training"
-    )
-    parser.add_argument("--only_eval", type=bool, default=False, help="verbose mode")
-
-    parser.add_argument("--verbose", type=bool, default=False, help="verbose mode")
-
-    # Parse the arguments
-    args = parser.parse_args()
-
-    assert args.num_layers in [18, 34, 50, 101, 152]
-    assert args.dataset in ["CIFAR10", "CIFAR100", "ImageNet"]
-    assert args.lr > 0
-    assert args.momentum > 0
-    assert args.batch_size > 0
-    assert args.num_epochs > 0
-    assert args.save_every > 0
-    assert args.verbose in [True, False]
-    assert args.only_eval in [True, False]
-    assert args.qat in [True, False]
+    args = parser_args()
 
     # %% Load the ResNet-50 model
     if args.qat == True:
-        device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-        model = resnet50_quan(weights=pretrained_weights_mapping[args.num_layers]).to(
-            device
-        )
-        print("----------Quantization Aware Training enabled")
+        if args.qat_method == "dynamic":
+            # case 1 : Dynamic Quantization
+            device = "cpu"
+            model = resnet50_quan(
+                weights=pretrained_weights_mapping[args.num_layers]
+            ).to(device)
+            quantized_model = torch.quantization.quantize_dynamic(
+                model, {torch.nn.Linear}, dtype=torch.qint8
+            )
+            model = quantized_model
+            print("----------Dynamic Quantization enabled")
+        elif args.qat_method == "static":
+            # case 2 : Static Quantization
+            print("----------Static Quantization enabled")
+
+        elif args.qat_method == "qat":
+            # case 3 : Quantization Aware Training
+            print("----------Quantization Aware Training enabled")
+        else:
+            raise ValueError("Invalid QAT method")
+
     else:
         device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
         model = layers_mapping[args.num_layers](
@@ -215,7 +114,7 @@ def main() -> None:
             dataset_name=args.dataset,
             device=device,
             root="data",
-            batch_size=256,
+            batch_size=16,
             num_workers=8,
         )
         eval_loss, eval_acc = SingleEpochEval(

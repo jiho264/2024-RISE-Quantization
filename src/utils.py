@@ -1,4 +1,4 @@
-import torch, time, os, tqdm
+import torch, time, os, tqdm, argparse
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
@@ -19,6 +19,48 @@ pretrained_weights_mapping = {
     101: resnet.ResNet101_Weights.DEFAULT,
     152: resnet.ResNet152_Weights.DEFAULT,
 }
+
+
+def parser_args() -> argparse.Namespace:
+    # %% Create an argument parser
+    parser = argparse.ArgumentParser(description="ResNet Training")
+
+    # Add arguments
+    parser.add_argument("--num_layers", type=int, default=50, help="number of layers")
+    parser.add_argument(
+        "--dataset", type=str, default="CIFAR10", help="name of the dataset"
+    )
+    parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
+    parser.add_argument("--momentum", type=float, default=0.9, help="momentum")
+    parser.add_argument("--batch_size", type=int, default=128, help="batch size")
+    parser.add_argument("--num_epochs", type=int, default=100, help="number of epochs")
+    parser.add_argument(
+        "--save_every", type=int, default=5, help="save model every n epochs"
+    )
+    parser.add_argument(
+        "--qat", type=bool, default=False, help="Enable Quantization Aware Training"
+    )
+    parser.add_argument("--only_eval", type=bool, default=False, help="verbose mode")
+    parser.add_argument(
+        "--qat_method", type=str, default=None, help="Quantization method"
+    )
+    parser.add_argument("--verbose", type=bool, default=False, help="verbose mode")
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    assert args.num_layers in [18, 34, 50, 101, 152]
+    assert args.dataset in ["CIFAR10", "CIFAR100", "ImageNet"]
+    assert args.lr > 0
+    assert args.momentum > 0
+    assert args.batch_size > 0
+    assert args.num_epochs > 0
+    assert args.save_every > 0
+    assert args.verbose in [True, False]
+    assert args.only_eval in [True, False]
+    assert args.qat in [True, False]
+
+    return args
 
 
 def GetDataset(

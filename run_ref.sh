@@ -13,6 +13,7 @@ if [ "$QAT" = True ]; then
     --dataset $DATASET \
     --verbose True \
     --batch_size 128 \
+    --only_eval True \
     --qat $QAT \
     | tee $MODEL_PATH/$MODEL_PATH.log --append
 else
