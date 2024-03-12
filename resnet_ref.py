@@ -9,6 +9,8 @@ from src.utils import (
     CheckPointLoader,
     layers_mapping,
     pretrained_weights_mapping,
+    evaluate,
+    print_size_of_model,
 )
 
 
@@ -70,7 +72,7 @@ def main() -> None:
     # %%
     device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
     # Load the ResNet-50 model
-
+    device = "cpu"
     model = layers_mapping[args.num_layers](
         weights=pretrained_weights_mapping[args.num_layers]
     ).to(device)
@@ -93,7 +95,7 @@ def main() -> None:
     # %%Set up training and evaluation processes
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-    trainloader, testloader = GetDataset(
+    train_loader, test_loader = GetDataset(
         dataset_name=args.dataset,
         device=device,
         root="data",
@@ -107,14 +109,14 @@ def main() -> None:
             start_time = time.time()
             train_loss, train_acc = SingleEpochTrain(
                 model=model,
-                trainloader=trainloader,
+                trainloader=train_loader,
                 criterion=criterion,
                 optimizer=optimizer,
                 device=device,
                 verb=args.verbose,
             )
             eval_loss, eval_acc = SingleEpochEval(
-                model=model, testloader=testloader, criterion=criterion, device=device
+                model=model, testloader=test_loader, criterion=criterion, device=device
             )
             end_time = time.time()
 
@@ -129,10 +131,31 @@ def main() -> None:
 
         print("Finished training")
     else:
-        eval_loss, eval_acc = SingleEpochEval(
-            model=model, testloader=testloader, criterion=criterion, device=device
+        # eval_loss, eval_acc = SingleEpochEval(
+        #     model=model, testloader=test_loader, criterion=criterion, device=device
+        # )
+        # print(f"eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%")
+        num_eval_batches = (
+            9999999  # batch 16이면 3125개. 9999999로 하면 전체 데이터셋으로 평가
         )
-        print(f"eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%")
+        _, test_loader = GetDataset(
+            dataset_name=args.dataset,
+            device=device,
+            root="data",
+            batch_size=16,
+            num_workers=4,
+        )
+        print("eval ref")
+        top1, top5 = evaluate(
+            model, criterion, test_loader, neval_batches=num_eval_batches
+        )
+
+        print(
+            "Evaluation accuracy on %d images, %2.2f"
+            % (num_eval_batches * args.batch_size, top1.avg)
+        )
+    print_size_of_model(model)
+
     return None
 
 

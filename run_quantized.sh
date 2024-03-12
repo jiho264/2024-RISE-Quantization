@@ -1,1 +1,0 @@
-python resnet_ref.py --num_layers 34 --dataset 'CIFAR100' --save_every 5 --continue_from -1 --qat 1 #tee resnet34_CIFAR100/resnet_ref.log --append
