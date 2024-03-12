@@ -1,7 +1,15 @@
 import torch, time, argparse
 import torch.nn as nn
 import torch.optim as optim
+from torchvision.models.resnet import (
+    ResNet,
+    Bottleneck,
+    _resnet,
+    resnet50,
+    ResNet18_Weights,
+)
 
+from typing import Any, Optional
 from src.utils import (
     SingleEpochTrain,
     SingleEpochEval,
@@ -13,7 +21,36 @@ from src.utils import (
     print_size_of_model,
 )
 
+# %% overwrite the torchvision.models.resnet
 
+
+# class Quan_ResNet(ResNet):
+#     def __init__(
+#         self,
+#         block: Any,
+#         layers: list[int],
+#         num_classes: int = 1000,
+#         weights: Optional[str] = None,
+#     ) -> None:
+#         super(Quan_ResNet, self).__init__(block, layers, num_classes)
+#         if weights is not None:
+#             self.load_state_dict(torch.load(weights))
+#         self.quant = torch.quantization.QuantStub()
+#         self.dequant = torch.quantization.DeQuantStub()
+
+#     def forward(self, x: torch.Tensor) -> torch.Tensor:
+#         x = self.quant(x)
+#         x = super(Quan_ResNet, self).forward(x)
+#         x = self.dequant(x)
+#         return x
+
+
+# def resnet50(weights: Optional[str] = None) -> Quan_ResNet:
+#     assert weights is None or ResNet18_Weights.IMAGENET1K_V1
+#     return Quan_ResNet(Bottleneck, [3, 4, 6, 3], weights=weights)
+
+
+# %% my code
 def main() -> None:
     """Main function for training ResNet model.
 
@@ -72,14 +109,10 @@ def main() -> None:
     # %%
     device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
     # Load the ResNet-50 model
-    device = "cpu"
     model = layers_mapping[args.num_layers](
         weights=pretrained_weights_mapping[args.num_layers]
     ).to(device)
-    ####################################################################################################
-    # 여기에 Block, forward 재정의 필요함.
-    #
-    ####################################################################################################
+
     if args.qat == True:
         _folder_path = f"resnet{args.num_layers}_{args.dataset}_QAT"
     else:
@@ -134,29 +167,17 @@ def main() -> None:
 
         print("Finished training")
     else:
-        # eval_loss, eval_acc = SingleEpochEval(
-        #     model=model, testloader=test_loader, criterion=criterion, device=device
-        # )
-        # print(f"eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%")
-        num_eval_batches = (
-            3125  # batch 16이면 3125개. 9999999로 하면 전체 데이터셋으로 평가
-        )
         _, test_loader = GetDataset(
             dataset_name=args.dataset,
             device=device,
             root="data",
-            batch_size=16,
-            num_workers=4,
+            batch_size=256,
+            num_workers=8,
         )
-        print("eval ref")
-        top1, top5 = evaluate(
-            model, criterion, test_loader, neval_batches=num_eval_batches
+        eval_loss, eval_acc = SingleEpochEval(
+            model=model, testloader=test_loader, criterion=criterion, device=device
         )
-
-        print(
-            "Evaluation accuracy on %d images, %2.2f"
-            % (num_eval_batches * args.batch_size, top1.avg)
-        )
+        print(f"eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%")
     print_size_of_model(model)
 
     return None
