@@ -1,1 +1,6 @@
-python resnet_ref.py --num_layers 34 --dataset 'CIFAR100' --save_every 5 --continue_from -1 #tee resnet34_CIFAR100/resnet_ref.log --append
+NUM_LAYERS=50
+DATASET="CIFAR100"
+MODEL_PATH=resnet"$NUM_LAYERS"_"$DATASET"
+
+python resnet_ref.py --num_layers $NUM_LAYERS --dataset $DATASET | \
+tee $MODEL_PATH/$MODEL_PATH.log --append

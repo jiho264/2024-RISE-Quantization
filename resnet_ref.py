@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 
-from src.utils import SingleEpochTrain, SingleEpochEval, GetDataset, SaveLoader
+from src.utils import SingleEpochTrain, SingleEpochEval, GetDataset, CheckPointLoader
 
 
 def main() -> None:
@@ -17,7 +17,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="ResNet Training")
 
     # Add arguments
-    parser.add_argument("--num_layers", type=int, default=18, help="number of layers")
+    parser.add_argument("--num_layers", type=int, default=50, help="number of layers")
     parser.add_argument(
         "--dataset", type=str, default="CIFAR10", help="name of the dataset"
     )
@@ -27,12 +27,6 @@ def main() -> None:
     parser.add_argument("--num_epochs", type=int, default=100, help="number of epochs")
     parser.add_argument(
         "--save_every", type=int, default=5, help="save model every n epochs"
-    )
-    parser.add_argument(
-        "--continue_from",
-        type=int,
-        default=-1,
-        help="continue training from a savepoint",
     )
     parser.add_argument(
         "--qat", type=bool, default=False, help="Enable Quantization Aware Training"
@@ -49,7 +43,6 @@ def main() -> None:
     assert args.batch_size > 0
     assert args.num_epochs > 0
     assert args.save_every > 0
-    assert args.continue_from >= -1
 
     # %%
     device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
@@ -61,29 +54,47 @@ def main() -> None:
         101: resnet101,
         152: resnet152,
     }
+    pretrained_weights_mapping = {
+        18: resnet.ResNet18_Weights.DEFAULT,
+        34: resnet.ResNet34_Weights.DEFAULT,
+        50: resnet.ResNet50_Weights.DEFAULT,
+        101: resnet.ResNet101_Weights.DEFAULT,
+        152: resnet.ResNet152_Weights.DEFAULT,
+    }
 
-    model = layers_mapping[args.num_layers]().to(device)
+    model = layers_mapping[args.num_layers](
+        weights=pretrained_weights_mapping[args.num_layers]
+    ).to(device)
 
     if args.qat == True:
-        folder_path = f"resnet{args.num_layers}_{args.dataset}_QAT"
+        _folder_path = f"resnet{args.num_layers}_{args.dataset}_QAT"
     else:
-        folder_path = f"resnet{args.num_layers}_{args.dataset}"
+        _folder_path = f"resnet{args.num_layers}_{args.dataset}"
 
-    file_name = f"resnet{args.num_layers}_{args.dataset}_epoch"  # resnet18_cifar10_epoch{epoch}.pth
+    _file_name = f"resnet{args.num_layers}_{args.dataset}_epoch"  # resnet18_cifar10_epoch{epoch}.pth
 
-    latest_epoch = SaveLoader(model, device, args.continue_from, folder_path, file_name)
-    assert latest_epoch != None
+    _latest_epoch = CheckPointLoader(
+        model=model,
+        device=device,
+        continue_from=args.continue_from,
+        folder_path=_folder_path,
+        file_name=_file_name,
+    )
 
     # %%Set up training and evaluation processes
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
-    trainloader, testloader = GetDataset(args.dataset, device, args.batch_size)
+    trainloader, testloader = GetDataset(
+        dataset_name=args.dataset,
+        device=device,
+        root="data",
+        batch_size=args.batch_size,
+    )
 
     # %% Training loop
     model.train()
     for epoch in range(args.num_epochs):  # Change the number of epochs as needed
-        now_epoch = epoch + 1 + latest_epoch
+        now_epoch = epoch + 1 + _latest_epoch
         start_time = time.time()
         train_loss, train_acc = SingleEpochTrain(
             model=model,
@@ -97,14 +108,14 @@ def main() -> None:
             model=model, testloader=testloader, criterion=criterion, device=device
         )
         end_time = time.time()
-        scheduler.step()
+
         print(
             f"Epoch {str(now_epoch).rjust(len(str(args.num_epochs)))}/{args.num_epochs} ({end_time - start_time:.2f}s) | train_loss: {train_loss:.4f} | train_acc: {train_acc:.2f}% | eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%"
         )
         if (now_epoch) % args.save_every == 0:
             torch.save(
                 model.state_dict(),
-                f"{folder_path}/{file_name}{now_epoch}.pth",
+                f"{_folder_path}/{_file_name}{now_epoch}.pth",
             )
 
     print("Finished training")
