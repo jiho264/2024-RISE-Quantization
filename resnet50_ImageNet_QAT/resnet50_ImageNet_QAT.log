@@ -12,3 +12,16 @@ No savepoint found. Starting from Pretrained Model
 evaluate acc of pretrained model.
 eval_loss: 1.4146 | eval_acc: 80.34%
 Size (MB): 102.527718
+
+----------Quantization Aware Training enabled
+No savepoint found. Starting from Pretrained Model
+evaluate acc of pretrained model.
+eval_loss: 1.4146 | eval_acc: 80.34%
+Size (MB): 102.527718
+그냥 로딩한 모델 정확도: 80.34
+====================================================================================================----------Quantization Aware Training enabled
+No savepoint found. Starting from Pretrained Model
+Let's do transfer learning!
+----------Quantization Aware Training enabled
+No savepoint found. Starting from Pretrained Model
+Let's do transfer learning!

@@ -1,15 +1,7 @@
 import torch, time, argparse
 import torch.nn as nn
 import torch.optim as optim
-from torchvision.models.resnet import (
-    ResNet,
-    Bottleneck,
-    _resnet,
-    resnet50,
-    ResNet18_Weights,
-)
 
-from typing import Any, Optional
 from src.utils import (
     SingleEpochTrain,
     SingleEpochEval,
@@ -17,37 +9,84 @@ from src.utils import (
     CheckPointLoader,
     layers_mapping,
     pretrained_weights_mapping,
-    evaluate,
     print_size_of_model,
 )
 
-# %% overwrite the torchvision.models.resnet
+# %% override the torchvision.models.resnet
+from torchvision.models.resnet import (
+    ResNet,
+    ResNet50_Weights,
+    Bottleneck,
+    BasicBlock,
+)
+from functools import partial
+from typing import Any, Callable, List, Optional, Type, Union
+
+import torch
+import torch.nn as nn
+from torch import Tensor
+
+from torchvision.transforms._presets import ImageClassification
+from torchvision.utils import _log_api_usage_once
+from torchvision.models._api import register_model, Weights, WeightsEnum
+from torchvision.models._meta import _IMAGENET_CATEGORIES
+from torchvision.models._utils import _ovewrite_named_param, handle_legacy_interface
+
+"""
+Todo : 
+- [x] forward 함수 앞뒤로 quantization 추가
+- [ ] skip add에서 그냥 +를 nn.quantized.FloatFunctional()으로 바꾸기
+- [x] ReLU 6면 int계산 안 되는데, 일반 ReLU인 것은 확인 완료
+"""
 
 
-# class Quan_ResNet(ResNet):
-#     def __init__(
-#         self,
-#         block: Any,
-#         layers: list[int],
-#         num_classes: int = 1000,
-#         weights: Optional[str] = None,
-#     ) -> None:
-#         super(Quan_ResNet, self).__init__(block, layers, num_classes)
-#         if weights is not None:
-#             self.load_state_dict(torch.load(weights))
-#         self.quant = torch.quantization.QuantStub()
-#         self.dequant = torch.quantization.DeQuantStub()
+# class BasicBlock_quan(BasicBlock): << 원하면 Block 내부 override해서 사용
+class ResNet_quan(ResNet):
+    def __init__(
+        self,
+        block: Any,
+        layers: list[int],
+        num_classes: int = 1000,
+        weights: Optional[str] = None,
+    ) -> None:
+        super(ResNet_quan, self).__init__(block, layers, num_classes)
+        if weights is not None:
+            self.load_state_dict(torch.load(weights))
+        self.quant = torch.quantization.QuantStub()
+        self.dequant = torch.quantization.DeQuantStub()
 
-#     def forward(self, x: torch.Tensor) -> torch.Tensor:
-#         x = self.quant(x)
-#         x = super(Quan_ResNet, self).forward(x)
-#         x = self.dequant(x)
-#         return x
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.quant(x)
+        x = super(ResNet_quan, self).forward(x)
+        x = self.dequant(x)
+        return x
 
 
-# def resnet50(weights: Optional[str] = None) -> Quan_ResNet:
-#     assert weights is None or ResNet18_Weights.IMAGENET1K_V1
-#     return Quan_ResNet(Bottleneck, [3, 4, 6, 3], weights=weights)
+def _resnet_quan(
+    block: Type[Union[BasicBlock, Bottleneck]],
+    layers: List[int],
+    weights: Optional[WeightsEnum],
+    progress: bool,
+    **kwargs: Any,
+) -> ResNet:
+    if weights is not None:
+        _ovewrite_named_param(kwargs, "num_classes", len(weights.meta["categories"]))
+
+    model = ResNet_quan(block, layers, **kwargs)
+
+    if weights is not None:
+        model.load_state_dict(
+            weights.get_state_dict(progress=progress, check_hash=True)
+        )
+
+    return model
+
+
+def resnet50_quan(
+    *, weights: Optional[ResNet50_Weights] = None, progress: bool = True, **kwargs: Any
+) -> ResNet:
+    weights = ResNet50_Weights.verify(weights)
+    return _resnet_quan(Bottleneck, [3, 4, 6, 3], weights, progress, **kwargs)
 
 
 # %% my code
@@ -106,12 +145,18 @@ def main() -> None:
     assert args.only_eval in [True, False]
     assert args.qat in [True, False]
 
-    # %%
-    device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-    # Load the ResNet-50 model
-    model = layers_mapping[args.num_layers](
-        weights=pretrained_weights_mapping[args.num_layers]
-    ).to(device)
+    # %% Load the ResNet-50 model
+    if args.qat == True:
+        device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+        model = resnet50_quan(weights=pretrained_weights_mapping[args.num_layers]).to(
+            device
+        )
+        print("----------Quantization Aware Training enabled")
+    else:
+        device = str(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+        model = layers_mapping[args.num_layers](
+            weights=pretrained_weights_mapping[args.num_layers]
+        ).to(device)
 
     if args.qat == True:
         _folder_path = f"resnet{args.num_layers}_{args.dataset}_QAT"
@@ -164,7 +209,6 @@ def main() -> None:
                     model.state_dict(),
                     f"{_folder_path}/{_file_name}{now_epoch}.pth",
                 )
-
         print("Finished training")
     else:
         _, test_loader = GetDataset(
