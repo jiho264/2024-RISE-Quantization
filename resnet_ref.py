@@ -76,7 +76,10 @@ def main() -> None:
     model = layers_mapping[args.num_layers](
         weights=pretrained_weights_mapping[args.num_layers]
     ).to(device)
-
+    ####################################################################################################
+    # 여기에 Block, forward 재정의 필요함.
+    #
+    ####################################################################################################
     if args.qat == True:
         _folder_path = f"resnet{args.num_layers}_{args.dataset}_QAT"
     else:
@@ -136,7 +139,7 @@ def main() -> None:
         # )
         # print(f"eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%")
         num_eval_batches = (
-            9999999  # batch 16이면 3125개. 9999999로 하면 전체 데이터셋으로 평가
+            3125  # batch 16이면 3125개. 9999999로 하면 전체 데이터셋으로 평가
         )
         _, test_loader = GetDataset(
             dataset_name=args.dataset,
