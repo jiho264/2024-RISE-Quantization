@@ -26,39 +26,34 @@ def parser_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="ResNet Training")
 
     # Add arguments
-    parser.add_argument("--num_layers", type=int, default=50, help="number of layers")
+    parser.add_argument("--arch", type=int, default=50, help="number of layers")
     parser.add_argument(
         "--dataset", type=str, default="CIFAR10", help="name of the dataset"
     )
     parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
     parser.add_argument("--momentum", type=float, default=0.9, help="momentum")
-    parser.add_argument("--batch_size", type=int, default=128, help="batch size")
-    parser.add_argument("--num_epochs", type=int, default=100, help="number of epochs")
+    parser.add_argument("--batch", type=int, default=128, help="batch size")
+    parser.add_argument("--epochs", type=int, default=100, help="number of epochs")
     parser.add_argument(
         "--save_every", type=int, default=5, help="save model every n epochs"
     )
-    parser.add_argument(
-        "--qat", type=bool, default=False, help="Enable Quantization Aware Training"
-    )
     parser.add_argument("--only_eval", type=bool, default=False, help="verbose mode")
-    parser.add_argument(
-        "--qat_method", type=str, default=None, help="Quantization method"
-    )
+    parser.add_argument("--quan", type=str, default="fp32", help="Quantization method")
     parser.add_argument("--verbose", type=bool, default=False, help="verbose mode")
 
     # Parse the arguments
     args = parser.parse_args()
 
-    assert args.num_layers in [18, 34, 50, 101, 152]
+    assert args.arch in [18, 34, 50, 101, 152]
     assert args.dataset in ["CIFAR10", "CIFAR100", "ImageNet"]
     assert args.lr > 0
     assert args.momentum > 0
-    assert args.batch_size > 0
-    assert args.num_epochs > 0
+    assert args.batch > 0
+    assert args.epochs > 0
     assert args.save_every > 0
     assert args.verbose in [True, False]
     assert args.only_eval in [True, False]
-    assert args.qat in [True, False]
+    assert args.quan in ["dynamic", "static", "qat", "fp32", None]
 
     return args
 
@@ -196,8 +191,8 @@ def CheckPointLoader(
         latest_epoch (int): latest epoch number about the checkpoint.
     """
     file_extension = ".pth"
-    # if not os.path.exists(folder_path):
-    #     os.makedirs(folder_path)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
 
     # Get a list of all pth files in the folder
     pth_files = [
