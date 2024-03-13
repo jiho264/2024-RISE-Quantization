@@ -49,10 +49,35 @@ class BottleNeck_quan(Bottleneck):
             dilation,
             norm_layer,
         )
+        self.relu1 = nn.ReLU()
+        self.relu2 = nn.ReLU()
+        self.relu3 = nn.ReLU()
 
     def forward(self, x: Tensor) -> Tensor:
-        x = super(BottleNeck_quan, self).forward(x)
-        return x
+        identity = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu1(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = self.relu2(out)
+
+        out = self.conv3(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.relu3(out)
+
+        return out
+
+    # def forward(self, x: Tensor) -> Tensor:
+    #     x = super(BottleNeck_quan, self).forward(x)
+    #     return x
 
 
 # class BasicBlock_quan(BasicBlock): << 원하면 Block 내부 override해서 사용

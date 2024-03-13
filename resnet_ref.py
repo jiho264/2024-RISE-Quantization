@@ -38,22 +38,27 @@ def main() -> None:
         model = resnet50_quan(weights=pretrained_weights_mapping[args.arch]).to(device)
 
         print("before quantization")
-        # print(model.modules)
         print(model.layer1[0])
-        print("")
-        print("")
-        print("")
         model.eval()
         print("after fusion")
 
         for m in model.modules():
             if type(m) == BottleNeck_quan:
-                print(m)
                 torch.quantization.fuse_modules(
-                    model, [m.conv1, m.bn1, m.relu], inplace=True
+                    m,
+                    [
+                        ["conv1", "bn1", "relu1"],
+                        ["conv2", "bn2", "relu2"],
+                        ["conv3", "bn3"],
+                    ],
+                    inplace=True,
                 )
-
-        # print(model.modules)
+                if m.downsample is not None:
+                    torch.quantization.fuse_modules(
+                        m.downsample,
+                        ["0", "1"],
+                        inplace=True,
+                    )
 
         print("")
         print(model.layer1[0])
