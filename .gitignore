@@ -2,3 +2,4 @@
 /resnet18_cifar10/
 **/**.pth
 **/__pycache__/
+**.**.pt
