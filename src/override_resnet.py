@@ -22,7 +22,7 @@ from torchvision.models._utils import _ovewrite_named_param, handle_legacy_inter
 Todo : 
 - [x] forward 함수 앞뒤로 quantization 추가
 - [ ] skip add에서 그냥 +를 nn.quantized.FloatFunctional()으로 바꾸기
-- [ ] Conv, bn, relu 하나로 만들어야함.
+- [x] Conv, bn, relu 하나로 만들어야함.
 - [x] ReLU 6면 int계산 안 되는데, 일반 ReLU인 것은 확인 완료
 """
 
@@ -52,6 +52,7 @@ class BottleNeck_quan(Bottleneck):
         self.relu1 = nn.ReLU()
         self.relu2 = nn.ReLU()
         self.relu3 = nn.ReLU()
+        self.add = nn.quantized.FloatFunctional()
 
     def forward(self, x: Tensor) -> Tensor:
         identity = x
@@ -70,7 +71,8 @@ class BottleNeck_quan(Bottleneck):
         if self.downsample is not None:
             identity = self.downsample(x)
 
-        out += identity
+        # out += identity
+        out = self.add.add(out, identity)
         out = self.relu3(out)
 
         return out
