@@ -22,8 +22,64 @@ from torchvision.models._utils import _ovewrite_named_param, handle_legacy_inter
 Todo : 
 - [x] forward 함수 앞뒤로 quantization 추가
 - [ ] skip add에서 그냥 +를 nn.quantized.FloatFunctional()으로 바꾸기
+- [x] Conv, bn, relu 하나로 만들어야함.
 - [x] ReLU 6면 int계산 안 되는데, 일반 ReLU인 것은 확인 완료
 """
+
+
+class BottleNeck_quan(Bottleneck):
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        downsample: Optional[nn.Module] = None,
+        groups: int = 1,
+        base_width: int = 64,
+        dilation: int = 1,
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+    ) -> None:
+        super(BottleNeck_quan, self).__init__(
+            inplanes,
+            planes,
+            stride,
+            downsample,
+            groups,
+            base_width,
+            dilation,
+            norm_layer,
+        )
+        self.relu1 = nn.ReLU()
+        self.relu2 = nn.ReLU()
+        self.relu3 = nn.ReLU()
+        self.add = nn.quantized.FloatFunctional()
+
+    def forward(self, x: Tensor) -> Tensor:
+        identity = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu1(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = self.relu2(out)
+
+        out = self.conv3(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        # out += identity
+        out = self.add.add(out, identity)
+        out = self.relu3(out)
+
+        return out
+
+    # def forward(self, x: Tensor) -> Tensor:
+    #     x = super(BottleNeck_quan, self).forward(x)
+    #     return x
 
 
 # class BasicBlock_quan(BasicBlock): << 원하면 Block 내부 override해서 사용
@@ -49,7 +105,7 @@ class ResNet_quan(ResNet):
 
 
 def _resnet_quan(
-    block: Type[Union[BasicBlock, Bottleneck]],
+    block: Type[Union[BasicBlock, BottleNeck_quan]],
     layers: List[int],
     weights: Optional[WeightsEnum],
     progress: bool,
@@ -72,4 +128,4 @@ def resnet50_quan(
     *, weights: Optional[ResNet50_Weights] = None, progress: bool = True, **kwargs: Any
 ) -> ResNet:
     weights = ResNet50_Weights.verify(weights)
-    return _resnet_quan(Bottleneck, [3, 4, 6, 3], weights, progress, **kwargs)
+    return _resnet_quan(BottleNeck_quan, [3, 4, 6, 3], weights, progress, **kwargs)

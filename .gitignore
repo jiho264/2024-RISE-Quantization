@@ -2,3 +2,6 @@
 /resnet18_cifar10/
 **/**.pth
 **/__pycache__/
+**.**.pt
+tempCodeRunnerFile.py
+tempCodeRunnerFile.sh
