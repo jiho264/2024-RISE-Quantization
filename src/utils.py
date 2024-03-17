@@ -348,10 +348,20 @@ def SingleEpochEval(
     return eval_loss, eval_acc
 
 
-def print_size_of_model(model) -> None:
+def print_size_of_model(model) -> float:
+    """Calculate the size of the model
+
+    Args:
+        model (torch.nn.module): The target model
+
+    Returns:
+        float: The size of the model
+    """
     torch.save(model.state_dict(), "temp.p")
-    print("Size (MB):", os.path.getsize("temp.p") / 1e6)
+    size = os.path.getsize("temp.p") / 1e6
+    print("Size (MB):", size)
     os.remove("temp.p")
+    return size
 
 
 def run_benchmark(model, img_loader, device) -> float:
@@ -377,6 +387,21 @@ def run_benchmark(model, img_loader, device) -> float:
 def check_accuracy(
     model, device, dataset_name="ImageNet", batch_size=25, num_iter=500
 ) -> tuple[float, float]:
+    """evaluate the model on eval dataset.
+    Ref on <8-bit Inference with TensorRT> Szymon Migacz, NVIDIA (May 8, 2017)
+    - batch_size: 25
+    - num_iter: 500
+
+    Args:
+        model (_type_): The target model
+        device (_type_): The target device
+        dataset_name (str, optional): dataset name. Defaults to "ImageNet".
+        batch_size (int, optional): The batch size for inference on CPU. Defaults to 25.
+        num_iter (int, optional): The number of sample batchs. Defaults to 500.
+
+    Returns:
+        tuple[float, float]: _description_
+    """
     model.eval()
     model.to(device)
 

@@ -82,7 +82,6 @@ class BottleNeck_quan(Bottleneck):
     #     return x
 
 
-# class BasicBlock_quan(BasicBlock): << 원하면 Block 내부 override해서 사용
 class ResNet_quan(ResNet):
     def __init__(
         self,
