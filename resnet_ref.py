@@ -141,8 +141,19 @@ def main() -> None:
     #         model=model, testloader=test_loader, criterion=criterion, device=device
     #     )
     #     print(f"eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%")
-    # print_size_of_model(model)
 
+    _, test_loader = GetDataset(
+        dataset_name=args.dataset,
+        device=device,
+        root="data",
+        batch_size=args.batch,
+        num_workers=8,
+    )
+    eval_loss, eval_acc = SingleEpochEval(
+        model=model, testloader=test_loader, criterion=criterion, device=device
+    )
+    print(f"eval_loss: {eval_loss:.4f} | eval_acc: {eval_acc:.2f}%")
+    print_size_of_model(model)
     # return None
 
 
