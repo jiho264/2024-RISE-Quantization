@@ -295,6 +295,7 @@ def SingleEpochEval(
     testloader,
     criterion,
     device: str,
+    limit: int = -1,
 ) -> tuple:
     """_summary_
 
@@ -313,6 +314,9 @@ def SingleEpochEval(
     running_loss = 0.0
     correct = 0
     total = 0
+
+    _iter_count = 0  # limit the number of iterations
+
     with torch.no_grad():
         for images, labels in tqdm.tqdm(testloader):
 
@@ -328,8 +332,17 @@ def SingleEpochEval(
             total += labels.size(0)
             correct += predicted.eq(labels).sum().item()
 
-    eval_loss = running_loss / len(testloader)
-    eval_acc = 100.0 * correct / total
+            _iter_count += 1
+            if limit > 0 and _iter_count >= limit:
+                break
+
+    if limit > 0:
+        eval_loss = running_loss / limit
+        eval_acc = 100.0 * correct / total
+
+    else:
+        eval_loss = running_loss / len(testloader)
+        eval_acc = 100.0 * correct / total
 
     return eval_loss, eval_acc
 
