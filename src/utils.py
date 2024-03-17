@@ -64,7 +64,7 @@ def GetDataset(
     root: str = "data",
     batch_size: int = 128,
     num_workers: int = 8,
-) -> tuple:
+) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
     """Get the dataset and dataloader
 
     Args:
@@ -235,7 +235,7 @@ def SingleEpochTrain(
     optimizer,
     device: str,
     verb=True,
-) -> tuple:
+) -> tuple[float, float]:
     """Run the training loop for a single epoch
 
     Args:
@@ -296,7 +296,7 @@ def SingleEpochEval(
     criterion,
     device: str,
     limit: int = -1,
-) -> tuple:
+) -> tuple[float, float]:
     """_summary_
 
     Args:
@@ -348,10 +348,54 @@ def SingleEpochEval(
     return eval_loss, eval_acc
 
 
-def print_size_of_model(model):
+def print_size_of_model(model) -> None:
     torch.save(model.state_dict(), "temp.p")
     print("Size (MB):", os.path.getsize("temp.p") / 1e6)
     os.remove("temp.p")
+
+
+def run_benchmark(model, img_loader, device) -> float:
+    elapsed = 0
+    model.eval()
+    num_batches = 1
+    for i, (images, target) in enumerate(img_loader):
+        if i < num_batches:
+            images = images.to(device)
+            start = time.time()
+            output = model(images)
+            end = time.time()
+            elapsed = elapsed + (end - start)
+        else:
+            break
+    num_images = images.size()[0] * num_batches
+
+    print("Elapsed time: %3.0f ms" % (elapsed / num_images * 1000))
+    # return elapsed
+    return elapsed / num_images * 1000
+
+
+def check_accuracy(
+    model, device, dataset_name="ImageNet", batch_size=25, num_iter=500
+) -> tuple[float, float]:
+    model.eval()
+    model.to(device)
+
+    _, test_loader = GetDataset(
+        dataset_name=dataset_name,
+        device=device,
+        root="data",
+        batch_size=batch_size,
+        num_workers=8,
+    )
+    _ = run_benchmark(model, test_loader, device)
+    print_size_of_model(model)
+    criterion = torch.nn.CrossEntropyLoss()
+    eval_loss, eval_acc = SingleEpochEval(
+        model, test_loader, criterion, device, num_iter
+    )
+
+    print(f"Eval Loss: {eval_loss:.4f}, Eval Acc: {eval_acc:.2f}%")
+    return eval_loss, eval_acc
 
 
 # %% https://pytorch.org/tutorials/advanced/static_quantization_tutorial.html
