@@ -251,7 +251,7 @@ def SingleEpochTrain(
     """
     # Training loop
     model.train()
-
+    model.to(device)
     running_loss = 0.0
     correct = 0
     total = 0
@@ -310,6 +310,7 @@ def SingleEpochEval(
     """
     # Evaluation loop
     model.eval()
+    model.to(device)
 
     running_loss = 0.0
     correct = 0
