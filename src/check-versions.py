@@ -35,7 +35,7 @@ print("")
 import tensorrt
 
 print("- TensorRT : ")
-subprocess.call("dpkg-query -W tensorrt", shell=True)
+# subprocess.call("dpkg-query -W tensorrt", shell=True)
 print(tensorrt.__version__)
 print("")
 # os="ubuntu2204"
