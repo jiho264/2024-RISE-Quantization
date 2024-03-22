@@ -131,7 +131,8 @@ def GetDataset(
             split="val",
             transform=transforms.Compose(
                 [
-                    transforms.Resize(256),
+                    # transforms.Resize(256),
+                    transforms.Resize(232),
                     transforms.CenterCrop(224),
                     transforms.ToTensor(),
                     transforms.Normalize(
