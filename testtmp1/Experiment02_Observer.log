@@ -1,0 +1,24 @@
+------------------------------------------------------------
+Case: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, dtype=torch.qint8){}
+Model Size: 25.69MB
+Inference Time: 12.88ms
+Eval Loss: 3.8972
+Eval Acc: 32.666%
+
+
+------------------------------------------------------------
+Case: functools.partial(<class 'torch.ao.quantization.observer.MinMaxObserver'>, dtype=torch.qint8){}
+Model Size: 25.69MB
+Inference Time: 13.23ms
+Eval Loss: 5.0267
+Eval Acc: 17.470%
+
+
+------------------------------------------------------------
+Case: functools.partial(<class 'torch.ao.quantization.observer.MovingAverageMinMaxObserver'>, dtype=torch.qint8){}
+Model Size: 25.69MB
+Inference Time: 12.99ms
+Eval Loss: 4.1360
+Eval Acc: 28.700%
+
+

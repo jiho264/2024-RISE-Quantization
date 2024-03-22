@@ -59,10 +59,7 @@ for case in cases:
     _model = fuse_ALL(_model)
     # set qconfig
 
-    _model.qconfig = torch.quantization.QConfig(
-        activation=torch.quantization.HistogramObserver,
-        weight=torch.quantization.default_per_channel_weight_observer,
-    )
+    _model.qconfig = torch.quantization.get_default_qconfig("x86")
     prepare(_model, inplace=True)
 
     # calibrate the model ############################################################
@@ -90,7 +87,7 @@ for case in cases:
         batch_size=_batch_size,
         num_workers=8,
     )
-
+    # test loader shuffle=True
     eval_loss, eval_acc = SingleEpochEval(
         model=_model, testloader=test_loader, criterion=criterion, device="cpu"
     )

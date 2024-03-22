@@ -153,7 +153,7 @@ def GetDataset(
         test_loader = torch.utils.data.DataLoader(
             test_dataset,
             batch_size=batch_size,
-            shuffle=False,
+            shuffle=True,
             num_workers=num_workers,
         )
     else:

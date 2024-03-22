@@ -1,0 +1,25 @@
+------------------------------------------------------------
+Case: Non-Fuse
+Model Size: 26.55MB
+Inference Time: 14.19ms
+Eval Loss: 7.0176
+Eval Acc: 0.444%
+
+
+------------------------------------------------------------
+Case: Fuse-OnlyBlocks
+Model Size: 26.15MB
+Inference Time: 13.10ms
+Eval Loss: 1.9579
+Eval Acc: 69.350%
+
+
+------------------------------------------------------------
+Case: Fuse-ALL
+Model Size: 26.15MB
+Inference Time: 13.03ms
+Eval Loss: 1.9176
+Eval Acc: 71.228%
+
+
+Done!

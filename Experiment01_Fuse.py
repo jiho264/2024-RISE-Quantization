@@ -80,10 +80,8 @@ for case in cases:
         raise ValueError(f"Unknown key: {case}")
 
     # set qconfig
-    _model.qconfig = torch.quantization.QConfig(
-        activation=torch.quantization.HistogramObserver,
-        weight=torch.quantization.default_per_channel_weight_observer,
-    )
+    _model.qconfig = torch.quantization.get_default_qconfig("x86")
+
     prepare(_model, inplace=True)
 
     # calibrate the model ############################################################
