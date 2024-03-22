@@ -1,4 +1,6 @@
 date
+python Experiment00_Ref.py | tee Experiment00_Ref.log
+date
 python Experiment01_Fuse.py | tee Experiment01_Fuse.log
 date
 python Experiment02_Observer.py | tee Experiment02_Observer.log
