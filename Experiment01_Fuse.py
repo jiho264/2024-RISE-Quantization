@@ -95,7 +95,7 @@ for case in cases:
         batch_size=256,
         num_workers=8,
     )
-    _, _ = SingleEpochEval(_model, train_loader, criterion, "cuda", limit=2)
+    _, _ = SingleEpochEval(_model, train_loader, criterion, "cuda")
 
     # convert the model ############################################################
     _model.to("cpu")
@@ -113,7 +113,7 @@ for case in cases:
     )
 
     eval_loss, eval_acc = SingleEpochEval(
-        model=_model, testloader=test_loader, criterion=criterion, device="cpu", limit=2
+        model=_model, testloader=test_loader, criterion=criterion, device="cpu"
     )
     model_size = get_size_of_model(_model)
     inference_time = run_benchmark(_model, test_loader, "cpu", 10)

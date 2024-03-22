@@ -95,7 +95,7 @@ for case in cases:
     )
 
     eval_loss, eval_acc = SingleEpochEval(
-        model=_model, testloader=test_loader, criterion=criterion, device="cpu", limit=1
+        model=_model, testloader=test_loader, criterion=criterion, device="cpu"
     )
     model_size = get_size_of_model(_model)
     inference_time = run_benchmark(_model, test_loader, "cpu", 10)
