@@ -21,7 +21,7 @@ from torchvision.models._utils import _ovewrite_named_param, handle_legacy_inter
 """
 Todo : 
 - [x] forward 함수 앞뒤로 quantization 추가
-- [ ] skip add에서 그냥 +를 nn.quantized.FloatFunctional()으로 바꾸기
+- [x] skip add에서 그냥 +를 nn.quantized.FloatFunctional()으로 바꾸기
 - [x] Conv, bn, relu 하나로 만들어야함.
 - [x] ReLU 6면 int계산 안 되는데, 일반 ReLU인 것은 확인 완료
 """
@@ -96,32 +96,32 @@ class ResNet_quan(ResNet):
         self.quant = torch.quantization.QuantStub()
         self.dequant = torch.quantization.DeQuantStub()
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.quant(x)
-        x = super(ResNet_quan, self).forward(x)
-        x = self.dequant(x)
-        return x
-
-    # def _forward_impl(self, x: Tensor) -> Tensor:
-    #     # See note [TorchScript super()]
-    #     x = self.conv1(x)
-    #     x = self.bn1(x)
-    #     x = self.relu(x)
-    #     x = self.maxpool(x)
-
-    #     x = self.layer1(x)
-    #     x = self.layer2(x)
-    #     x = self.layer3(x)
-    #     x = self.layer4(x)
-
-    #     x = self.avgpool(x)
-    #     x = torch.flatten(x, 1)
-    #     x = self.fc(x)
-
+    # def forward(self, x: torch.Tensor) -> torch.Tensor:
+    #     x = self.quant(x)
+    #     x = super(ResNet_quan, self).forward(x)
+    #     x = self.dequant(x)
     #     return x
 
-    # def forward(self, x: Tensor) -> Tensor:
-    #     return self._forward_impl(x)
+    def forward(self, x: Tensor) -> Tensor:
+        # See note [TorchScript super()]
+        x = self.quant(x)
+
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+
+        x = self.dequant(x)
+        return x
 
 
 def _resnet_quan(

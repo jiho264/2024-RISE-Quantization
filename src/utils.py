@@ -4,6 +4,8 @@ import torchvision.datasets as datasets
 from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
 import torchvision.models.resnet as resnet
 
+# from src.override_resnet import *
+
 
 layers_mapping = {
     18: resnet18,
@@ -365,10 +367,36 @@ def print_size_of_model(model) -> float:
     return size
 
 
-def run_benchmark(model, img_loader, device) -> float:
+def get_size_of_model(model) -> float:
+    """Calculate the size of the model
+
+    Args:
+        model (torch.nn.module): The target model
+
+    Returns:
+        float: The size of the model
+    """
+    torch.save(model.state_dict(), "temp.p")
+    size = os.path.getsize("temp.p") / 1e6
+    # print("Size (MB):", size)
+    os.remove("temp.p")
+    return size
+
+
+def run_benchmark(model, img_loader, device, num_batches=1) -> float:
+    """return the elapsed time for inference (ms)
+
+    Args:
+        model (_type_): _description_
+        img_loader (_type_): _description_
+        device (_type_): _description_
+        batch_size (_type_): _description_
+
+    Returns:
+        float: _description_
+    """
     elapsed = 0
     model.eval()
-    num_batches = 1
     for i, (images, target) in enumerate(img_loader):
         if i < num_batches:
             images = images.to(device)
@@ -379,19 +407,15 @@ def run_benchmark(model, img_loader, device) -> float:
         else:
             break
     num_images = images.size()[0] * num_batches
-
-    print("Elapsed time: %3.0f ms" % (elapsed / num_images * 1000))
+    # print("Elapsed time: %3.0f ms" % (elapsed / num_images * 1000))
     # return elapsed
     return elapsed / num_images * 1000
 
 
 def check_accuracy(
-    model, device, dataset_name="ImageNet", batch_size=25, num_iter=500
+    model, device, dataset_name="ImageNet", batch_size=32, num_iter=999999
 ) -> tuple[float, float]:
     """evaluate the model on eval dataset.
-    Ref on <8-bit Inference with TensorRT> Szymon Migacz, NVIDIA (May 8, 2017)
-    - batch_size: 25
-    - num_iter: 500
 
     Args:
         model (_type_): The target model
