@@ -1,0 +1,81 @@
+------------------------------------------------------------
+Case: Use calib 10%
+Model Size: 26.151272MB
+Inference Time: 12.62ms
+Eval Loss: 1.4338
+Eval Acc: 80.206%
+
+
+------------------------------------------------------------
+Case: Use calib 20%
+Model Size: 26.151272MB
+Inference Time: 12.98ms
+Eval Loss: 1.4316
+Eval Acc: 80.302%
+
+
+------------------------------------------------------------
+Case: Use calib 30%
+Model Size: 26.151272MB
+Inference Time: 13.07ms
+Eval Loss: 1.4229
+Eval Acc: 80.216%
+
+
+------------------------------------------------------------
+Case: Use calib 40%
+Model Size: 26.151272MB
+Inference Time: 12.93ms
+Eval Loss: 1.4123
+Eval Acc: 80.284%
+
+
+------------------------------------------------------------
+Case: Use calib 50%
+Model Size: 26.151272MB
+Inference Time: 12.43ms
+Eval Loss: 1.4277
+Eval Acc: 80.260%
+
+
+------------------------------------------------------------
+Case: Use calib 60%
+Model Size: 26.151272MB
+Inference Time: 12.98ms
+Eval Loss: 1.4210
+Eval Acc: 80.296%
+
+
+------------------------------------------------------------
+Case: Use calib 70%
+Model Size: 26.151272MB
+Inference Time: 13.13ms
+Eval Loss: 1.4271
+Eval Acc: 80.378%
+
+
+------------------------------------------------------------
+Case: Use calib 80%
+Model Size: 26.151272MB
+Inference Time: 12.38ms
+Eval Loss: 1.4193
+Eval Acc: 80.302%
+
+
+------------------------------------------------------------
+Case: Use calib 90%
+Model Size: 26.151272MB
+Inference Time: 13.52ms
+Eval Loss: 1.4268
+Eval Acc: 80.270%
+
+
+------------------------------------------------------------
+Case: Use calib 100%
+Model Size: 26.151272MB
+Inference Time: 12.77ms
+Eval Loss: 1.4256
+Eval Acc: 80.424%
+
+
+Done!

@@ -101,7 +101,7 @@ class ResNet_quan(ResNet):
         self.case = case
 
     def forward(self, x: Tensor) -> Tensor:
-        print(self.case)
+        # print(self.case)
         # See note [TorchScript super()]
         if self.case == "conv1":
             x = self.quant(x)
