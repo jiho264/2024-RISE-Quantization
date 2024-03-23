@@ -1,0 +1,24 @@
+------------------------------------------------------------
+Case: conv1
+Model Size: 26.151272MB
+Inference Time: 13.11ms
+Eval Loss: 1.4322
+Eval Acc: 80.324%
+
+
+------------------------------------------------------------
+Case: layer1
+Model Size: 26.177596MB
+Inference Time: 13.54ms
+Eval Loss: 1.4242
+Eval Acc: 80.324%
+
+
+------------------------------------------------------------
+Case: layer2
+Model Size: 26.783074MB
+Inference Time: 21.96ms
+Eval Loss: 1.4129
+Eval Acc: 80.588%
+
+
