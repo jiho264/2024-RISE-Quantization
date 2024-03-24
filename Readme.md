@@ -68,7 +68,8 @@
     backend == 'x86':
     qconfig = QConfig(activation=HistogramObserver.with_args(reduce_range=True),
                    weight=default_per_channel_weight_observer) # PerChannelMinMaxObserver
-                   
+    default_per_channel_weight_observer = PerChannelMinMaxObserver.with_args(
+              dtype=torch.qint8, qscheme=torch.per_channel_symmetric)
     ```
   - Activation : HistogramObserver(reduce_range=True)
   - Weight : PerChannelMinMaxObserver
