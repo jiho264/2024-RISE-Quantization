@@ -22,3 +22,20 @@ Eval Loss: 1.4129
 Eval Acc: 80.588%
 
 
+------------------------------------------------------------
+Case: layer3
+Model Size: 30.349262MB
+Inference Time: 28.16ms
+Eval Loss: 1.4091
+Eval Acc: 80.534%
+
+
+------------------------------------------------------------
+Case: layer4
+Model Size: 51.397638MB
+Inference Time: 30.67ms
+Eval Loss: 1.4217
+Eval Acc: 80.652%
+
+
+Done!

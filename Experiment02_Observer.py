@@ -114,7 +114,7 @@ for case_activation in cases_activation:
         _model = fuse_ALL(_model)
         # set qconfig
         _model.qconfig = torch.quantization.QConfig(
-            activation=cases_activation,
+            activation=case_activation,
             weight=case_weight,
         )
         prepare(_model, inplace=True)

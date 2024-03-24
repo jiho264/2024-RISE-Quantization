@@ -1,0 +1,91 @@
+------------------------------------------------------------
+case_activation: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, reduce_range=True){}
+case_weight: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, dtype=torch.qint8){}
+Model Size: 25.69MB
+Inference Time: 12.44ms
+Eval Loss: 1.4645
+Eval Acc: 78.990%
+
+
+------------------------------------------------------------
+case_activation: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, reduce_range=True){}
+case_weight: functools.partial(<class 'torch.ao.quantization.observer.MinMaxObserver'>, dtype=torch.qint8){}
+Model Size: 25.69MB
+Inference Time: 12.88ms
+Eval Loss: 1.5083
+Eval Acc: 79.126%
+
+
+------------------------------------------------------------
+case_activation: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, reduce_range=True){}
+case_weight: functools.partial(<class 'torch.ao.quantization.observer.MovingAverageMinMaxObserver'>, dtype=torch.qint8){}
+Model Size: 25.69MB
+Inference Time: 12.66ms
+Eval Loss: 1.5019
+Eval Acc: 79.078%
+
+
+------------------------------------------------------------
+case_activation: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, reduce_range=True){}
+case_weight: functools.partial(<class 'torch.ao.quantization.observer.PerChannelMinMaxObserver'>, dtype=torch.qint8){}
+Model Size: 26.15MB
+Inference Time: 12.69ms
+Eval Loss: 1.4396
+Eval Acc: 80.300%
+
+
+------------------------------------------------------------
+case_activation: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, reduce_range=True){}
+case_weight: functools.partial(<class 'torch.ao.quantization.observer.MovingAveragePerChannelMinMaxObserver'>, dtype=torch.qint8){}
+Model Size: 26.15MB
+Inference Time: 12.73ms
+Eval Loss: 1.4409
+Eval Acc: 80.160%
+
+
+------------------------------------------------------------
+case_activation: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, reduce_range=False){}
+case_weight: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, dtype=torch.qint8){}
+Model Size: 25.69MB
+Inference Time: 12.70ms
+Eval Loss: 4.0794
+Eval Acc: 29.848%
+
+
+------------------------------------------------------------
+case_activation: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, reduce_range=False){}
+case_weight: functools.partial(<class 'torch.ao.quantization.observer.MinMaxObserver'>, dtype=torch.qint8){}
+Model Size: 25.69MB
+Inference Time: 12.90ms
+Eval Loss: 4.3346
+Eval Acc: 25.848%
+
+
+------------------------------------------------------------
+case_activation: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, reduce_range=False){}
+case_weight: functools.partial(<class 'torch.ao.quantization.observer.MovingAverageMinMaxObserver'>, dtype=torch.qint8){}
+Model Size: 25.69MB
+Inference Time: 12.71ms
+Eval Loss: 4.4176
+Eval Acc: 24.836%
+
+
+------------------------------------------------------------
+case_activation: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, reduce_range=False){}
+case_weight: functools.partial(<class 'torch.ao.quantization.observer.PerChannelMinMaxObserver'>, dtype=torch.qint8){}
+Model Size: 26.15MB
+Inference Time: 12.58ms
+Eval Loss: 4.4285
+Eval Acc: 24.754%
+
+
+------------------------------------------------------------
+case_activation: functools.partial(<class 'torch.ao.quantization.observer.HistogramObserver'>, reduce_range=False){}
+case_weight: functools.partial(<class 'torch.ao.quantization.observer.MovingAveragePerChannelMinMaxObserver'>, dtype=torch.qint8){}
+Model Size: 26.15MB
+Inference Time: 12.86ms
+Eval Loss: 4.7509
+Eval Acc: 19.266%
+
+
+Done!
