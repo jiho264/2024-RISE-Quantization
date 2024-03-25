@@ -7,14 +7,14 @@
 
 # Post Training Static Quantization Experiments
 - Evaluate : Entire of ImageNet2012 validation set
-### 0. Reference Model
+### 0. The reference model
 - ```model = torchvision.models.quantization.resnet50(weight=resnet.ResNet50_Weights.DEFAULT)```
 
 | Name     | eval_loss | eval_acc | Size     | Inference Time |
 | -------- | --------- | -------- | -------- | -------------- |
 | ResNet50 | 1.3998    | 80.852%  | 102.53MB | 32.45ms        |
 
-### 1. Pick Fusion layers
+### 1. Pick the fusion layer
 - Quantize ALL + ```torch.quantization.get_default_qconfig("x86")```
   
 | Fuse        | eval_loss | eval_acc    | Size    | Inference |
@@ -23,7 +23,7 @@
 | Only Blocks | 1.4560    | 79.876%     | 26.15MB | 12.86ms   |
 | **ALL**     | 1.4373    | **80.330%** | 26.15MB | 13.61ms   |
 
-### 2. Observer
+### 2. Pick an observer to calculate the quantization parameters (scale, zero_point)
 - Fuse ALL + Quantize ALL
   
 | Activation                     | Weight                                     | eval_loss | eval_acc    | Size    | Inference Time |
@@ -39,7 +39,7 @@
 | HistObs(reduce_range=False)    | PerChannelMinMaxObserver                   | 4.4285    | 24.754%     | 26.15MB | 12.58ms        |
 | HistObs(reduce_range=False)    | MovingAveragePerChannelMinMaxObserver      | 4.7509    | 19.266%     | 26.15MB | 12.86ms        |
 
-### 3. Pick Quantization Layer
+### 3. Pick the starting layer for quantization
 - Fuse ALL + ```torch.quantization.get_default_qconfig("x86")```
 
 | Quantization | eval_loss | eval_acc    | Size        | Inference Time |
@@ -50,7 +50,7 @@
 | Layer3       | 1.4091    | 80.534%     | 30.349262MB | 28.16ms        |
 | Layer4       | 1.4217    | 80.652%     | 51.397638MB | 30.67ms        |
 
-### 4. Calibration Method
+### 4. Pick the utilization of the training data set during the calibration phase
 - Fuse ALL + ```torch.quantization.get_default_qconfig("x86")``` + Quantize ALL
 
 | Utilization | eval_loss | eval_acc    | Size    | Inference Time |
