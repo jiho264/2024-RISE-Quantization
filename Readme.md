@@ -26,18 +26,18 @@
 ### 2. Observer
 - Fuse ALL + Quantize ALL
   
-| Activation                               | Weight                                     | eval_loss | eval_acc    | Size    | Inference Time |
-| ---------------------------------------- | ------------------------------------------ | --------- | ----------- | ------- | -------------- |
-| **HistogramObserver(reduce_range=True)** | HistogramObserver                          | 1.4645    | 78.990%     | 25.69MB | 12.44ms        |
-| **HistogramObserver(reduce_range=True)** | MinMaxObserver                             | 1.5083    | 79.126%     | 25.69MB | 12.88ms        |
-| **HistogramObserver(reduce_range=True)** | MovingAverageMinMaxObserver                | 1.5019    | 79.078%     | 25.69MB | 12.66ms        |
-| **HistogramObserver(reduce_range=True)** | **PerChannelMinMaxObserver** (default x86) | 1.4396    | **80.300%** | 26.15MB | 12.69ms        |
-| **HistogramObserver(reduce_range=True)** | **MovingAveragePerChannelMinMaxObserver**  | 1.4409    | **80.160%** | 26.15MB | 12.73ms        |
-| HistogramObserver(reduce_range=False)    | HistogramObserver                          | 4.0794    | 29.848%     | 25.69MB | 12.70ms        |
-| HistogramObserver(reduce_range=False)    | MinMaxObserver                             | 4.3364    | 25.848%     | 25.69MB | 12.90ms        |
-| HistogramObserver(reduce_range=False)    | MovingAverageMinMaxObserver                | 4.4176    | 24.836%     | 25.69MB | 12.71ms        |
-| HistogramObserver(reduce_range=False)    | PerChannelMinMaxObserver                   | 4.4285    | 24.754%     | 26.15MB | 12.58ms        |
-| HistogramObserver(reduce_range=False)    | MovingAveragePerChannelMinMaxObserver      | 4.7509    | 19.266%     | 26.15MB | 12.86ms        |
+| Activation                     | Weight                                     | eval_loss | eval_acc    | Size    | Inference Time |
+| ------------------------------ | ------------------------------------------ | --------- | ----------- | ------- | -------------- |
+| **HistObs(reduce_range=True)** | HistogramObserver                          | 1.4645    | 78.990%     | 25.69MB | 12.44ms        |
+| **HistObs(reduce_range=True)** | MinMaxObserver                             | 1.5083    | 79.126%     | 25.69MB | 12.88ms        |
+| **HistObs(reduce_range=True)** | MovingAverageMinMaxObserver                | 1.5019    | 79.078%     | 25.69MB | 12.66ms        |
+| **HistObs(reduce_range=True)** | **PerChannelMinMaxObserver** (default x86) | 1.4396    | **80.300%** | 26.15MB | 12.69ms        |
+| **HistObs(reduce_range=True)** | **MovingAveragePerChannelMinMaxObserver**  | 1.4409    | **80.160%** | 26.15MB | 12.73ms        |
+| HistObs(reduce_range=False)    | HistogramObserver                          | 4.0794    | 29.848%     | 25.69MB | 12.70ms        |
+| HistObs(reduce_range=False)    | MinMaxObserver                             | 4.3364    | 25.848%     | 25.69MB | 12.90ms        |
+| HistObs(reduce_range=False)    | MovingAverageMinMaxObserver                | 4.4176    | 24.836%     | 25.69MB | 12.71ms        |
+| HistObs(reduce_range=False)    | PerChannelMinMaxObserver                   | 4.4285    | 24.754%     | 26.15MB | 12.58ms        |
+| HistObs(reduce_range=False)    | MovingAveragePerChannelMinMaxObserver      | 4.7509    | 19.266%     | 26.15MB | 12.86ms        |
 
 ### 3. Pick Quantization Layer
 - Fuse ALL + ```torch.quantization.get_default_qconfig("x86")```
