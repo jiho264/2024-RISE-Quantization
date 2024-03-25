@@ -9,12 +9,14 @@
 - Evaluate : Entire of ImageNet2012 validation set
 ### 0. Reference Model
 - ```model = torchvision.models.quantization.resnet50(weight=resnet.ResNet50_Weights.DEFAULT)```
+
 | Name     | eval_loss | eval_acc | Size     | Inference Time |
 | -------- | --------- | -------- | -------- | -------------- |
 | ResNet50 | 1.3998    | 80.852%  | 102.53MB | 32.45ms        |
 
 ### 1. Pick Fusion layers
 - Quantize ALL + ```torch.quantization.get_default_qconfig("x86")```
+  
 | Fuse        | eval_loss | eval_acc    | Size    | Inference |
 | ----------- | --------- | ----------- | ------- | --------- |
 | None        | 1.4529    | 79.372%     | 26.55MB | 14.37ms   |
@@ -23,6 +25,7 @@
 
 ### 2. Observer
 - Fuse ALL + Quantize ALL
+  
 | Activation                               | Weight                                     | eval_loss | eval_acc    | Size    | Inference Time |
 | ---------------------------------------- | ------------------------------------------ | --------- | ----------- | ------- | -------------- |
 | **HistogramObserver(reduce_range=True)** | HistogramObserver                          | 1.4645    | 78.990%     | 25.69MB | 12.44ms        |
@@ -38,6 +41,7 @@
 
 ### 3. Pick Quantization Layer
 - Fuse ALL + ```torch.quantization.get_default_qconfig("x86")```
+
 | Quantization | eval_loss | eval_acc    | Size        | Inference Time |
 | ------------ | --------- | ----------- | ----------- | -------------- |
 | **ALL**      | 1.4322    | **80.324%** | 26.151272MB | 13.11ms        |
@@ -48,6 +52,7 @@
 
 ### 4. Calibration Method
 - Fuse ALL + ```torch.quantization.get_default_qconfig("x86")``` + Quantize ALL
+
 | Utilization | eval_loss | eval_acc    | Size    | Inference Time |
 | ----------- | --------- | ----------- | ------- | -------------- |
 | 10%         | 1.4338    | 80.206%     | 26.15MB | 12.62ms        |
