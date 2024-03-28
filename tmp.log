@@ -1,0 +1,227 @@
+------------------------------------------------------------
+case_quant_max: 120
+Model Size: 26.15MB
+Inference Time: 12.53ms
+Eval Loss: 1.4467
+Eval Acc: 80.938%
+
+------------------------------------------------------------
+case_quant_max: 121
+Model Size: 26.15MB
+Inference Time: 13.28ms
+Eval Loss: 1.4697
+Eval Acc: 76.250%
+
+------------------------------------------------------------
+case_quant_max: 122
+Model Size: 26.15MB
+Inference Time: 12.65ms
+Eval Loss: 1.4871
+Eval Acc: 80.312%
+
+------------------------------------------------------------
+case_quant_max: 123
+Model Size: 26.15MB
+Inference Time: 13.31ms
+Eval Loss: 1.3541
+Eval Acc: 80.938%
+
+------------------------------------------------------------
+case_quant_max: 124
+Model Size: 26.15MB
+Inference Time: 13.23ms
+Eval Loss: 1.4521
+Eval Acc: 78.125%
+
+------------------------------------------------------------
+case_quant_max: 125
+Model Size: 26.15MB
+Inference Time: 12.67ms
+Eval Loss: 1.5357
+Eval Acc: 77.500%
+
+------------------------------------------------------------
+case_quant_max: 126
+Model Size: 26.15MB
+Inference Time: 12.72ms
+Eval Loss: 1.4173
+Eval Acc: 79.375%
+
+------------------------------------------------------------
+case_quant_max: 127
+Model Size: 26.15MB
+Inference Time: 12.59ms
+Eval Loss: 1.3552
+Eval Acc: 83.750%
+
+------------------------------------------------------------
+case_quant_max: 128
+Model Size: 26.15MB
+Inference Time: 13.02ms
+Eval Loss: 1.4112
+Eval Acc: 82.188%
+
+
+Done!
+------------------------------------------------------------
+case_upsample_rate: 120
+Model Size: 26.15MB
+Inference Time: 12.96ms
+Eval Loss: 1.3242
+Eval Acc: 85.625%
+
+
+------------------------------------------------------------
+case_upsample_rate: 121
+Model Size: 26.15MB
+Inference Time: 13.63ms
+Eval Loss: 1.3702
+Eval Acc: 80.000%
+
+
+------------------------------------------------------------
+case_upsample_rate: 122
+Model Size: 26.15MB
+Inference Time: 12.64ms
+Eval Loss: 1.4777
+Eval Acc: 79.375%
+
+
+------------------------------------------------------------
+case_upsample_rate: 123
+Model Size: 26.15MB
+Inference Time: 12.91ms
+Eval Loss: 1.4090
+Eval Acc: 80.625%
+
+
+------------------------------------------------------------
+case_upsample_rate: 124
+Model Size: 26.15MB
+Inference Time: 12.58ms
+Eval Loss: 1.4130
+Eval Acc: 80.312%
+
+
+------------------------------------------------------------
+case_upsample_rate: 125
+Model Size: 26.15MB
+Inference Time: 13.47ms
+Eval Loss: 1.4323
+Eval Acc: 83.125%
+
+
+------------------------------------------------------------
+case_upsample_rate: 126
+Model Size: 26.15MB
+Inference Time: 12.65ms
+Eval Loss: 1.4439
+Eval Acc: 80.000%
+
+
+------------------------------------------------------------
+case_upsample_rate: 127
+Model Size: 26.15MB
+Inference Time: 12.99ms
+Eval Loss: 1.4064
+Eval Acc: 82.500%
+
+
+------------------------------------------------------------
+case_upsample_rate: 128
+Model Size: 26.15MB
+Inference Time: 13.72ms
+Eval Loss: 1.5137
+Eval Acc: 81.562%
+
+
+Done!
+------------------------------------------------------------
+case_upsample_rate: 110
+Model Size: 26.15MB
+Inference Time: 12.84ms
+Eval Loss: 1.4544
+Eval Acc: 80.938%
+
+
+------------------------------------------------------------
+case_upsample_rate: 111
+Model Size: 26.15MB
+Inference Time: 13.13ms
+Eval Loss: 1.3932
+Eval Acc: 80.625%
+
+
+------------------------------------------------------------
+case_upsample_rate: 112
+Model Size: 26.15MB
+Inference Time: 12.79ms
+Eval Loss: 1.3676
+Eval Acc: 80.938%
+
+
+------------------------------------------------------------
+case_upsample_rate: 113
+Model Size: 26.15MB
+Inference Time: 13.38ms
+Eval Loss: 1.3551
+Eval Acc: 82.812%
+
+
+------------------------------------------------------------
+case_upsample_rate: 114
+Model Size: 26.15MB
+Inference Time: 12.74ms
+Eval Loss: 1.4354
+Eval Acc: 79.062%
+
+
+------------------------------------------------------------
+case_upsample_rate: 115
+Model Size: 26.15MB
+Inference Time: 13.04ms
+Eval Loss: 1.3455
+Eval Acc: 82.812%
+
+
+------------------------------------------------------------
+case_upsample_rate: 116
+Model Size: 26.15MB
+Inference Time: 13.58ms
+Eval Loss: 1.4675
+Eval Acc: 77.500%
+
+
+------------------------------------------------------------
+case_upsample_rate: 117
+Model Size: 26.15MB
+Inference Time: 12.57ms
+Eval Loss: 1.4676
+Eval Acc: 77.812%
+
+
+------------------------------------------------------------
+case_upsample_rate: 118
+Model Size: 26.15MB
+Inference Time: 12.94ms
+Eval Loss: 1.3848
+Eval Acc: 81.562%
+
+
+------------------------------------------------------------
+case_upsample_rate: 119
+Model Size: 26.15MB
+Inference Time: 13.53ms
+Eval Loss: 1.5797
+Eval Acc: 76.562%
+
+
+------------------------------------------------------------
+case_upsample_rate: 120
+Model Size: 26.15MB
+Inference Time: 13.62ms
+Eval Loss: 1.4118
+Eval Acc: 81.250%
+
+
+Done!
