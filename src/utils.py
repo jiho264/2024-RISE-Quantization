@@ -119,7 +119,9 @@ def GetDataset(
             split="train",
             transform=transforms.Compose(
                 [
-                    transforms.RandomResizedCrop(224),
+                    transforms.Resize(232),
+                    transforms.CenterCrop(224),
+                    # transforms.RandomResizedCrop(224),
                     transforms.RandomHorizontalFlip(),
                     transforms.ToTensor(),
                     transforms.Normalize(
