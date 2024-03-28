@@ -49,7 +49,7 @@ class BottleNeck_quan(Bottleneck):
             dilation,
             norm_layer,
         )
-        self.relu1 = nn.ReLU()
+        self.relu1 = self.relu
         self.relu2 = nn.ReLU()
         self.relu3 = nn.ReLU()
         self.add = nn.quantized.FloatFunctional()
@@ -57,25 +57,24 @@ class BottleNeck_quan(Bottleneck):
     def forward(self, x: Tensor) -> Tensor:
         identity = x
 
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu1(out)
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu1(x)
 
-        out = self.conv2(out)
-        out = self.bn2(out)
-        out = self.relu2(out)
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.relu2(x)
 
-        out = self.conv3(out)
-        out = self.bn3(out)
+        x = self.conv3(x)
+        x = self.bn3(x)
 
         if self.downsample is not None:
-            identity = self.downsample(x)
+            identity = self.downsample(identity)
 
-        # out += identity
-        out = self.add.add(out, identity)
-        out = self.relu3(out)
+        x = self.add.add(x, identity)
+        x = self.relu3(x)
 
-        return out
+        return x
 
     # def forward(self, x: Tensor) -> Tensor:
     #     x = super(BottleNeck_quan, self).forward(x)
