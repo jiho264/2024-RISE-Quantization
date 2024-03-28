@@ -323,7 +323,8 @@ def SingleEpochEval(
 
     with torch.no_grad():
         for images, labels in tqdm.tqdm(testloader):
-
+            if limit > 0 and _iter_count >= limit:
+                break
             images, labels = images.to(device), labels.to(device)
 
             # Forward pass
@@ -337,8 +338,6 @@ def SingleEpochEval(
             correct += predicted.eq(labels).sum().item()
 
             _iter_count += 1
-            if limit > 0 and _iter_count >= limit:
-                break
 
     if limit > 0:
         eval_loss = running_loss / limit
