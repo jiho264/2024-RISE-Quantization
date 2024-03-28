@@ -448,6 +448,42 @@ def check_accuracy(
     return eval_loss, eval_acc
 
 
+from src.override_resnet import ResNet_quan, BottleNeck_quan
+
+
+def fuse_ALL(model) -> torch.nn.Module:
+    SingleTimeFlag = False
+    for m in model.modules():
+        if m.__class__.__name__ == ResNet_quan.__name__:
+            if SingleTimeFlag == True:
+                raise ValueError("ResNet_quan is already fused")
+            SingleTimeFlag = True
+            torch.quantization.fuse_modules(
+                m,
+                ["conv1", "bn1", "relu"],
+                inplace=True,
+            )
+
+        if type(m) == BottleNeck_quan:
+
+            torch.quantization.fuse_modules(
+                m,
+                [
+                    ["conv1", "bn1", "relu1"],
+                    ["conv2", "bn2", "relu2"],
+                    ["conv3", "bn3"],
+                ],
+                inplace=True,
+            )
+            if m.downsample is not None:
+                torch.quantization.fuse_modules(
+                    m.downsample,
+                    ["0", "1"],
+                    inplace=True,
+                )
+    return model
+
+
 # %% https://pytorch.org/tutorials/advanced/static_quantization_tutorial.html
 # class AverageMeter(object):
 #     """평균과 현재 값 계산 및 저장"""
