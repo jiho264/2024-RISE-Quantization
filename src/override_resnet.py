@@ -52,7 +52,9 @@ class BottleNeck_quan(Bottleneck):
         self.relu1 = self.relu
         self.relu2 = nn.ReLU()
         self.relu3 = nn.ReLU()
-        self.add = nn.quantized.FloatFunctional()
+        self.add1 = nn.quantized.FloatFunctional()
+        self.add2 = nn.quantized.FloatFunctional()
+        self.zero = torch.tensor(0.0)
 
     def forward(self, x: Tensor) -> Tensor:
         identity = x
@@ -71,10 +73,36 @@ class BottleNeck_quan(Bottleneck):
         if self.downsample is not None:
             identity = self.downsample(identity)
 
-        x = self.add.add(x, identity)
+        x = self.add1.add(x, identity)
         x = self.relu3(x)
+        x = self.add2.add(
+            x, self.zero
+        )  # Activation 보려면 꼭 필요함. 근데 이거 있으면, convert 절대 불가함. convert 이후 backend에 해당 명령어가 없음.
 
         return x
+
+    # old
+    # def forward(self, x: Tensor) -> Tensor:
+    #     identity = x
+
+    #     x = self.conv1(x)
+    #     x = self.bn1(x)
+    #     x = self.relu1(x)
+
+    #     x = self.conv2(x)
+    #     x = self.bn2(x)
+    #     x = self.relu2(x)
+
+    #     x = self.conv3(x)
+    #     x = self.bn3(x)
+
+    #     if self.downsample is not None:
+    #         identity = self.downsample(identity)
+
+    #     x = self.add.add(x, identity)
+    #     x = self.relu3(x)
+
+    #     return x
 
     # def forward(self, x: Tensor) -> Tensor:
     #     x = super(BottleNeck_quan, self).forward(x)
