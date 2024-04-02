@@ -4,6 +4,7 @@ import torch.optim as optim
 from torch.quantization import prepare, convert
 from src.utils import *
 from src.override_resnet import *
+from src.custom_observer import CustomHistogramObserver
 
 
 """
@@ -55,18 +56,18 @@ def get_default_qconfig(backend='x86', version=0):
     
 """
 # All default activation observer is HistogramObserver
-cases_activation = [
-    torch.quantization.HistogramObserver.with_args(reduce_range=True),
-    torch.quantization.HistogramObserver.with_args(reduce_range=False),
-]
-# we can use 5 different type of weight observer
-cases_weight = [
-    # torch.quantization.HistogramObserver.with_args(dtype=torch.qint8),
-    # torch.quantization.MinMaxObserver.with_args(dtype=torch.qint8),
-    # torch.quantization.MovingAverageMinMaxObserver.with_args(dtype=torch.qint8),
-    torch.quantization.PerChannelMinMaxObserver.with_args(dtype=torch.qint8),
-    # torch.quantization.MovingAveragePerChannelMinMaxObserver.with_args(dtype=torch.qint8),
-]
+# cases_activation = [
+#     torch.quantization.HistogramObserver.with_args(reduce_range=True),
+#     torch.quantization.HistogramObserver.with_args(reduce_range=False),
+# ]
+# # we can use 5 different type of weight observer
+# cases_weight = [
+#     # torch.quantization.HistogramObserver.with_args(dtype=torch.qint8),
+#     # torch.quantization.MinMaxObserver.with_args(dtype=torch.qint8),
+#     # torch.quantization.MovingAverageMinMaxObserver.with_args(dtype=torch.qint8),
+#     torch.quantization.PerChannelMinMaxObserver.with_args(dtype=torch.qint8),
+#     # torch.quantization.MovingAveragePerChannelMinMaxObserver.with_args(dtype=torch.qint8),
+# ]
 
 
 # for case_activation in cases_activation:
@@ -82,7 +83,7 @@ for i in range(110, 121):
     _model = fuse_ALL(_model)
 
     _model.qconfig = torch.quantization.QConfig(
-        activation=torch.quantization.HistogramObserver.with_args(
+        activation=torch.quantization.CustomHistogramObserver.with_args(
             quant_min=0, quant_max=127, upsample_rate=128
         ),
         weight=torch.quantization.PerChannelMinMaxObserver.with_args(dtype=torch.qint8),

@@ -53,7 +53,7 @@ class BottleNeck_quan(Bottleneck):
         self.relu2 = nn.ReLU()
         self.relu3 = nn.ReLU()
         self.add1 = nn.quantized.FloatFunctional()
-        self.act_obs = nn.quantized.FloatFunctional()
+        self.through = nn.quantized.FloatFunctional()
         self.zero = torch.tensor(0.0)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -72,10 +72,11 @@ class BottleNeck_quan(Bottleneck):
 
         if self.downsample is not None:
             identity = self.downsample(identity)
+            # print(self.downsample[0].stride)
 
         x = self.add1.add(x, identity)
         x = self.relu3(x)
-        x = self.act_obs.add(
+        x = self.through.add(
             x, self.zero
         )  # Activation 보려면 꼭 필요함. 근데 이거 있으면, convert 절대 불가함. convert 이후 backend에 해당 명령어가 없음.
 
@@ -122,7 +123,7 @@ class ResNet_quan(ResNet):
             self.load_state_dict(torch.load(weights))
         self.quant = torch.quantization.QuantStub()
         self.dequant = torch.quantization.DeQuantStub()
-        self.act_obs = nn.quantized.FloatFunctional()
+        # self.act_obs = nn.quantized.FloatFunctional()
         self.zero = torch.tensor(0.0)
 
     # def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -139,7 +140,7 @@ class ResNet_quan(ResNet):
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
-        x = self.act_obs.add(x, self.zero)  ## observer 넣으려고 만든 +0 연산
+        # x = self.act_obs.add(x, self.zero)  ## observer 넣으려고 만든 +0 연산
 
         x = self.layer1(x)
         x = self.layer2(x)
