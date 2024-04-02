@@ -3,170 +3,233 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.quantization import prepare, convert
 from src.utils import *
-from src.override_resnet import *
-from src.custom_observer import CustomHistogramObserver
+
+# from src.override_resnet import *
+# from src.custom_observer import CustomHistogramObserver
 
 
-"""
-torch.ao.quantization.qconfig.py
+# %% override the torchvision.models.resnet
+from torchvision.models.resnet import (
+    ResNet,
+    ResNet50_Weights,
+    Bottleneck,
+    BasicBlock,
+)
+from functools import partial
+from typing import Any, Callable, List, Optional, Type, Union
 
-def get_default_qconfig(backend='x86', version=0):
-    # Returns the default PTQ qconfig for the specified backend.
+import torch
+import torch.nn as nn
+from torch import Tensor
 
-    # Args:
-    #   * `backend` (str): a string representing the target backend. Currently supports
-    #     `x86` (default), `fbgemm`, `qnnpack` and `onednn`.
+from torchvision.transforms._presets import ImageClassification
+from torchvision.utils import _log_api_usage_once
+from torchvision.models._api import register_model, Weights, WeightsEnum
+from torchvision.models._meta import _IMAGENET_CATEGORIES
+from torchvision.models._utils import _ovewrite_named_param, handle_legacy_interface
 
-    # Return:
-    #     qconfig
 
-    supported_backends = ["fbgemm", "x86", "qnnpack", "onednn"]
-    if backend not in supported_backends:
-        raise AssertionError(
-            "backend: " + str(backend) +
-            f" not supported. backend must be one of {supported_backends}"
+class BottleNeck_quan(Bottleneck):
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        downsample: Optional[nn.Module] = None,
+        groups: int = 1,
+        base_width: int = 64,
+        dilation: int = 1,
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+    ) -> None:
+        super(BottleNeck_quan, self).__init__(
+            inplanes,
+            planes,
+            stride,
+            downsample,
+            groups,
+            base_width,
+            dilation,
+            norm_layer,
+        )
+        self.relu1 = self.relu
+        self.relu2 = nn.ReLU()
+        self.relu3 = nn.ReLU()
+        self.add1 = nn.quantized.FloatFunctional()
+        self.through = nn.quantized.FloatFunctional()
+        self.zero = torch.tensor(0.0)
+
+    def forward(self, x: Tensor) -> Tensor:
+        identity = x
+
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu1(x)
+
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.relu2(x)
+
+        x = self.conv3(x)
+        x = self.bn3(x)
+
+        if self.downsample is not None:
+            identity = self.downsample(identity)
+            # print(self.downsample[0].stride)
+
+        x = self.add1.add(x, identity)
+        x = self.relu3(x)
+        # x = self.through.add(
+        #     x, self.zero
+        # )  # Activation 보려면 꼭 필요함. 근데 이거 있으면, convert 절대 불가함. convert 이후 backend에 해당 명령어가 없음.
+
+        return x
+
+
+class ResNet_quan(ResNet):
+    def __init__(
+        self,
+        block: Any,
+        layers: list[int],
+        num_classes: int = 1000,
+        weights: Optional[str] = None,
+    ) -> None:
+        super(ResNet_quan, self).__init__(block, layers, num_classes)
+        if weights is not None:
+            self.load_state_dict(torch.load(weights))
+        self.quant = torch.quantization.QuantStub()
+        self.dequant = torch.quantization.DeQuantStub()
+        # self.act_obs = nn.quantized.FloatFunctional()
+        self.zero = torch.tensor(0.0)
+
+    # def forward(self, x: torch.Tensor) -> torch.Tensor:
+    #     x = self.quant(x)
+    #     x = super(ResNet_quan, self).forward(x)
+    #     x = self.dequant(x)
+    #     return x
+
+    def forward(self, x: Tensor) -> Tensor:
+        # See note [TorchScript super()]
+
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        # x = self.act_obs.add(x, self.zero)  ## observer 넣으려고 만든 +0 연산
+        x = self.quant(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.dequant(x)
+
+        x = self.fc(x)
+
+        return x
+
+
+def _resnet_quan(
+    block: Type[Union[BasicBlock, BottleNeck_quan]],
+    layers: List[int],
+    weights: Optional[WeightsEnum],
+    progress: bool,
+    **kwargs: Any,
+) -> ResNet:
+    if weights is not None:
+        _ovewrite_named_param(kwargs, "num_classes", len(weights.meta["categories"]))
+
+    model = ResNet_quan(block, layers, **kwargs)
+
+    if weights is not None:
+        model.load_state_dict(
+            weights.get_state_dict(progress=progress, check_hash=True)
         )
 
-    if version == 0:
-        if backend == 'fbgemm':
-            qconfig = QConfig(activation=HistogramObserver.with_args(reduce_range=True),
-                                weight=default_per_channel_weight_observer)
-        elif backend == 'qnnpack':
-            # TODO: make this compatible with xnnpack constraints
-            qconfig = QConfig(activation=HistogramObserver.with_args(reduce_range=False),
-                                weight=default_weight_observer)
-        elif backend == 'onednn':
-            if not torch.cpu._is_cpu_support_vnni():
-                warnings.warn(
-                    "Default qconfig of oneDNN backend with reduce_range of false may have accuracy issues "
-                    "on CPU without Vector Neural Network Instruction support.")
-            qconfig = QConfig(activation=HistogramObserver.with_args(reduce_range=False),
-                                weight=default_per_channel_weight_observer)
-        elif backend == 'x86':
-            qconfig = QConfig(activation=HistogramObserver.with_args(reduce_range=True),
-                                weight=default_per_channel_weight_observer)
-        else:
-            # won't reach
-            qconfig = default_qconfig
-    else:
-        raise AssertionError("Version number: " + str(version) +
-                                " in get_default_qconfig is not supported. Version number must be 0")
+    return model
 
-    return qconfig
-    
-"""
-# All default activation observer is HistogramObserver
-# cases_activation = [
-#     torch.quantization.HistogramObserver.with_args(reduce_range=True),
-#     torch.quantization.HistogramObserver.with_args(reduce_range=False),
-# ]
-# # we can use 5 different type of weight observer
-# cases_weight = [
-#     # torch.quantization.HistogramObserver.with_args(dtype=torch.qint8),
-#     # torch.quantization.MinMaxObserver.with_args(dtype=torch.qint8),
-#     # torch.quantization.MovingAverageMinMaxObserver.with_args(dtype=torch.qint8),
-#     torch.quantization.PerChannelMinMaxObserver.with_args(dtype=torch.qint8),
-#     # torch.quantization.MovingAveragePerChannelMinMaxObserver.with_args(dtype=torch.qint8),
-# ]
+
+def resnet50_quan(
+    *, weights: Optional[ResNet50_Weights] = None, progress: bool = True, **kwargs: Any
+) -> ResNet:
+    weights = ResNet50_Weights.verify(weights)
+    return _resnet_quan(BottleNeck_quan, [3, 4, 6, 3], weights, progress, **kwargs)
 
 
 # for case_activation in cases_activation:
 #     for case_weight in cases_weight:
 # prepare the model
 # for i in [120, 121, 122, 123, 124, 125, 126, 127, 128]:
-for i in range(110, 121):
-    _model = resnet50_quan(weights=pretrained_weights_mapping[50])
-    _model.to("cpu")
-    _model.eval()
+# for i in range(110, 121):
+_model = resnet50_quan(weights=pretrained_weights_mapping[50])
+_model.to("cpu")
+_model.eval()
 
-    # set fuse ############################################################
-    _model = fuse_ALL(_model)
+# set fuse ############################################################
+_model = fuse_ALL(_model)
 
-    _model.qconfig = torch.quantization.QConfig(
-        activation=torch.quantization.CustomHistogramObserver.with_args(
-            quant_min=0, quant_max=127, upsample_rate=128
-        ),
-        weight=torch.quantization.PerChannelMinMaxObserver.with_args(dtype=torch.qint8),
-    )
-    prepare(_model, inplace=True)
+_model.conv1.qconfig = None
+_model.fc.qconfig = None
+_model.qconfig = torch.quantization.QConfig(
+    activation=torch.quantization.HistogramObserver.with_args(
+        quant_max=127, quant_min=0, dtype=torch.quint8
+    ),
+    weight=torch.quantization.PerChannelMinMaxObserver.with_args(dtype=torch.qint8),
+)
+prepare(_model, inplace=True)
 
-    # calibrate the model ############################################################
-    criterion = nn.CrossEntropyLoss()
-    train_loader, _ = GetDataset(
-        dataset_name="ImageNet",
-        device="cuda",
-        root="data",
-        batch_size=256,
-        num_workers=8,
-    )
-    _, _ = SingleEpochEval(_model, train_loader, criterion, "cuda", 4)
+# calibrate the model ############################################################
+criterion = nn.CrossEntropyLoss()
+train_loader, _ = GetDataset(
+    dataset_name="ImageNet",
+    device="cuda",
+    root="data",
+    batch_size=256,
+    num_workers=8,
+)
+_, _ = SingleEpochEval(_model, train_loader, criterion, "cuda", 4)
 
-    # convert the model ############################################################
-    _model.to("cpu")
-    convert(_model, inplace=True)
+# convert the model ############################################################
+_model.to("cpu")
+convert(_model, inplace=True)
 
-    # evaluate the model ############################################################
+# evaluate the model ############################################################
 
-    _batch_size = 32
-    _, test_loader = GetDataset(
-        dataset_name="ImageNet",
-        device="cpu",
-        root="data",
-        batch_size=_batch_size,
-        num_workers=8,
-    )
+_batch_size = 32
+_, test_loader = GetDataset(
+    dataset_name="ImageNet",
+    device="cpu",
+    root="data",
+    batch_size=_batch_size,
+    num_workers=8,
+)
 
-    eval_loss, eval_acc = SingleEpochEval(
-        model=_model,
-        testloader=test_loader,
-        criterion=criterion,
-        device="cpu",
-        limit=10,
-    )
-    model_size = get_size_of_model(_model)
-    inference_time = run_benchmark(_model, test_loader, "cpu", 10)
-    print("------------------------------------------------------------")
-    # print(f"case_activation: {case_activation}")
-    # print(f"case_upsample_rate: {i}")
-    print(f"Model Size: {model_size:.2f}MB")
-    print(f"Inference Time: {inference_time:.2f}ms")
-    print(f"Eval Loss: {eval_loss:.4f}")
-    print(f"Eval Acc: {eval_acc:.3f}%")
-    print("\n")
+eval_loss, eval_acc = SingleEpochEval(
+    model=_model,
+    testloader=test_loader,
+    criterion=criterion,
+    device="cpu",
+    limit=10,
+)
+model_size = get_size_of_model(_model)
+inference_time = run_benchmark(_model, test_loader, "cpu", 10)
+print("------------------------------------------------------------")
+# print(f"case_activation: {case_activation}")
+# print(f"case_upsample_rate: {i}")
+print(f"Model Size: {model_size:.2f}MB")
+print(f"Inference Time: {inference_time:.2f}ms")
+print(f"Eval Loss: {eval_loss:.4f}")
+print(f"Eval Acc: {eval_acc:.3f}%")
+print("\n")
 
 print("Done!")
 
 
 """
 
-UniformQuantizationObserverBase(ObservingBase):
-    def _calculate_qparams(self, min_val, max_val):
-        ...
-        
-        
-        quant_min, quant_max = self.quant_min, self.quant_max
-        min_val_neg = torch.min(min_val, torch.zeros_like(min_val))
-        max_val_pos = torch.max(max_val, torch.zeros_like(max_val))
+first conv, last fc 제외하고 싹다 quantization 때리는 코드
 
-        ## min_val_neg == 0
-        ## max_val_pos == max_val
-        
-        device = min_val_neg.device
-        scale = torch.ones(min_val_neg.size(), dtype=torch.float32, device=device)
-        zero_point = torch.zeros(min_val_neg.size(), dtype=torch.int64, device=device)
 
-        if (
-            self.qscheme == torch.per_tensor_symmetric
-            or self.qscheme == torch.per_channel_symmetric
-        ):
-            ...
-        elif self.qscheme == torch.per_channel_affine_float_qparams:
-            ...
-        else:
-        
-            # Activation의 quantization은 per_tensor이므로 항상 여기서 계산됨.
-            scale = (max_val_pos - min_val_neg) / float(quant_max - quant_min)
-            scale = torch.max(scale, self.eps)
-            zero_point = quant_min - torch.round(min_val_neg / scale).to(torch.int)
-            zero_point = torch.clamp(zero_point, quant_min, quant_max)
 """
