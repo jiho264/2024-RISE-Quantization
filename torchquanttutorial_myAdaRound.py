@@ -1,30 +1,29 @@
-import torch
+import torch, time
 from myAdaRound.utils import *
+import torchvision.models.resnet as resnet
 
 
 #################################################################################################
 ## 3. Main function
 #################################################################################################
 def main():
-    # prepare the model
-    import torchvision.models.resnet as resnet
 
+    # resnet18 Acc@1: 69.758%
     model = resnet.resnet18(weights="IMAGENET1K_V1")
     model.eval().to("cuda")
 
-    _batch_size = 64
+    _batch_size = 128
 
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
 
-    # num_eval_batches = len(test_loader)
-    _num_eval_batches = 10
-    # resnet18 with this seed should give 70.00% accuracy
-    # _top1, _ = evaluate(
-    #     model, test_loader, neval_batches=_num_eval_batches, device="cuda"
-    # )
-    # print(
-    #     f" Original model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
-    # )
+    # _num_eval_batches = len(test_loader)
+    _num_eval_batches = 32
+    _top1, _ = evaluate(
+        model, test_loader, neval_batches=_num_eval_batches, device="cuda"
+    )
+    print(
+        f" Original model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
+    )
 
     def quant_module_refactor_wo_fuse(
         module: nn.Module,
@@ -48,7 +47,8 @@ def main():
 
     weight_quant_params = dict(
         # for each QuantModule
-        quantizer=AbsMinMaxQuantizer,
+        # quantizer="AbsMaxQuantizer",
+        quantizer="MinMaxQuantizer",
         active=True,
         # active=False,
         # ...
@@ -96,4 +96,7 @@ if __name__ == "__main__":
     torch.cuda.manual_seed(0)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+    STARTTIME = time.time()
     main()
+    print(f"Total time: {time.time() - STARTTIME:.2f} sec")

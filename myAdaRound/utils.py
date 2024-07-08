@@ -74,7 +74,7 @@ def GetDataset(batch_size=64):
     test_loader = torch.utils.data.DataLoader(
         test_dataset,
         batch_size=batch_size,
-        shuffle=True,
+        shuffle=False,
         num_workers=8,
         pin_memory=True,
     )
@@ -161,7 +161,7 @@ class UniformAffineQuantizer(nn.Module):
         return self.dequantize(self.quantize(x))
 
 
-class AbsMinMaxQuantizer(UniformAffineQuantizer):
+class AbsMaxQuantizer(UniformAffineQuantizer):
     def __init__(self, args, org_weight=None):
         """AbsMinMaxQuantizer.
         Naive symmetric quantizer with abs max scaling.
@@ -169,7 +169,7 @@ class AbsMinMaxQuantizer(UniformAffineQuantizer):
             args (dict): for UniformAffineQuantizer
             org_weight (Tensor): have to need for determine the scaling factor
         """
-        super(AbsMinMaxQuantizer, self).__init__(args)
+        super(AbsMaxQuantizer, self).__init__(args)
 
         if self.per_channel == True:
 
@@ -181,7 +181,30 @@ class AbsMinMaxQuantizer(UniformAffineQuantizer):
             # print(org_weight.shape, self.scaler.shape)
         else:
             self.scaler = org_weight.abs().max() / (self.n_steps // 2 - 1)
-            # print(org_weight.shape, self.scaler.shape)
+            print(org_weight.shape, self.scaler.shape)
+
+
+class MinMaxQuantizer(UniformAffineQuantizer):
+    def __init__(self, args, org_weight=None):
+        """MinMaxQuantizer.
+
+        Args:
+            args (dict): for UniformAffineQuantizer
+            org_weight (Tensor): have to need for determine the scaling factor
+        """
+        super(MinMaxQuantizer, self).__init__(args)
+
+        if self.per_channel == True:
+            _mins = org_weight.view(org_weight.size(0), -1).min(dim=1).values
+            _maxs = org_weight.view(org_weight.size(0), -1).max(dim=1).values
+
+            self.scaler = (_maxs - _mins) / (self.n_steps // 2 - 1)
+            self.scaler = self.scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
+        else:
+            a = org_weight.min()
+            b = org_weight.max()
+
+            self.scaler = (b - a) / (self.n_steps - 1)
 
 
 class QuantModule(nn.Module):
@@ -205,12 +228,13 @@ class QuantModule(nn.Module):
         """weight quantizer"""
         self.w_act = weight_quant_params.get("active")
         w_quantizer_type = weight_quant_params.get("quantizer")
-        if w_quantizer_type is None:
-            raise ValueError("weight quantizer type is not defined.")
-        elif w_quantizer_type == AbsMinMaxQuantizer:
-            self.weight_quantizer = AbsMinMaxQuantizer(weight_quant_params, self.weight)
 
-        elif w_quantizer_type == "myAdaRound":
+        if w_quantizer_type == "AbsMaxQuantizer":
+            self.weight_quantizer = AbsMaxQuantizer(weight_quant_params, self.weight)
+
+        elif w_quantizer_type == "MinMaxQuantizer":
+            self.weight_quantizer = MinMaxQuantizer(weight_quant_params, self.weight)
+
             # [ ] add more quantizer option
             pass
         else:
