@@ -18,6 +18,7 @@ def main():
 
     # num_eval_batches = len(test_loader)
     _num_eval_batches = 10
+    # resnet18 with this seed should give 70.00% accuracy
     # _top1, _ = evaluate(
     #     model, test_loader, neval_batches=_num_eval_batches, device="cuda"
     # )
@@ -46,10 +47,15 @@ def main():
                 )
 
     weight_quant_params = dict(
+        # for each QuantModule
+        quantizer=AbsMinMaxQuantizer,
         active=True,
         # active=False,
+        # ...
+        # for each Quantizer class
         n_bits=8,
-        per_channel=False,
+        per_channel=True,
+        # per_channel=False,
     )
     act_quant_params = {}
     quant_module_refactor_wo_fuse(model, weight_quant_params, act_quant_params)
@@ -58,7 +64,7 @@ def main():
     for name, module in model.named_modules():
         if isinstance(module, QuantModule):
             cnt += 1
-            print(f"QuantModule: {name}, {module.weight.shape}")
+            print(f"    QuantModule: {name}, {module.weight.shape}")
 
     print(f"Total QuantModule: {cnt}")
     # def calibration():

@@ -128,27 +128,24 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class AbsMinMaxQuantizer(nn.Module):
-    def __init__(self, args, org_weight=None):
-        """AbsMinMaxQuantizer.
-        Naive symetric quantizer with abs max scaling.
+class UniformAffineQuantizer(nn.Module):
+    def __init__(self, args):
+        """QuantizerBase
+            - Base class for quantizer
+            - Uniform Affine Quantization
+
         Args:
             args (_type_): dict
                 - active (bool): quantization enabled or not
                 - n_bits (int): number of bits for quantization
-                #TODO
                 - per_channel (bool): per channel quantization or not
-            org_weight (Tensor): have to need for determine the scaling factor
         """
-        super(AbsMinMaxQuantizer, self).__init__()
+        super(UniformAffineQuantizer, self).__init__()
         self.n_bits = args.get("n_bits")
         self.n_steps = 2**self.n_bits
         self.per_channel = args.get("per_channel")
-
-        # self.scaler = 1.0
-        self.scaler = org_weight.abs().max() / (self.n_steps // 2 - 1)
+        self.scaler = 1.0
         self.zero_point = 0
-        self.theta = 0
 
     def quantize(self, input: Tensor) -> Tensor:
         return torch.clamp(
@@ -162,6 +159,29 @@ class AbsMinMaxQuantizer(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         return self.dequantize(self.quantize(x))
+
+
+class AbsMinMaxQuantizer(UniformAffineQuantizer):
+    def __init__(self, args, org_weight=None):
+        """AbsMinMaxQuantizer.
+        Naive symmetric quantizer with abs max scaling.
+        Args:
+            args (dict): for UniformAffineQuantizer
+            org_weight (Tensor): have to need for determine the scaling factor
+        """
+        super(AbsMinMaxQuantizer, self).__init__(args)
+
+        if self.per_channel == True:
+
+            self.scaler = org_weight.view(org_weight.size(0), -1).abs().max(
+                dim=1
+            ).values / (self.n_steps // 2 - 1)
+            # print(self.scaler.shape)
+            self.scaler = self.scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
+            # print(org_weight.shape, self.scaler.shape)
+        else:
+            self.scaler = org_weight.abs().max() / (self.n_steps // 2 - 1)
+            # print(org_weight.shape, self.scaler.shape)
 
 
 class QuantModule(nn.Module):
@@ -184,7 +204,17 @@ class QuantModule(nn.Module):
 
         """weight quantizer"""
         self.w_act = weight_quant_params.get("active")
-        self.weight_quantizer = AbsMinMaxQuantizer(weight_quant_params, self.weight)
+        w_quantizer_type = weight_quant_params.get("quantizer")
+        if w_quantizer_type is None:
+            raise ValueError("weight quantizer type is not defined.")
+        elif w_quantizer_type == AbsMinMaxQuantizer:
+            self.weight_quantizer = AbsMinMaxQuantizer(weight_quant_params, self.weight)
+
+        elif w_quantizer_type == "myAdaRound":
+            # [ ] add more quantizer option
+            pass
+        else:
+            raise ValueError(f"Unknown weight quantizer type: {w_quantizer_type}")
 
     def forward(self, x: Tensor) -> Tensor:
         if self.w_act == True:
