@@ -121,15 +121,52 @@ def evaluate(model, data_loader, neval_batches, device):
 
 
 #################################################################################################
-#################################################################################################
+## 2. Quantized module
 #################################################################################################
 
 import torch.nn as nn
 import torch.nn.functional as F
 
 
+class AbsMinMaxQuantizer(nn.Module):
+    def __init__(self, args, org_weight=None):
+        """AbsMinMaxQuantizer.
+        Naive symetric quantizer with abs max scaling.
+        Args:
+            args (_type_): dict
+                - active (bool): quantization enabled or not
+                - n_bits (int): number of bits for quantization
+                #TODO
+                - per_channel (bool): per channel quantization or not
+            org_weight (Tensor): have to need for determine the scaling factor
+        """
+        super(AbsMinMaxQuantizer, self).__init__()
+        self.n_bits = args.get("n_bits")
+        self.n_steps = 2**self.n_bits
+        self.per_channel = args.get("per_channel")
+
+        # self.scaler = 1.0
+        self.scaler = org_weight.abs().max() / (self.n_steps // 2 - 1)
+        self.zero_point = 0
+        self.theta = 0
+
+    def quantize(self, input: Tensor) -> Tensor:
+        return torch.clamp(
+            (input / self.scaler).round() + self.zero_point,
+            -self.n_steps // 2,
+            self.n_steps // 2 - 1,
+        )
+
+    def dequantize(self, input: Tensor) -> Tensor:
+        return (input - self.zero_point) * self.scaler
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.dequantize(self.quantize(x))
+
+
 class QuantModule(nn.Module):
-    def __init__(self, org_module):
+
+    def __init__(self, org_module, weight_quant_params, act_quant_params):
         super(QuantModule, self).__init__()
         if isinstance(org_module, nn.Conv2d):
             self.fwd_kwargs = dict(
@@ -142,24 +179,21 @@ class QuantModule(nn.Module):
         else:
             self.fwd_kwargs = dict()
             self.fwd_func = F.linear
-        self.weight = org_module.weight
-        self.org_weight = org_module.weight.clone()
 
-        """quantizer"""
-        self.scaler = 0
-        self.zero_point = 0
-        self.alpha = 0
-        self.theta = 0
+        self.weight = org_module.weight.clone().detach()
 
-    def quantize(self, input: Tensor) -> Tensor:
-        return torch.clamp((input / self.scaler).round() + self.zero_point, 0, 255)
-
-    def dequantize(self, input: Tensor) -> Tensor:
-        return (input - self.zero_point) * self.scaler
+        """weight quantizer"""
+        self.w_act = weight_quant_params.get("active")
+        self.weight_quantizer = AbsMinMaxQuantizer(weight_quant_params, self.weight)
 
     def forward(self, x: Tensor) -> Tensor:
-        x = self.dequantize(self.quantize(x))
-        return self.fwd_func(x, self.weight, **self.fwd_kwargs)
+        if self.w_act == True:
+            weight = self.weight_quantizer(self.weight)
+            print(".", end="")
+        else:
+            weight = self.weight
+
+        return self.fwd_func(x, weight, **self.fwd_kwargs)
 
         """
         ResNet18 quantization with myAdaRound...

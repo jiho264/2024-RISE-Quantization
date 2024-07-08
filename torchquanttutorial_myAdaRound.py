@@ -38,14 +38,21 @@ def main():
                 setattr(
                     module,
                     name,
-                    QuantModule(child_module),
+                    QuantModule(child_module, weight_quant_params, act_quant_params),
                 )
             else:
                 quant_module_refactor_wo_fuse(
                     child_module, weight_quant_params, act_quant_params
                 )
 
-    quant_module_refactor_wo_fuse(model)
+    weight_quant_params = dict(
+        active=True,
+        # active=False,
+        n_bits=8,
+        per_channel=False,
+    )
+    act_quant_params = {}
+    quant_module_refactor_wo_fuse(model, weight_quant_params, act_quant_params)
 
     cnt = 0
     for name, module in model.named_modules():
@@ -71,6 +78,7 @@ def main():
     _top1, _ = evaluate(
         model, test_loader, neval_batches=_num_eval_batches, device="cuda"
     )
+    print("")
     print(
         f" Quantized model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
     )
