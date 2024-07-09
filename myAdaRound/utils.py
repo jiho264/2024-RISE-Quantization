@@ -157,8 +157,19 @@ class UniformAffineQuantizer(nn.Module):
 
         # per_ch option is "store_true
         self.per_channel = args.get("per_channel") if args.get("per_channel") else False
+        self.n_ch = len(org_weight.size()) if self.per_channel else 1
         self.scaler = None
         self.zero_point = None
+
+    def compute_qparams(self, _min, _max):
+        # Origin tensor shape: [out_channel, in_channel, k, k]
+        # per_ch Qparam shape: [n_channel, 1, 1, 1]
+
+        scaler = (_max - _min) / (self.repr_max - self.repr_min)
+        self.scaler = scaler.view(-1, *([1] * (self.n_ch - 1)))
+
+        _min = _min.view(-1, *([1] * (self.n_ch - 1)))
+        self.zero_point = -(_min / self.scaler).round() + self.repr_min
 
     def quantize(self, input: Tensor) -> Tensor:
         return torch.clamp(
@@ -188,9 +199,6 @@ class AbsMaxQuantizer(UniformAffineQuantizer):
         """
         super(AbsMaxQuantizer, self).__init__(org_weight, args)
 
-        # Origin tensor shape: [out_channel, in_channel, k, k]
-        # per_ch Qparam shape: [n_channel, 1, 1, 1]
-
         _AbsMax = None
         if self.per_channel == True:
             _AbsMax = org_weight.view(org_weight.size(0), -1).abs().max(dim=1).values
@@ -199,10 +207,9 @@ class AbsMaxQuantizer(UniformAffineQuantizer):
 
         # if s8, scaler = 2 * org_weight.abs().max() / (127 - (-128))
         # if u8, scaler = 2 * org_weight.abs().max() / (255 - 0)
-        scaler = 2 * _AbsMax / (self.repr_max - self.repr_min)
-        self.scaler = scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
 
         # if s8 or u8, zero_point = 0
+        self.compute_qparams(-_AbsMax, _AbsMax)
         self.zero_point = torch.zeros_like(self.scaler)
 
         # for debug
@@ -223,9 +230,6 @@ class MinMaxQuantizer(UniformAffineQuantizer):
         """
         super(MinMaxQuantizer, self).__init__(org_weight, args)
 
-        # Origin tensor shape: [out_channel, in_channel, k, k]
-        # per_ch Qparam shape: [n_channel, 1, 1, 1]
-
         if self.per_channel == True:
             _min = org_weight.view(org_weight.size(0), -1).min(dim=1).values
             _max = org_weight.view(org_weight.size(0), -1).max(dim=1).values
@@ -235,58 +239,82 @@ class MinMaxQuantizer(UniformAffineQuantizer):
 
         # if s8, scaler = (_max - _min) / (127 - (-128))
         # if u8, scaler = (_max - _min) / (255 - 0)
-        scaler = (_max - _min) / (self.repr_max - self.repr_min)
-        self.scaler = scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
 
         # if s8, zero_point = -_min / scaler + (-128)
         # if u8, zero_point = -_min / scaler + 0
-        _min = _min.view(-1, *([1] * (len(org_weight.size()) - 1)))
-        self.zero_point = -(_min / self.scaler).round() + self.repr_min
+        self.compute_qparams(_min, _max)
 
         # for debug
         # print(self.scaler.shape, self.zero_point.shape)
 
 
-class MinMaxL2NormQuantizer(UniformAffineQuantizer):
+class L2DistanceQuantizer(UniformAffineQuantizer):
     def __init__(self, org_weight, args):
         """
         Args:
             args (dict): for UniformAffineQuantizer
             org_weight (Tensor): have to need for determine the scaling factor
         """
-        super(MinMaxL2NormQuantizer, self).__init__(org_weight, args)
+        super(L2DistanceQuantizer, self).__init__(org_weight, args)
 
-        # [ ] implement the l2 norm quantization
-        # if self.per_channel == True:
-        #     _mins = org_weight.view(org_weight.size(0), -1).min(dim=1).values
-        #     _maxs = org_weight.view(org_weight.size(0), -1).max(dim=1).values
-        #
-        #     pass  # Not yet implemented
-        # else:
-        #     _min = org_weight.min()
-        #     _max = org_weight.max()
+        # [ ] implement the L2DistanceQuantizer
+        """below is uncomplited"""
+        if self.per_channel == True:
+            _min = org_weight.view(org_weight.size(0), -1).min(dim=1).values
+            _max = org_weight.view(org_weight.size(0), -1).max(dim=1).values
+        else:
+            _min = org_weight.min()
+            _max = org_weight.max()
 
-        #     best_l2_norm = 9999
-        #     best_scaler = 1.0
-        #     best_zero_point = 0.0
+        if self.signed == True:
+            # perform_2D_search [min, max]
+            best_l2_norm = torch.ones_like(_min) * 9999
+            best_scaler = torch.ones_like(_min)
+            best_zero_point = torch.zeros_like(_min)
 
-        #     for i in range(0, 80):
-        #         _tmp_min = _min * 0.01 * i
-        #         _tmp_max = _max * 0.01 * i
+            for i in range(0, 99):
+                _tmp_min = _min * (100 - i) / 100  # 100%, 99%, 98%, ..., 1%
+                _tmp_max = _max * (100 - i) / 100  # 100%, 99%, 98%, ..., 1%
 
-        #         self.scaler = (_tmp_max - _tmp_min) / (self.repr_max - self.repr_min)
-        #         self.zero_point = -(_tmp_min / self.scaler).round() + self.repr_min
+                self.scaler = (_tmp_max - _tmp_min) / (self.repr_max - self.repr_min)
+                self.zero_point = -(_tmp_min / self.scaler).round() + self.repr_min
+                # per-ch인 경우 l2 score가 ch수 만큼 생성되어야함.
+                # 그 뒤 각 ch마다 점수 좋은 것을 선택해야함.
 
-        #         _l2_norm = (
-        #             self.dequantize(self.quantize(org_weight)) - org_weight
-        #         ).norm(p=2)
-        #         if _l2_norm < best_l2_norm:
-        #             best_l2_norm = _l2_norm
-        #             best_scaler = self.scaler
-        #             best_zero_point = self.zero_point
+                # 여기 p=2말고 p=2.4인 경우 더 좋은 결과를 보임.
+                _l2_norm = (self.forward(org_weight) - org_weight).norm(p=2)
 
-        #     self.scaler = best_scaler
-        #     self.zero_point = best_zero_point
+                # best_l2_norm = torch.where(_l2_norm < best_l2_norm,
+
+                if _l2_norm < best_l2_norm:
+                    best_l2_norm = _l2_norm
+                    best_scaler = self.scaler
+                    best_zero_point = self.zero_point
+
+            self.scaler = best_scaler
+            self.zero_point = best_zero_point
+        else:
+            # perform_1D_search [0, max]
+            # best_l2_norm = 9999
+            # best_scaler = 1.0
+            # best_zero_point = 0.0
+
+            # for i in range(0, 80):
+            #     _tmp_min = _min * 0.01 * i
+            #     _tmp_max = _max * 0.01 * i
+
+            #     self.scaler = (_tmp_max - _tmp_min) / (self.repr_max - self.repr_min)
+            #     self.zero_point = -(_tmp_min / self.scaler).round() + self.repr_min
+
+            #     _l2_norm = (self.forward(org_weight) - org_weight).norm(p=2)
+            #     if _l2_norm < best_l2_norm:
+            #         best_l2_norm = _l2_norm
+            #         best_scaler = self.scaler
+            #         best_zero_point = self.zero_point
+
+            # self.scaler = best_scaler
+            # self.zero_point = best_zero_point
+            ...
 
 
 class QuantModule(nn.Module):
@@ -315,8 +343,8 @@ class QuantModule(nn.Module):
 
         elif w_quantizer_type == "MinMaxQuantizer":
             self.weight_quantizer = MinMaxQuantizer(self.weight, weight_quant_params)
-        elif w_quantizer_type == "MinMaxL2NormQuantizer":
-            self.weight_quantizer = MinMaxL2NormQuantizer(
+        elif w_quantizer_type == "L2DistanceQuantizer":
+            self.weight_quantizer = L2DistanceQuantizer(
                 self.weight, weight_quant_params
             )
 
@@ -331,6 +359,6 @@ class QuantModule(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         weight = self.weight_quantizer(self.weight)
-        print(".", end="")
+        # print(".", end="")
 
         return self.fwd_func(x, weight, **self.fwd_kwargs)

@@ -46,22 +46,25 @@ def main():
                 )
 
     weight_quant_params = dict(
-        scheme="AbsMaxQuantizer",
-        # scheme="MinMaxQuantizer",
-        # scheme="MinMaxL2NormQuantizer",
+        # scheme="AbsMaxQuantizer",
+        scheme="MinMaxQuantizer",
+        # scheme="L2DistanceQuantizer",
         # per_channel=True,
         dstDtype="INT8",
     )
     act_quant_params = {}
     quant_module_refactor_wo_fuse(model, weight_quant_params, act_quant_params)
+    print("Qparams computing done...")
 
-    cnt = 0
-    for name, module in model.named_modules():
-        if isinstance(module, QuantModule):
-            cnt += 1
-            print(f"    QuantModule: {name}, {module.weight.shape}")
+    # Count the number of QuantModule
+    # cnt = 0
+    # for name, module in model.named_modules():
+    #     if isinstance(module, QuantModule):
+    #         cnt += 1
+    #         print(f"    QuantModule: {name}, {module.weight.shape}")
 
-    print(f"Total QuantModule: {cnt}")
+    # print(f"Total QuantModule: {cnt}")
+
     # def calibration():
     #     _calib_len = 16
     #     print(f"Calibration complited with {_batch_size * _calib_len} images...")
