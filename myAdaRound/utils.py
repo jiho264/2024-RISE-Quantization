@@ -129,6 +129,12 @@ import torch.nn.functional as F
 
 
 class UniformAffineQuantizer(nn.Module):
+    ## Public variables :
+    # - (bool) signed
+    # - (bool) per-channel
+    ## Public methods :
+    # - compute_qparams(_min, _max)
+    # - forward(x: Tensor) -> Tensor
     def __init__(self, org_weight, args):
         super(UniformAffineQuantizer, self).__init__()
 
@@ -140,49 +146,49 @@ class UniformAffineQuantizer(nn.Module):
             "UINT4",
         ], f"Unknown quantization type: {_DtypeStr}"
 
-        self.n_bits = int(_DtypeStr[-1])  # "INT8" -> 8
+        self._n_bits = int(_DtypeStr[-1])  # "INT8" -> 8
         self.signed = True if _DtypeStr[0] == "I" else False  # "INT8" -> True
 
         # the below code runtime is 300ms in resnet18 with i7-9700k with RTX3090
         if self.signed == False and org_weight.min() < 0:
             raise ValueError("Unsigned quantization does not support negative values.")
 
-        self.repr_min, self.repr_max = None, None
+        self._repr_min, self._repr_max = None, None
         if self.signed:
-            self.repr_min = -(2 ** (self.n_bits - 1))  # "INT8" -> -128
-            self.repr_max = 2 ** (self.n_bits - 1) - 1  # "INT8" -> 127
+            self._repr_min = -(2 ** (self._n_bits - 1))  # "INT8" -> -128
+            self._repr_max = 2 ** (self._n_bits - 1) - 1  # "INT8" -> 127
         else:
-            self.repr_min = 0  # "UINT8" -> 0
-            self.repr_max = 2 ** (self.n_bits) - 1  # "UINT8" -> 255
+            self._repr_min = 0  # "UINT8" -> 0
+            self._repr_max = 2 ** (self._n_bits) - 1  # "UINT8" -> 255
 
         # per_ch option is "store_true
         self.per_channel = args.get("per_channel") if args.get("per_channel") else False
-        self.n_ch = len(org_weight.size()) if self.per_channel else 1
-        self.scaler = None
-        self.zero_point = None
+        self._n_ch = len(org_weight.size()) if self.per_channel else 1
+        self._scaler = None
+        self._zero_point = None
 
-    def compute_qparams(self, _min, _max):
+    def compute_qparams(self, _min, _max) -> None:
         # Origin tensor shape: [out_channel, in_channel, k, k]
         # per_ch Qparam shape: [n_channel, 1, 1, 1]
 
-        scaler = (_max - _min) / (self.repr_max - self.repr_min)
-        self.scaler = scaler.view(-1, *([1] * (self.n_ch - 1)))
+        scaler = (_max - _min) / (self._repr_max - self._repr_min)
+        self._scaler = scaler.view(-1, *([1] * (self._n_ch - 1)))
 
-        _min = _min.view(-1, *([1] * (self.n_ch - 1)))
-        self.zero_point = -(_min / self.scaler).round() + self.repr_min
+        _min = _min.view(-1, *([1] * (self._n_ch - 1)))
+        self._zero_point = -(_min / self._scaler).round() + self._repr_min
 
-    def quantize(self, input: Tensor) -> Tensor:
+    def _quantize(self, input: Tensor) -> Tensor:
         return torch.clamp(
-            (input / self.scaler).round() + self.zero_point,
-            self.repr_min,
-            self.repr_max,
+            (input / self._scaler).round() + self._zero_point,
+            self._repr_min,
+            self._repr_max,
         )
 
-    def dequantize(self, input: Tensor) -> Tensor:
-        return (input - self.zero_point) * self.scaler
+    def _dequantize(self, input: Tensor) -> Tensor:
+        return (input - self._zero_point) * self._scaler
 
     def forward(self, x: Tensor) -> Tensor:
-        return self.dequantize(self.quantize(x))
+        return self._dequantize(self._quantize(x))
 
 
 class AbsMaxQuantizer(UniformAffineQuantizer):
@@ -210,7 +216,7 @@ class AbsMaxQuantizer(UniformAffineQuantizer):
 
         # if s8 or u8, zero_point = 0
         self.compute_qparams(-_AbsMax, _AbsMax)
-        self.zero_point = torch.zeros_like(self.scaler)
+        self.zero_point = torch.zeros_like(self._scaler)
 
         # for debug
         # print(self.scaler.shape, self.zero_point.shape)
@@ -246,6 +252,7 @@ class MinMaxQuantizer(UniformAffineQuantizer):
 
         # for debug
         # print(self.scaler.shape, self.zero_point.shape)
+        print(self._scaler, self._zero_point)
 
 
 class L2DistanceQuantizer(UniformAffineQuantizer):
@@ -268,31 +275,32 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
 
         if self.signed == True:
             # perform_2D_search [min, max]
-            best_l2_norm = torch.ones_like(_min) * 9999
-            best_scaler = torch.ones_like(_min)
-            best_zero_point = torch.zeros_like(_min)
+            # per-layer: 69.65
+            # per-channel: 69.76
+            self.compute_qparams(_min, _max)
+            best_score = (self.forward(org_weight) - org_weight).norm(p=2)
+            best_min = _min.clone()
+            best_max = _max.clone()
 
-            for i in range(0, 99):
-                _tmp_min = _min * (100 - i) / 100  # 100%, 99%, 98%, ..., 1%
-                _tmp_max = _max * (100 - i) / 100  # 100%, 99%, 98%, ..., 1%
+            for i in range(0, 999):
+                _tmp_min = _min * (1000 - i) / 1000  # 100%, 99%, 98%, ..., 1%
+                _tmp_max = _max * (1000 - i) / 1000  # 100%, 99%, 98%, ..., 1%
 
-                self.scaler = (_tmp_max - _tmp_min) / (self.repr_max - self.repr_min)
-                self.zero_point = -(_tmp_min / self.scaler).round() + self.repr_min
-                # per-ch인 경우 l2 score가 ch수 만큼 생성되어야함.
-                # 그 뒤 각 ch마다 점수 좋은 것을 선택해야함.
+                self.compute_qparams(_tmp_min, _tmp_max)
+                # -> Changed the scaler and zero_point
 
-                # 여기 p=2말고 p=2.4인 경우 더 좋은 결과를 보임.
-                _l2_norm = (self.forward(org_weight) - org_weight).norm(p=2)
+                _tmp_score = (self.forward(org_weight) - org_weight).norm(p=2.4)
 
-                # best_l2_norm = torch.where(_l2_norm < best_l2_norm,
+                ## torch.where(condition, if true, if false)
+                best_score = torch.min(_tmp_score, best_score)
+                best_min = torch.where(_tmp_score < best_score, _tmp_min, best_min)
+                best_max = torch.where(_tmp_score < best_score, _tmp_max, best_max)
 
-                if _l2_norm < best_l2_norm:
-                    best_l2_norm = _l2_norm
-                    best_scaler = self.scaler
-                    best_zero_point = self.zero_point
-
-            self.scaler = best_scaler
-            self.zero_point = best_zero_point
+            # -> Findinf the best_min, best_max is done..
+            self.compute_qparams(best_min, best_max)
+            # print(best_min.shape, best_max.shape)
+            print(self._scaler, self._zero_point)
+            # -> end
         else:
             # perform_1D_search [0, max]
             # best_l2_norm = 9999
