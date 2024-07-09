@@ -46,10 +46,10 @@ def main():
                 )
 
     weight_quant_params = dict(
-        # scheme="AbsMaxQuantizer",
-        scheme="MinMaxQuantizer",
+        scheme="AbsMaxQuantizer",
+        # scheme="MinMaxQuantizer",
         # scheme="MinMaxL2NormQuantizer",
-        per_channel=True,
+        # per_channel=True,
         dstDtype="INT8",
     )
     act_quant_params = {}

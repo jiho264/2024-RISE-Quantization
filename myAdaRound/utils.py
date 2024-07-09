@@ -188,19 +188,25 @@ class AbsMaxQuantizer(UniformAffineQuantizer):
         """
         super(AbsMaxQuantizer, self).__init__(org_weight, args)
 
-        if self.per_channel == True:
-            # Origin tensor shape: [out_channel, in_channel, k, k]
-            # per_ch Qparam shape: [n_channel, 1, 1, 1]
-            per_ch_w = org_weight.view(org_weight.size(0), -1).abs().max(dim=1).values
-            scaler = per_ch_w / (self.repr_max - self.repr_min)
-            self.scaler = 2 * scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
-        else:
-            # if s8, scaler = 2 * org_weight.abs().max() / (127 - (-128))
-            # if u8, scaler = 2 * org_weight.abs().max() / (255 - 0)
-            self.scaler = 2 * org_weight.abs().max() / (self.repr_max - self.repr_min)
+        # Origin tensor shape: [out_channel, in_channel, k, k]
+        # per_ch Qparam shape: [n_channel, 1, 1, 1]
 
+        _AbsMax = None
+        if self.per_channel == True:
+            _AbsMax = org_weight.view(org_weight.size(0), -1).abs().max(dim=1).values
+        else:
+            _AbsMax = org_weight.abs().max()
+
+        # if s8, scaler = 2 * org_weight.abs().max() / (127 - (-128))
+        # if u8, scaler = 2 * org_weight.abs().max() / (255 - 0)
+        scaler = 2 * _AbsMax / (self.repr_max - self.repr_min)
+        self.scaler = scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
+
+        # if s8 or u8, zero_point = 0
         self.zero_point = torch.zeros_like(self.scaler)
-        print(self.scaler.shape, self.zero_point.shape)
+
+        # for debug
+        # print(self.scaler.shape, self.zero_point.shape)
 
 
 class MinMaxQuantizer(UniformAffineQuantizer):
@@ -219,6 +225,7 @@ class MinMaxQuantizer(UniformAffineQuantizer):
 
         # Origin tensor shape: [out_channel, in_channel, k, k]
         # per_ch Qparam shape: [n_channel, 1, 1, 1]
+
         if self.per_channel == True:
             _min = org_weight.view(org_weight.size(0), -1).min(dim=1).values
             _max = org_weight.view(org_weight.size(0), -1).max(dim=1).values
@@ -230,12 +237,14 @@ class MinMaxQuantizer(UniformAffineQuantizer):
         # if u8, scaler = (_max - _min) / (255 - 0)
         scaler = (_max - _min) / (self.repr_max - self.repr_min)
         self.scaler = scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
+
         # if s8, zero_point = -_min / scaler + (-128)
         # if u8, zero_point = -_min / scaler + 0
         _min = _min.view(-1, *([1] * (len(org_weight.size()) - 1)))
         self.zero_point = -(_min / self.scaler).round() + self.repr_min
 
-        print(self.scaler.shape, self.zero_point.shape)
+        # for debug
+        # print(self.scaler.shape, self.zero_point.shape)
 
 
 class MinMaxL2NormQuantizer(UniformAffineQuantizer):
