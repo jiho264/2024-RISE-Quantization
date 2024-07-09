@@ -46,16 +46,11 @@ def main():
                 )
 
     weight_quant_params = dict(
-        # for each QuantModule
-        # quantizer="AbsMaxQuantizer",
-        quantizer="MinMaxQuantizer",
-        active=True,
-        # active=False,
-        # ...
-        # for each Quantizer class
-        n_bits=8,
+        # scheme="AbsMaxQuantizer",
+        scheme="MinMaxQuantizer",
+        # scheme="MinMaxL2NormQuantizer",
         per_channel=True,
-        # per_channel=False,
+        dstDtype="INT8",
     )
     act_quant_params = {}
     quant_module_refactor_wo_fuse(model, weight_quant_params, act_quant_params)

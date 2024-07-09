@@ -129,29 +129,42 @@ import torch.nn.functional as F
 
 
 class UniformAffineQuantizer(nn.Module):
-    def __init__(self, args):
-        """QuantizerBase
-            - Base class for quantizer
-            - Uniform Affine Quantization
-
-        Args:
-            args (_type_): dict
-                - active (bool): quantization enabled or not
-                - n_bits (int): number of bits for quantization
-                - per_channel (bool): per channel quantization or not
-        """
+    def __init__(self, org_weight, args):
         super(UniformAffineQuantizer, self).__init__()
-        self.n_bits = args.get("n_bits")
-        self.n_steps = 2**self.n_bits
-        self.per_channel = args.get("per_channel")
-        self.scaler = 1.0
-        self.zero_point = 0
+
+        _DtypeStr = args.get("dstDtype")
+        assert _DtypeStr in [
+            "INT8",
+            "UINT8",
+            "INT4",
+            "UINT4",
+        ], f"Unknown quantization type: {_DtypeStr}"
+
+        self.n_bits = int(_DtypeStr[-1])  # "INT8" -> 8
+        self.signed = True if _DtypeStr[0] == "I" else False  # "INT8" -> True
+
+        # the below code runtime is 300ms in resnet18 with i7-9700k with RTX3090
+        if self.signed == False and org_weight.min() < 0:
+            raise ValueError("Unsigned quantization does not support negative values.")
+
+        self.repr_min, self.repr_max = None, None
+        if self.signed:
+            self.repr_min = -(2 ** (self.n_bits - 1))  # "INT8" -> -128
+            self.repr_max = 2 ** (self.n_bits - 1) - 1  # "INT8" -> 127
+        else:
+            self.repr_min = 0  # "UINT8" -> 0
+            self.repr_max = 2 ** (self.n_bits) - 1  # "UINT8" -> 255
+
+        # per_ch option is "store_true
+        self.per_channel = args.get("per_channel") if args.get("per_channel") else False
+        self.scaler = None
+        self.zero_point = None
 
     def quantize(self, input: Tensor) -> Tensor:
         return torch.clamp(
             (input / self.scaler).round() + self.zero_point,
-            -self.n_steps // 2,
-            self.n_steps // 2 - 1,
+            self.repr_min,
+            self.repr_max,
         )
 
     def dequantize(self, input: Tensor) -> Tensor:
@@ -162,55 +175,118 @@ class UniformAffineQuantizer(nn.Module):
 
 
 class AbsMaxQuantizer(UniformAffineQuantizer):
-    def __init__(self, args, org_weight=None):
-        """AbsMinMaxQuantizer.
-        Naive symmetric quantizer with abs max scaling.
-        Args:
-            args (dict): for UniformAffineQuantizer
-            org_weight (Tensor): have to need for determine the scaling factor
+    def __init__(self, org_weight, args):
         """
-        super(AbsMaxQuantizer, self).__init__(args)
+        [ Absolute Maximum Quantization ]
+        - When zero_point is zero, the quantization range is symmetric.
+            (Uniform Symmetric Quantization)
+        - range: [-max(abs(x)), max(abs(x))]
+
+        (default seed=0 and 128*32 img)
+        # resnet18 Acc@1 per-layer : 74.34
+        # resnet18 Acc@1 per-channel : 74.56
+        """
+        super(AbsMaxQuantizer, self).__init__(org_weight, args)
 
         if self.per_channel == True:
-
-            self.scaler = org_weight.view(org_weight.size(0), -1).abs().max(
-                dim=1
-            ).values / (self.n_steps // 2 - 1)
-            # print(self.scaler.shape)
-            self.scaler = self.scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
-            # print(org_weight.shape, self.scaler.shape)
+            # Origin tensor shape: [out_channel, in_channel, k, k]
+            # per_ch Qparam shape: [n_channel, 1, 1, 1]
+            per_ch_w = org_weight.view(org_weight.size(0), -1).abs().max(dim=1).values
+            scaler = per_ch_w / (self.repr_max - self.repr_min)
+            self.scaler = 2 * scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
         else:
-            self.scaler = org_weight.abs().max() / (self.n_steps // 2 - 1)
-            print(org_weight.shape, self.scaler.shape)
+            # if s8, scaler = 2 * org_weight.abs().max() / (127 - (-128))
+            # if u8, scaler = 2 * org_weight.abs().max() / (255 - 0)
+            self.scaler = 2 * org_weight.abs().max() / (self.repr_max - self.repr_min)
+
+        self.zero_point = torch.zeros_like(self.scaler)
+        print(self.scaler.shape, self.zero_point.shape)
 
 
 class MinMaxQuantizer(UniformAffineQuantizer):
-    def __init__(self, args, org_weight=None):
-        """MinMaxQuantizer.
-
-        Args:
-            args (dict): for UniformAffineQuantizer
-            org_weight (Tensor): have to need for determine the scaling factor
+    def __init__(self, org_weight, args):
         """
-        super(MinMaxQuantizer, self).__init__(args)
+        [ Min-Max Quantization ]
+        - The quantization range is asymmetric.
+        - range: [min(x), max(x)]
+        - https://pytorch.org/docs/stable/generated/torch.ao.quantization.observer.MinMaxObserver
+
+        (default seed=0 and 128*32 img)
+        # resnet18 Acc@1 per-layer : 74.46
+        # resnet18 Acc@1 per-channel : 74.34 (It might be higher than per-layer)
+        """
+        super(MinMaxQuantizer, self).__init__(org_weight, args)
 
         if self.per_channel == True:
-            _mins = org_weight.view(org_weight.size(0), -1).min(dim=1).values
-            _maxs = org_weight.view(org_weight.size(0), -1).max(dim=1).values
+            # Origin tensor shape: [out_channel, in_channel, k, k]
+            # per_ch Qparam shape: [n_channel, 1, 1, 1]
+            _min = org_weight.view(org_weight.size(0), -1).min(dim=1).values
+            _max = org_weight.view(org_weight.size(0), -1).max(dim=1).values
 
-            self.scaler = (_maxs - _mins) / (self.n_steps // 2 - 1)
-            self.scaler = self.scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
+            scaler = (_max - _min) / (self.repr_max - self.repr_min)
+            self.scaler = scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
+
+            _min = _min.view(-1, *([1] * (len(org_weight.size()) - 1)))
+            self.zero_point = -(_min / self.scaler).round() + self.repr_min
         else:
-            a = org_weight.min()
-            b = org_weight.max()
+            _min = org_weight.min()
+            _max = org_weight.max()
+            # if s8, scaler = (_max - _min) / (127 - (-128))
+            # if u8, scaler = (_max - _min) / (255 - 0)
+            self.scaler = (_max - _min) / (self.repr_max - self.repr_min)
 
-            self.scaler = (b - a) / (self.n_steps - 1)
+            # if s8, zero_point = -_min / scaler + (-128)
+            # if u8, zero_point = -_min / scaler + 0
+            self.zero_point = -(_min / self.scaler).round() + self.repr_min
+
+        print(self.scaler.shape, self.zero_point.shape)
+
+
+# class MinMaxL2NormQuantizer(UniformAffineQuantizer):
+#     def __init__(self, org_weight, args):
+#         """
+#         Args:
+#             args (dict): for UniformAffineQuantizer
+#             org_weight (Tensor): have to need for determine the scaling factor
+#         """
+#         super(MinMaxL2NormQuantizer, self).__init__(args)
+
+#         if self.per_channel == True:
+#             _mins = org_weight.view(org_weight.size(0), -1).min(dim=1).values
+#             _maxs = org_weight.view(org_weight.size(0), -1).max(dim=1).values
+#             # [ ] implement the per-ch l2 norm quantization
+#         else:
+#             _min = org_weight.min()
+#             _max = org_weight.max()
+#             print(f"init minmax range is {_min}, {_max}")
+#             best_l2_norm = torch.inf()
+
+#             for i in range(0, 80):
+#                 _min *= i
+#                 _max *= i
+
+#                 _scaler = (_max - _min) / (self.n_steps - 1)
+#                 _zero_point = -_min / _scaler
+
+#                 _q = torch.clamp(
+#                     (org_weight / _scaler).round() + _zero_point,
+#                     -self.n_steps // 2,
+#                     self.n_steps // 2 - 1,
+#                 )
+
+#                 _l2_norm = torch.norm(org_weight - _q * _scaler, p=2)
+#                 if _l2_norm < best_l2_norm:
+#                     best_l2_norm = _l2_norm
+#                     self.scaler = _scaler
+#                     self.zero_point = _zero_point
+#                 else:
+#                     break
 
 
 class QuantModule(nn.Module):
-
     def __init__(self, org_module, weight_quant_params, act_quant_params):
         super(QuantModule, self).__init__()
+        """forward function setting"""
         if isinstance(org_module, nn.Conv2d):
             self.fwd_kwargs = dict(
                 stride=org_module.stride,
@@ -226,50 +302,29 @@ class QuantModule(nn.Module):
         self.weight = org_module.weight.clone().detach()
 
         """weight quantizer"""
-        self.w_act = weight_quant_params.get("active")
-        w_quantizer_type = weight_quant_params.get("quantizer")
+        w_quantizer_type = weight_quant_params.get("scheme")
 
         if w_quantizer_type == "AbsMaxQuantizer":
-            self.weight_quantizer = AbsMaxQuantizer(weight_quant_params, self.weight)
+            self.weight_quantizer = AbsMaxQuantizer(self.weight, weight_quant_params)
 
         elif w_quantizer_type == "MinMaxQuantizer":
-            self.weight_quantizer = MinMaxQuantizer(weight_quant_params, self.weight)
+            self.weight_quantizer = MinMaxQuantizer(self.weight, weight_quant_params)
+        elif w_quantizer_type == "MinMaxL2NormQuantizer":
+            # self.weight_quantizer = MinMaxL2NormQuantizer(
+            #     self.weight, weight_quant_params
+            # )
 
             # [ ] add more quantizer option
+
             pass
         else:
             raise ValueError(f"Unknown weight quantizer type: {w_quantizer_type}")
 
+        """activation quantizer"""
+        # [ ] add activation quantizer
+
     def forward(self, x: Tensor) -> Tensor:
-        if self.w_act == True:
-            weight = self.weight_quantizer(self.weight)
-            print(".", end="")
-        else:
-            weight = self.weight
+        weight = self.weight_quantizer(self.weight)
+        print(".", end="")
 
         return self.fwd_func(x, weight, **self.fwd_kwargs)
-
-        """
-        ResNet18 quantization with myAdaRound...
-        QuantModule: conv1, torch.Size([64, 3, 7, 7])
-        QuantModule: layer1.0.conv1, torch.Size([64, 64, 3, 3])
-        QuantModule: layer1.0.conv2, torch.Size([64, 64, 3, 3])
-        QuantModule: layer1.1.conv1, torch.Size([64, 64, 3, 3])
-        QuantModule: layer1.1.conv2, torch.Size([64, 64, 3, 3])
-        QuantModule: layer2.0.conv1, torch.Size([128, 64, 3, 3])
-        QuantModule: layer2.0.conv2, torch.Size([128, 128, 3, 3])
-        QuantModule: layer2.0.downsample.0, torch.Size([128, 64, 1, 1])
-        QuantModule: layer2.1.conv1, torch.Size([128, 128, 3, 3])
-        QuantModule: layer2.1.conv2, torch.Size([128, 128, 3, 3])
-        QuantModule: layer3.0.conv1, torch.Size([256, 128, 3, 3])
-        QuantModule: layer3.0.conv2, torch.Size([256, 256, 3, 3])
-        QuantModule: layer3.0.downsample.0, torch.Size([256, 128, 1, 1])
-        QuantModule: layer3.1.conv1, torch.Size([256, 256, 3, 3])
-        QuantModule: layer3.1.conv2, torch.Size([256, 256, 3, 3])
-        QuantModule: layer4.0.conv1, torch.Size([512, 256, 3, 3])
-        QuantModule: layer4.0.conv2, torch.Size([512, 512, 3, 3])
-        QuantModule: layer4.0.downsample.0, torch.Size([512, 256, 1, 1])
-        QuantModule: layer4.1.conv1, torch.Size([512, 512, 3, 3])
-        QuantModule: layer4.1.conv2, torch.Size([512, 512, 3, 3])
-        QuantModule: fc, torch.Size([1000, 512])
-        """
