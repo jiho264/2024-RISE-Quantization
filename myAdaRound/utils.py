@@ -182,9 +182,9 @@ class AbsMaxQuantizer(UniformAffineQuantizer):
             (Uniform Symmetric Quantization)
         - range: [-max(abs(x)), max(abs(x))]
 
-        (default seed=0 and 128*32 img)
-        # resnet18 Acc@1 per-layer : 74.34
-        # resnet18 Acc@1 per-channel : 74.56
+        [W8A32]
+        # resnet18 Acc@1 per-layer : 69.54 %
+        # resnet18 Acc@1 per-channel : 69.64 %
         """
         super(AbsMaxQuantizer, self).__init__(org_weight, args)
 
@@ -211,76 +211,73 @@ class MinMaxQuantizer(UniformAffineQuantizer):
         - range: [min(x), max(x)]
         - https://pytorch.org/docs/stable/generated/torch.ao.quantization.observer.MinMaxObserver
 
-        (default seed=0 and 128*32 img)
-        # resnet18 Acc@1 per-layer : 74.46
-        # resnet18 Acc@1 per-channel : 74.34 (It might be higher than per-layer)
+        [W8A32]
+        # resnet18 Acc@1 per-layer : 69.65 %
+        # resnet18 Acc@1 per-channel : 69.76 % (same with origin)
         """
         super(MinMaxQuantizer, self).__init__(org_weight, args)
 
+        # Origin tensor shape: [out_channel, in_channel, k, k]
+        # per_ch Qparam shape: [n_channel, 1, 1, 1]
         if self.per_channel == True:
-            # Origin tensor shape: [out_channel, in_channel, k, k]
-            # per_ch Qparam shape: [n_channel, 1, 1, 1]
             _min = org_weight.view(org_weight.size(0), -1).min(dim=1).values
             _max = org_weight.view(org_weight.size(0), -1).max(dim=1).values
-
-            scaler = (_max - _min) / (self.repr_max - self.repr_min)
-            self.scaler = scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
-
-            _min = _min.view(-1, *([1] * (len(org_weight.size()) - 1)))
-            self.zero_point = -(_min / self.scaler).round() + self.repr_min
         else:
             _min = org_weight.min()
             _max = org_weight.max()
-            # if s8, scaler = (_max - _min) / (127 - (-128))
-            # if u8, scaler = (_max - _min) / (255 - 0)
-            self.scaler = (_max - _min) / (self.repr_max - self.repr_min)
 
-            # if s8, zero_point = -_min / scaler + (-128)
-            # if u8, zero_point = -_min / scaler + 0
-            self.zero_point = -(_min / self.scaler).round() + self.repr_min
+        # if s8, scaler = (_max - _min) / (127 - (-128))
+        # if u8, scaler = (_max - _min) / (255 - 0)
+        scaler = (_max - _min) / (self.repr_max - self.repr_min)
+        self.scaler = scaler.view(-1, *([1] * (len(org_weight.size()) - 1)))
+        # if s8, zero_point = -_min / scaler + (-128)
+        # if u8, zero_point = -_min / scaler + 0
+        _min = _min.view(-1, *([1] * (len(org_weight.size()) - 1)))
+        self.zero_point = -(_min / self.scaler).round() + self.repr_min
 
         print(self.scaler.shape, self.zero_point.shape)
 
 
-# class MinMaxL2NormQuantizer(UniformAffineQuantizer):
-#     def __init__(self, org_weight, args):
-#         """
-#         Args:
-#             args (dict): for UniformAffineQuantizer
-#             org_weight (Tensor): have to need for determine the scaling factor
-#         """
-#         super(MinMaxL2NormQuantizer, self).__init__(args)
+class MinMaxL2NormQuantizer(UniformAffineQuantizer):
+    def __init__(self, org_weight, args):
+        """
+        Args:
+            args (dict): for UniformAffineQuantizer
+            org_weight (Tensor): have to need for determine the scaling factor
+        """
+        super(MinMaxL2NormQuantizer, self).__init__(org_weight, args)
 
-#         if self.per_channel == True:
-#             _mins = org_weight.view(org_weight.size(0), -1).min(dim=1).values
-#             _maxs = org_weight.view(org_weight.size(0), -1).max(dim=1).values
-#             # [ ] implement the per-ch l2 norm quantization
-#         else:
-#             _min = org_weight.min()
-#             _max = org_weight.max()
-#             print(f"init minmax range is {_min}, {_max}")
-#             best_l2_norm = torch.inf()
+        # [ ] implement the l2 norm quantization
+        # if self.per_channel == True:
+        #     _mins = org_weight.view(org_weight.size(0), -1).min(dim=1).values
+        #     _maxs = org_weight.view(org_weight.size(0), -1).max(dim=1).values
+        #
+        #     pass  # Not yet implemented
+        # else:
+        #     _min = org_weight.min()
+        #     _max = org_weight.max()
 
-#             for i in range(0, 80):
-#                 _min *= i
-#                 _max *= i
+        #     best_l2_norm = 9999
+        #     best_scaler = 1.0
+        #     best_zero_point = 0.0
 
-#                 _scaler = (_max - _min) / (self.n_steps - 1)
-#                 _zero_point = -_min / _scaler
+        #     for i in range(0, 80):
+        #         _tmp_min = _min * 0.01 * i
+        #         _tmp_max = _max * 0.01 * i
 
-#                 _q = torch.clamp(
-#                     (org_weight / _scaler).round() + _zero_point,
-#                     -self.n_steps // 2,
-#                     self.n_steps // 2 - 1,
-#                 )
+        #         self.scaler = (_tmp_max - _tmp_min) / (self.repr_max - self.repr_min)
+        #         self.zero_point = -(_tmp_min / self.scaler).round() + self.repr_min
 
-#                 _l2_norm = torch.norm(org_weight - _q * _scaler, p=2)
-#                 if _l2_norm < best_l2_norm:
-#                     best_l2_norm = _l2_norm
-#                     self.scaler = _scaler
-#                     self.zero_point = _zero_point
-#                 else:
-#                     break
+        #         _l2_norm = (
+        #             self.dequantize(self.quantize(org_weight)) - org_weight
+        #         ).norm(p=2)
+        #         if _l2_norm < best_l2_norm:
+        #             best_l2_norm = _l2_norm
+        #             best_scaler = self.scaler
+        #             best_zero_point = self.zero_point
+
+        #     self.scaler = best_scaler
+        #     self.zero_point = best_zero_point
 
 
 class QuantModule(nn.Module):
@@ -310,9 +307,9 @@ class QuantModule(nn.Module):
         elif w_quantizer_type == "MinMaxQuantizer":
             self.weight_quantizer = MinMaxQuantizer(self.weight, weight_quant_params)
         elif w_quantizer_type == "MinMaxL2NormQuantizer":
-            # self.weight_quantizer = MinMaxL2NormQuantizer(
-            #     self.weight, weight_quant_params
-            # )
+            self.weight_quantizer = MinMaxL2NormQuantizer(
+                self.weight, weight_quant_params
+            )
 
             # [ ] add more quantizer option
 

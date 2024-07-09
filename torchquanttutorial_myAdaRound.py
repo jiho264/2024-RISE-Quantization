@@ -16,14 +16,14 @@ def main():
 
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
 
-    # _num_eval_batches = len(test_loader)
-    _num_eval_batches = 32
-    _top1, _ = evaluate(
-        model, test_loader, neval_batches=_num_eval_batches, device="cuda"
-    )
-    print(
-        f" Original model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
-    )
+    _num_eval_batches = len(test_loader)
+    # _num_eval_batches = 32
+    # _top1, _ = evaluate(
+    #     model, test_loader, neval_batches=_num_eval_batches, device="cuda"
+    # )
+    # print(
+    #     f" Original model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"6165
+    # )
 
     def quant_module_refactor_wo_fuse(
         module: nn.Module,
