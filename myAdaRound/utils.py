@@ -339,15 +339,36 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
 
 class AdaRoundQuantizer(MinMaxQuantizer):
     def __init__(self, org_weight, args):
-
+        """
+        Ref: Up or Down? Adaptive Rounding for Post-Training Quantization
+        - https://proceedings.mlr.press/v119/nagel20a/nagel20a.pdf
+        """
         # print("- AdaRoundQuantizer are baesd on MinMaxQuantizer.")
         # print("- Just, add more Qparam as Rounding Value.")
 
         super(AdaRoundQuantizer, self).__init__(org_weight, args)
+        self.enable = False
+        self.fp_inputs = None
+        self.fp_outputs = None
         # -> Now, We have MinMaxQuantizer's scaler and zero_point!
 
-        self._rounding_value = torch.zeros_like(org_weight)
-        # self._rounding_value = torch.where(torch.randn_like(org_weight) < 0, 0, 1)
+    #     # [ ] 미완성
+    #     self._rounding_value = torch.where(torch.rand_like(org_weight) > 0.5, 1, 0)
+    #     self.v = torch.zeros_like(org_weight)
+
+    #     self.zeta = 1.1  # fixed value
+    #     self.gamma = -0.1  # fixed value
+
+    #     self.rambda = 0.1
+
+    # # [ ] 미완성
+    # def _rectified_sigmoid(self, v: Tensor) -> Tensor:
+    #     return torch.clamp(v.sigmoid() * (self.zeta - self.gamma), 0, 1)
+
+    # # [ ] 미완성
+    # def _regularization_term(self, beta=2.0) -> Tensor:
+    #     # return {near 0 or near 1} -> meaning is that determine factor of the rounding.
+    #     return 1 - (2 * self._rectified_sigmoid(self.v) - 1).abs().pow(beta)
 
     def _quantize(self, input: Tensor) -> Tensor:
         ## ResNet18 / W4A32 per-ch / MinMaxQuantizer
@@ -357,7 +378,8 @@ class AdaRoundQuantizer(MinMaxQuantizer):
         # randomly half floor, half ceil -> 18.00%
 
         return torch.clamp(
-            (input / self._scaler).round() + self._zero_point + self._rounding_value,
+            (input / self._scaler).round()
+            + self._zero_point,  # + self._rounding_value,
             self._repr_min,
             self._repr_max,
         )
@@ -382,6 +404,7 @@ class QuantModule(nn.Module):
         self.weight = org_module.weight.clone().detach()
 
         """weight quantizer"""
+        self.w_quant_enable = True  # default is True. Need false option when only compute adaround values.
         w_quantizer_type = weight_quant_params.get("scheme")
 
         if w_quantizer_type == "AbsMaxQuantizer":
@@ -395,7 +418,6 @@ class QuantModule(nn.Module):
             )
         elif w_quantizer_type == "AdaRoundQuantizer":
             self.weight_quantizer = AdaRoundQuantizer(self.weight, weight_quant_params)
-
         else:
             raise ValueError(f"Unknown weight quantizer type: {w_quantizer_type}")
 
@@ -403,8 +425,12 @@ class QuantModule(nn.Module):
         # [ ] add activation quantizer
 
     def forward(self, x: Tensor) -> Tensor:
-        weight = self.weight_quantizer(self.weight)
-        # print(".", end="")
+        if self.w_quant_enable == True:
+            print("q", end="")
+            weight = self.weight_quantizer(self.weight)
+        else:
+            print(".", end="")
+            weight = self.weight
         return self.fwd_func(x, weight, **self.fwd_kwargs)
 
 

@@ -19,17 +19,42 @@ def get_train_samples(train_loader, num_samples):
 
 
 def computeAdaRoundValues(model, layer, cali_data):
-    cached_inps, cached_outs = save_inp_oup_data(model, layer, cali_data)
-    print("    ", cached_inps.shape, cached_outs.shape)
+
+    layer.w_quant_enable = True
+    x_hat_inputs, _ = save_inp_oup_data(model, layer, cali_data)
+
+    print("   ", x_hat_inputs.shape)
+
+    Y = layer.fp_outputs.view(-1)  # Y = W * X / it is constant
+
+    Y_hat = layer.forward(x_hat_inputs).view(-1)  # Y_hat = W_hat * X_hat
+    _norm = torch.norm(Y - Y_hat, p=2)
+    print(_norm)
+    # [ ] implement more details
     return None
 
 
 def runAdaRound(model, train_loader, num_samples=1024) -> None:
 
     model.eval()
-    cali_data = get_train_samples(train_loader, num_samples)
 
-    # 각 layer에 접속하는 함수
+    cali_data = get_train_samples(train_loader, num_samples)
+    cali_data = get_train_samples(train_loader, 128)
+
+    # Optain the ORIGIN input and output data of each layer
+    def _getFpInputOutput(module: nn.Module):
+        for name, module in module.named_children():
+            if isinstance(module, QuantModule):
+                module.w_quant_enable = False
+                _, FP_OUTPUTS = save_inp_oup_data(model, module, cali_data)
+                module.fp_outputs = FP_OUTPUTS
+                print("   ", module.fp_outputs.shape)
+            else:
+                _getFpInputOutput(module)
+
+    _getFpInputOutput(model)
+
+    # Compute the AdaRound values
     def _runAdaRound(module: nn.Module):
         for name, module in module.named_children():
             if isinstance(module, QuantModule):
@@ -57,7 +82,7 @@ def main():
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
 
     _num_eval_batches = len(test_loader)
-    # _num_eval_batches = 32
+    _num_eval_batches = 32
     # _top1, _ = evaluate(
     #     model, test_loader, neval_batches=_num_eval_batches, device="cuda"
     # )
