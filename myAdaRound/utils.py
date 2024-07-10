@@ -234,9 +234,13 @@ class MinMaxQuantizer(UniformAffineQuantizer):
         - range: [min(x), max(x)]
         - https://pytorch.org/docs/stable/generated/torch.ao.quantization.observer.MinMaxObserver
 
-        [W8A32]
-        # resnet18 Acc@1 per-layer : 69.65 %
-        # resnet18 Acc@1 per-channel : 69.76 % (same with origin)
+        [ResNet18 / W8A32]
+        - per-layer : 69.65%
+        - per-ch : 69.76%
+
+        [ResNet50 / W8A32]
+        - per-layer : 75.99%
+        - per-ch : 76.09%
         """
         super(MinMaxQuantizer, self).__init__(org_weight, args)
 
@@ -271,8 +275,6 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
         """
         super(L2DistanceQuantizer, self).__init__(org_weight, args)
 
-        # [ ] implement the L2DistanceQuantizer
-        """below is uncomplited"""
         if self.per_channel == True:
             _min = org_weight.view(org_weight.size(0), -1).min(dim=1).values
             _max = org_weight.view(org_weight.size(0), -1).max(dim=1).values
@@ -281,78 +283,28 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
             _max = org_weight.max()
 
         if self.signed == True:
-            ##[1]#########################################################################
-            # my sliding code here
+            # perform_2D_search [min, max]
             """
-            [ResNet18 / W8A32]
-            my 2D search (p=2)
-            - per-layer: 69.60%
-            - per-ch: 69.79% << FOR REAL... ref acc is 69.758%
-
-            my 2D search (p=2.4)
-            - per-layer: 69.67%
-            - per-ch: 69.76%
-            
-            [ResNet50 / W8A32] (p=2)
-            - per-layer: ??
-            - per-ch: 76.11%
-
-            [ResNet50 / W8A32] (p=2.4)
-            - per-layer: ??
-            - per-ch: 76.10%
-
-            """
-            # self.compute_qparams(_min, _max)
-            # best_score = (self.forward(org_weight) - org_weight).norm(p=2)
-            # best_min = _min.clone()
-            # best_max = _max.clone()
-
-            # n_iter = 100
-            # for i in range(1, n_iter + 1):
-            #     # 1% ~ 100%
-            #     _tmp_min = _min / n_iter * i
-            #     _tmp_max = _max / n_iter * i
-            #     _tmp_scaler = (_tmp_max - _tmp_min) / (self._repr_max - self._repr_min)
-
-            #     for zp in range(0, (self._repr_max - self._repr_min + 1)):
-            #         _new_min = _tmp_min - zp * _tmp_scaler
-            #         _new_max = _tmp_max - zp * _tmp_scaler
-
-            #         self.compute_qparams(_new_min, _new_max)
-            #         # -> Changed the scaler and zero_point
-
-            #         _tmp_score = (self.forward(org_weight) - org_weight).norm(p=2)
-
-            #         best_min = torch.where(_tmp_score < best_score, _tmp_min, best_min)
-            #         best_max = torch.where(_tmp_score < best_score, _tmp_max, best_max)
-            #         best_score = torch.min(_tmp_score, best_score)
-
-            # # -> Findinf the best_min, best_max is done..
-            # self.compute_qparams(best_min, best_max)
-
-            ##[2]#########################################################################
-            """
-            myArgMinMax search 
-            [ResNet18 / W8A32] (p=2) 
+            myArgMinMax search
+            [ResNet18 / W8A32] (p=2)
             - per-layer: 69.65%
             - per-ch: 69.76%
 
-            [ResNet18 / W8A32] (p=2.4) 
+            [ResNet18 / W8A32] (p=2.4)
             - per-layer: 69.58%
             - per-ch: 69.76%
-            
+
             [ResNet50 / W8A32] (p=2)
-            - per-layer: ??
+            - per-layer: 75.81%
             - per-ch: 76.09%
 
             [ResNet50 / W8A32] (p=2.4)
-            - per-layer: ??
+            - per-layer: 75.95%
             - per-ch: 76.09%
-            
-            
+
             """
             self.compute_qparams(_min, _max)
-            best_score = (self.forward(org_weight) - org_weight).norm(p=2.4)
+            best_score = (self.forward(org_weight) - org_weight).norm(p=2)
             best_min = _min.clone()
             best_max = _max.clone()
 
@@ -362,6 +314,8 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
                 if i / len(_argsorted) > 0.01:
                     break
                 for d_min, d_max in [(0, 1), (1, 0), (1, 1)]:
+                    # Consider all combination of min, max
+                    # Index : (min, max), (min, max-1), (min+1, max), (min+1, max+-1)
                     _tmp_min = org_weight.view(-1)[_argsorted[i - 1 + d_min]]
                     _tmp_max = org_weight.view(-1)[_argsorted[-i - d_max]]
 
@@ -376,64 +330,37 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
             # -> Findinf the best_min, best_max is done..
             self.compute_qparams(best_min, best_max)
 
-            ##[origin]###########################################################################
-            # """
-            # [ResNet18 / W8A32]
-            # - per-layer: 69.62%
-            # - per-ch: 69.79%
-
-            # [ResNet50 / W8A32]
-            # - per-layer: ??
-            # - per-ch: 76.09%
-            # """
-            # self.channel_wise = self.per_channel
-
-            # def lp_loss(pred, tgt, p=2.0):
-            #     x = (pred - tgt).abs().pow(p)
-            #     if not self.channel_wise:
-            #         return x.mean()
-            #     else:
-            #         y = torch.flatten(x, 1)
-            #         return y.mean(1)
-
-            # x = org_weight
-            # self.channel_wise = self.per_channel
-            # if self.channel_wise:
-            #     y = torch.flatten(x, 1)
-            #     x_min, x_max = torch.aminmax(y, dim=1)
-            #     # may also have the one side distribution in some channels
-            #     x_max = torch.max(x_max, torch.zeros_like(x_max))
-            #     x_min = torch.min(x_min, torch.zeros_like(x_min))
-            # else:
-            #     x_min, x_max = torch.aminmax(x)
-            # xrange = x_max - x_min
-            # best_score = torch.zeros_like(x_min) + (1e10)
-            # best_min = x_min.clone()
-            # best_max = x_max.clone()
-            # # enumerate xrange
-            # self.num = 100
-
-            # for i in range(1, self.num + 1):
-            #     tmp_min = torch.zeros_like(x_min)
-            #     tmp_max = xrange / self.num * i
-            #     # tmp_delta = (tmp_max - tmp_min) / (2**self.n_bits - 1)
-            #     tmp_delta = (tmp_max - tmp_min) / (self._repr_max - self._repr_min)
-            #     # enumerate zp
-            #     # for zp in range(0, self.n_levels):
-            #     for zp in range(0, (self._repr_max - self._repr_min + 1)):
-            #         new_min = tmp_min - zp * tmp_delta
-            #         new_max = tmp_max - zp * tmp_delta
-            #         self.compute_qparams(new_max, new_min)
-            #         x_q = self.forward(x)
-            #         score = lp_loss(x, x_q, 2.4)
-            #         best_min = torch.where(score < best_score, new_min, best_min)
-            #         best_max = torch.where(score < best_score, new_max, best_max)
-            #         best_score = torch.min(best_score, score)
-
-            # self.compute_qparams(best_min, best_max)
         else:
             # perform_1D_search [0, max]
-            ...
+            raise NotImplementedError(
+                "Unsigned L2DistanceQuantizer is not implemented yet."
+            )
+
+
+class AdaRoundQuantizer(MinMaxQuantizer):
+    def __init__(self, org_weight, args):
+
+        # print("- AdaRoundQuantizer are baesd on MinMaxQuantizer.")
+        # print("- Just, add more Qparam as Rounding Value.")
+
+        super(AdaRoundQuantizer, self).__init__(org_weight, args)
+        # -> Now, We have MinMaxQuantizer's scaler and zero_point!
+
+        self._rounding_value = torch.zeros_like(org_weight)
+        # self._rounding_value = torch.where(torch.randn_like(org_weight) < 0, 0, 1)
+
+    def _quantize(self, input: Tensor) -> Tensor:
+        ## ResNet18 / W4A32 per-ch / MinMaxQuantizer
+        # round -> 58.24%
+        # ceil -> 0.10%
+        # floor -> 0.11%
+        # randomly half floor, half ceil -> 18.00%
+
+        return torch.clamp(
+            (input / self._scaler).round() + self._zero_point + self._rounding_value,
+            self._repr_min,
+            self._repr_max,
+        )
 
 
 class QuantModule(nn.Module):
@@ -466,10 +393,9 @@ class QuantModule(nn.Module):
             self.weight_quantizer = L2DistanceQuantizer(
                 self.weight, weight_quant_params
             )
+        elif w_quantizer_type == "AdaRoundQuantizer":
+            self.weight_quantizer = AdaRoundQuantizer(self.weight, weight_quant_params)
 
-            # [ ] add more quantizer option
-
-            pass
         else:
             raise ValueError(f"Unknown weight quantizer type: {w_quantizer_type}")
 
@@ -479,5 +405,181 @@ class QuantModule(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         weight = self.weight_quantizer(self.weight)
         # print(".", end="")
-
         return self.fwd_func(x, weight, **self.fwd_kwargs)
+
+
+"""
+Backup...
+ResNet18 W8A32 p=2 case1 method produces 69.79% which higher than the origin 69.758%
+"""
+# class L2DistanceQuantizer(UniformAffineQuantizer):
+#     def __init__(self, org_weight, args):
+#         """
+#         Args:
+#             args (dict): for UniformAffineQuantizer
+#             org_weight (Tensor): have to need for determine the scaling factor
+#         """
+#         super(L2DistanceQuantizer, self).__init__(org_weight, args)
+
+#         """below is uncomplited"""
+#         if self.per_channel == True:
+#             _min = org_weight.view(org_weight.size(0), -1).min(dim=1).values
+#             _max = org_weight.view(org_weight.size(0), -1).max(dim=1).values
+#         else:
+#             _min = org_weight.min()
+#             _max = org_weight.max()
+
+#         if self.signed == True:
+#             ##[1]#########################################################################
+#             # my sliding code here
+#             """
+#             [ResNet18 / W8A32]
+#             my 2D search (p=2)
+#             - per-layer: 69.60%
+#             - per-ch: 69.79% << FOR REAL... ref acc is 69.758%
+
+#             my 2D search (p=2.4)
+#             - per-layer: 69.67%
+#             - per-ch: 69.76%
+
+#             [ResNet50 / W8A32] (p=2)
+#             - per-layer: ??
+#             - per-ch: 76.11%
+
+#             [ResNet50 / W8A32] (p=2.4)
+#             - per-layer: ??
+#             - per-ch: 76.10%
+
+#             """
+#             # self.compute_qparams(_min, _max)
+#             # best_score = (self.forward(org_weight) - org_weight).norm(p=2)
+#             # best_min = _min.clone()
+#             # best_max = _max.clone()
+
+#             # n_iter = 100
+#             # for i in range(1, n_iter + 1):
+#             #     # 1% ~ 100%
+#             #     _tmp_min = _min / n_iter * i
+#             #     _tmp_max = _max / n_iter * i
+#             #     _tmp_scaler = (_tmp_max - _tmp_min) / (self._repr_max - self._repr_min)
+
+#             #     for zp in range(0, (self._repr_max - self._repr_min + 1)):
+#             #         _new_min = _tmp_min - zp * _tmp_scaler
+#             #         _new_max = _tmp_max - zp * _tmp_scaler
+
+#             #         self.compute_qparams(_new_min, _new_max)
+#             #         # -> Changed the scaler and zero_point
+
+#             #         _tmp_score = (self.forward(org_weight) - org_weight).norm(p=2)
+
+#             #         best_min = torch.where(_tmp_score < best_score, _tmp_min, best_min)
+#             #         best_max = torch.where(_tmp_score < best_score, _tmp_max, best_max)
+#             #         best_score = torch.min(_tmp_score, best_score)
+
+#             # # -> Findinf the best_min, best_max is done..
+#             # self.compute_qparams(best_min, best_max)
+
+#             ##[2]#########################################################################
+#             """
+#             myArgMinMax search
+#             [ResNet18 / W8A32] (p=2)
+#             - per-layer: 69.65%
+#             - per-ch: 69.76%
+
+#             [ResNet18 / W8A32] (p=2.4)
+#             - per-layer: 69.58%
+#             - per-ch: 69.76%
+
+#             [ResNet50 / W8A32] (p=2)
+#             - per-layer: ??
+#             - per-ch: 76.09%
+
+#             [ResNet50 / W8A32] (p=2.4)
+#             - per-layer: ??
+#             - per-ch: 76.09%
+
+
+#             """
+#             self.compute_qparams(_min, _max)
+#             best_score = (self.forward(org_weight) - org_weight).norm(p=2.4)
+#             best_min = _min.clone()
+#             best_max = _max.clone()
+
+#             _argsorted = torch.argsort(org_weight.view(-1))
+
+#             for i in range(1, int(len(_argsorted) / 2 + 1)):
+#                 if i / len(_argsorted) > 0.01:
+#                     break
+#                 for d_min, d_max in [(0, 1), (1, 0), (1, 1)]:
+#                     _tmp_min = org_weight.view(-1)[_argsorted[i - 1 + d_min]]
+#                     _tmp_max = org_weight.view(-1)[_argsorted[-i - d_max]]
+
+#                     self.compute_qparams(_tmp_min, _tmp_max)
+#                     # -> Changed the scaler and zero_point
+#                     _tmp_score = (self.forward(org_weight) - org_weight).norm(p=2)
+
+#                     best_min = torch.where(_tmp_score < best_score, _tmp_min, best_min)
+#                     best_max = torch.where(_tmp_score < best_score, _tmp_max, best_max)
+#                     best_score = torch.min(_tmp_score, best_score)
+
+#             # -> Findinf the best_min, best_max is done..
+#             self.compute_qparams(best_min, best_max)
+
+#             ##[origin]###########################################################################
+#             # """
+#             # [ResNet18 / W8A32]
+#             # - per-layer: 69.62%
+#             # - per-ch: 69.79%
+
+#             # [ResNet50 / W8A32]
+#             # - per-layer: ??
+#             # - per-ch: 76.09%
+#             # """
+#             # self.channel_wise = self.per_channel
+
+#             # def lp_loss(pred, tgt, p=2.0):
+#             #     x = (pred - tgt).abs().pow(p)
+#             #     if not self.channel_wise:
+#             #         return x.mean()
+#             #     else:
+#             #         y = torch.flatten(x, 1)
+#             #         return y.mean(1)
+
+#             # x = org_weight
+#             # self.channel_wise = self.per_channel
+#             # if self.channel_wise:
+#             #     y = torch.flatten(x, 1)
+#             #     x_min, x_max = torch.aminmax(y, dim=1)
+#             #     # may also have the one side distribution in some channels
+#             #     x_max = torch.max(x_max, torch.zeros_like(x_max))
+#             #     x_min = torch.min(x_min, torch.zeros_like(x_min))
+#             # else:
+#             #     x_min, x_max = torch.aminmax(x)
+#             # xrange = x_max - x_min
+#             # best_score = torch.zeros_like(x_min) + (1e10)
+#             # best_min = x_min.clone()
+#             # best_max = x_max.clone()
+#             # # enumerate xrange
+#             # self.num = 100
+
+#             # for i in range(1, self.num + 1):
+#             #     tmp_min = torch.zeros_like(x_min)
+#             #     tmp_max = xrange / self.num * i
+#             #     # tmp_delta = (tmp_max - tmp_min) / (2**self.n_bits - 1)
+#             #     tmp_delta = (tmp_max - tmp_min) / (self._repr_max - self._repr_min)
+#             #     # enumerate zp
+#             #     # for zp in range(0, self.n_levels):
+#             #     for zp in range(0, (self._repr_max - self._repr_min + 1)):
+#             #         new_min = tmp_min - zp * tmp_delta
+#             #         new_max = tmp_max - zp * tmp_delta
+#             #         self.compute_qparams(new_max, new_min)
+#             #         x_q = self.forward(x)
+#             #         score = lp_loss(x, x_q, 2.4)
+#             #         best_min = torch.where(score < best_score, new_min, best_min)
+#             #         best_max = torch.where(score < best_score, new_max, best_max)
+#             #         best_score = torch.min(best_score, score)
+
+#             # self.compute_qparams(best_min, best_max)
+#         else:
+#             # perform_1D_search [0, max]
+#             ...

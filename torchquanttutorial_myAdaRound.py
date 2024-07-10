@@ -1,6 +1,45 @@
 import torch, time
-from myAdaRound.utils import *
+import torch.nn as nn
+from myAdaRound.utils import QuantModule, GetDataset, evaluate
+from myAdaRound.data_utils import save_inp_oup_data
 import torchvision.models.resnet as resnet
+
+
+#################################################################################################
+## (option) 4. Compute AdaRound values
+#################################################################################################
+# calibration data loader code in AdaRound
+def get_train_samples(train_loader, num_samples):
+    train_data = []
+    for batch in train_loader:
+        train_data.append(batch[0])
+        if len(train_data) * batch[0].size(0) >= num_samples:
+            break
+    return torch.cat(train_data, dim=0)[:num_samples]
+
+
+def computeAdaRoundValues(model, layer, cali_data):
+    cached_inps, cached_outs = save_inp_oup_data(model, layer, cali_data)
+    print("    ", cached_inps.shape, cached_outs.shape)
+    return None
+
+
+def runAdaRound(model, train_loader, num_samples=1024) -> None:
+
+    model.eval()
+    cali_data = get_train_samples(train_loader, num_samples)
+
+    # 각 layer에 접속하는 함수
+    def _runAdaRound(module: nn.Module):
+        for name, module in module.named_children():
+            if isinstance(module, QuantModule):
+                computeAdaRoundValues(model, module, cali_data)
+            else:
+                _runAdaRound(module)
+
+    _runAdaRound(model)
+
+    return None
 
 
 #################################################################################################
@@ -9,6 +48,7 @@ import torchvision.models.resnet as resnet
 def main():
 
     # resnet18 Acc@1: 69.758%
+    # resnet50 Acc@1: 76.130%
     model = resnet.resnet18(weights="IMAGENET1K_V1")
     model.eval().to("cuda")
 
@@ -25,7 +65,7 @@ def main():
     #     f" Original model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"6165
     # )
 
-    def quant_module_refactor_wo_fuse(
+    def quant_module_refactor(
         module: nn.Module,
         weight_quant_params: dict = {},
         act_quant_params: dict = {},
@@ -41,43 +81,34 @@ def main():
                     QuantModule(child_module, weight_quant_params, act_quant_params),
                 )
             else:
-                quant_module_refactor_wo_fuse(
+                quant_module_refactor(
                     child_module, weight_quant_params, act_quant_params
                 )
 
     weight_quant_params = dict(
         # scheme="AbsMaxQuantizer",
         # scheme="MinMaxQuantizer",
-        scheme="L2DistanceQuantizer",
+        # scheme="L2DistanceQuantizer",
+        scheme="AdaRoundQuantizer",
         per_channel=True,
-        dstDtype="INT8",
+        dstDtype="INT4",
     )
     act_quant_params = {}
-    quant_module_refactor_wo_fuse(model, weight_quant_params, act_quant_params)
+    quant_module_refactor(model, weight_quant_params, act_quant_params)
     print("Qparams computing done...")
 
     # Count the number of QuantModule
-    # cnt = 0
-    # for name, module in model.named_modules():
-    #     if isinstance(module, QuantModule):
-    #         cnt += 1
-    #         print(f"    QuantModule: {name}, {module.weight.shape}")
+    cnt = 0
+    for name, module in model.named_modules():
+        if isinstance(module, QuantModule):
+            cnt += 1
+            print(f"    QuantModule: {name}, {module.weight.shape}")
 
-    # print(f"Total QuantModule: {cnt}")
+    print(f"Total QuantModule: {cnt}")
 
-    # def calibration():
-    #     _calib_len = 16
-    #     print(f"Calibration complited with {_batch_size * _calib_len} images...")
-    #     for i, (data, _) in enumerate(train_loader):
-    #         if i > _calib_len:
-    #             break
-    #         with torch.no_grad():
-    #             model(data.to("cuda"))
-
-    #     model.to("cuda")
-
-    # calibration()
-    # convert(model, inplace=True)
+    if weight_quant_params["scheme"] == "AdaRoundQuantizer":
+        runAdaRound(model, train_loader, num_samples=1024)
+        print(f"AdaRound values computing done...")
 
     _top1, _ = evaluate(
         model, test_loader, neval_batches=_num_eval_batches, device="cuda"
