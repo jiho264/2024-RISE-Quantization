@@ -49,7 +49,7 @@ def main():
         # scheme="AbsMaxQuantizer",
         scheme="MinMaxQuantizer",
         # scheme="L2DistanceQuantizer",
-        # per_channel=True,
+        per_channel=True,
         dstDtype="INT8",
     )
     act_quant_params = {}

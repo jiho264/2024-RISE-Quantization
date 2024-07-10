@@ -211,11 +211,15 @@ class AbsMaxQuantizer(UniformAffineQuantizer):
         else:
             _AbsMax = org_weight.abs().max()
 
-        # if s8, scaler = 2 * org_weight.abs().max() / (127 - (-128))
-        # if u8, scaler = 2 * org_weight.abs().max() / (255 - 0)
+        if self.signed == True:
+            # if s8, scaler = 2 * org_weight.abs().max() / (127 - (-128))
+            #               = org_weight.abs().max() - (-org_weight.abs().max()) / (127 - (-128))
+            self.compute_qparams(-_AbsMax, _AbsMax)
+        else:
+            # if u8, scaler = org_weight.abs().max() / (255 - 0)
+            self.compute_qparams(torch.zeros_like(_AbsMax), _AbsMax)
 
         # if s8 or u8, zero_point = 0
-        self.compute_qparams(-_AbsMax, _AbsMax)
         self.zero_point = torch.zeros_like(self._scaler)
 
         # for debug
@@ -243,16 +247,19 @@ class MinMaxQuantizer(UniformAffineQuantizer):
             _min = org_weight.min()
             _max = org_weight.max()
 
-        # if s8, scaler = (_max - _min) / (127 - (-128))
-        # if u8, scaler = (_max - _min) / (255 - 0)
-
-        # if s8, zero_point = -_min / scaler + (-128)
-        # if u8, zero_point = -_min / scaler + 0
-        self.compute_qparams(_min, _max)
+        # Same equation
+        if self.signed == True:
+            # if s8, scaler = (_max - _min) / (127 - (-128))
+            # if s8, zero_point = -_min / scaler + (-128)
+            self.compute_qparams(_min, _max)
+        else:
+            # if u8, scaler = (_max - _min) / (255 - 0)
+            # if u8, zero_point = -_min / scaler + 0
+            self.compute_qparams(_min, _max)
 
         # for debug
         # print(self.scaler.shape, self.zero_point.shape)
-        print(self._scaler, self._zero_point)
+        # print(self._scaler, self._zero_point)
 
 
 class L2DistanceQuantizer(UniformAffineQuantizer):
@@ -282,10 +289,9 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
             best_min = _min.clone()
             best_max = _max.clone()
 
-            for i in range(0, 999):
-                _tmp_min = _min * (1000 - i) / 1000  # 100%, 99%, 98%, ..., 1%
-                _tmp_max = _max * (1000 - i) / 1000  # 100%, 99%, 98%, ..., 1%
-
+            for i in range(0, 99):
+                _tmp_min = _min * (100 - i / 2) / 100
+                _tmp_max = _max * (100 - i / 2) / 100
                 self.compute_qparams(_tmp_min, _tmp_max)
                 # -> Changed the scaler and zero_point
 
@@ -299,7 +305,7 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
             # -> Findinf the best_min, best_max is done..
             self.compute_qparams(best_min, best_max)
             # print(best_min.shape, best_max.shape)
-            print(self._scaler, self._zero_point)
+            # print(self._scaler, self._zero_point)
             # -> end
         else:
             # perform_1D_search [0, max]
