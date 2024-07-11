@@ -385,7 +385,6 @@ class AdaRoundQuantizer(MinMaxQuantizer):
 
         assert (_residual - self._h()).abs().sum() == 0
 
-    # [ ] 미완성
     def _h(self) -> Tensor:
         # _rectified_sigmoid (strached sigmoid function)
         # return {0, 1} when v is determined.
@@ -394,10 +393,12 @@ class AdaRoundQuantizer(MinMaxQuantizer):
             self._v.sigmoid() * (self.zeta - self.gamma) + self.gamma, 0, 1
         )
 
-    # # [ ] 미완성
-    # def f_reg(self, beta=2.0) -> Tensor:
-    #     # _regularization_term for determining the v
-    #     return (1 - (2 * self._h() - 1).abs().pow(beta)).sum()
+    def f_reg(self, beta=2.0) -> Tensor:
+        # _regularization_term for determining the v
+        # my
+        return (1 - (2 * self._h() - 1).abs().pow(beta)).sum()
+        # org. but same.
+        # return (1 - ((self._h() - 0.5).abs() * 2).pow(beta)).sum()
 
     def _quantize(self, input: Tensor) -> Tensor:
         if self.rouning_value == None:
