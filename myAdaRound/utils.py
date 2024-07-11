@@ -355,7 +355,7 @@ class AdaRoundQuantizer(MinMaxQuantizer):
 
         self.zeta = 1.1  # fixed param for function h()
         self.gamma = -0.1  # fixed pamam for function h()
-        self.lamda = 0.1  # lambda. fixed param for regularization function f()
+        self.lamda = 1  # lambda. fixed param for regularization function f()
 
         self._v = None
         self._init_v(org_weight=org_weight)

@@ -39,14 +39,14 @@ def _computeAdaRoundValues(model, layer, cali_data):
         _reg_loss = 0
         _beta = 0
 
-        # # [3] regularization term (option 66% -> 68%)
-        # if i < n_iter * 0.2:
-        #     _reg_loss = 0
-        # else:
-        #     _beta = i / n_iter * 18 + 2  # 2 ~ 20
-        #     _reg_loss = layer.weight_quantizer.lamda * layer.weight_quantizer.f_reg(
-        #         beta=_beta
-        #     )
+        # [3] regularization term (option 66% -> 68%)
+        if i < n_iter * 0.2:
+            _reg_loss = 0
+        else:
+            _beta = i / n_iter * 18 + 2  # 2 ~ 20
+            _reg_loss = layer.weight_quantizer.lamda * layer.weight_quantizer.f_reg(
+                beta=_beta
+            )
         loss = _l2_loss + _reg_loss
         loss.backward()
         optimizer.step()
@@ -109,13 +109,16 @@ def main():
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
 
     _num_eval_batches = len(test_loader)
-    # _num_eval_batches = 32
-    # _top1, _ = evaluate(
-    #     model, test_loader, neval_batches=_num_eval_batches, device="cuda"
-    # )
-    # print(
-    #     f" Original model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
-    # )
+    _num_eval_batches = 32
+
+    # for benchmarking
+    if _num_eval_batches == len(test_loader):
+        _top1, _ = evaluate(
+            model, test_loader, neval_batches=_num_eval_batches, device="cuda"
+        )
+        print(
+            f" Original model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
+        )
 
     def _quant_module_refactor(
         module: nn.Module,
