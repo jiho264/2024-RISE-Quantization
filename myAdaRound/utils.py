@@ -307,13 +307,11 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
 
             for i in range(1, int(len(_argsorted) / 2 + 1)):
                 if i / len(_argsorted) > 0.001:
-                    # Percentile method mostly used 0.01% ~ 0.00001%.
                     # the combination of smallest 0.05% and largest 0.05% is enough.
                     # if compute all combination, there are huge overhead without significant improvement.
                     break
                 for d_min, d_max in [(0, 1), (1, 0), (1, 1)]:
                     # Consider all combination of min, max
-                    # Index : (min, max), (min, max-1), (min+1, max), (min+1, max+-1)
                     # if range is [0, 9], compute l2 distance of (0, 8), (1, 9), (1, 8) also (0, 9) is considered in before of For loop (initiated best[min, max])
                     _tmp_min = org_weight.view(-1)[_argsorted[i - 1 + d_min]]
                     _tmp_max = org_weight.view(-1)[_argsorted[-i - d_max]]
