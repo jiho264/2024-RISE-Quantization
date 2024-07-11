@@ -82,7 +82,7 @@ def main():
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
 
     _num_eval_batches = len(test_loader)
-    # _num_eval_batches = 32
+    _num_eval_batches = 32
     # _top1, _ = evaluate(
     #     model, test_loader, neval_batches=_num_eval_batches, device="cuda"
     # )
@@ -113,10 +113,10 @@ def main():
     weight_quant_params = dict(
         # scheme="AbsMaxQuantizer",
         # scheme="MinMaxQuantizer",
-        scheme="L2DistanceQuantizer",
-        # scheme="AdaRoundQuantizer",
+        # scheme="L2DistanceQuantizer",
+        scheme="AdaRoundQuantizer",
         per_channel=True,
-        dstDtype="INT8",
+        dstDtype="INT4",
     )
     act_quant_params = {}
     _quant_module_refactor(model, weight_quant_params, act_quant_params)

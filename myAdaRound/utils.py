@@ -339,8 +339,14 @@ class AdaRoundQuantizer(MinMaxQuantizer):
         """
         Ref: Up or Down? Adaptive Rounding for Post-Training Quantization
         - https://proceedings.mlr.press/v119/nagel20a/nagel20a.pdf
+
+        ## ResNet18 / W4A32 per-ch / MinMaxQuantizer
+        # round -> 58.24%
+        # ceil -> 0.10%
+        # floor -> 0.11%
+        # randomly half floor, half ceil -> 18.00%
         """
-        # print("- AdaRoundQuantizer are baesd on MinMaxQuantizer.")
+        # print("- AdaRoundQuantizer is baesd on MinMaxQuantizer.")
         # print("- Just, add more Qparam as Rounding Value.")
 
         super(AdaRoundQuantizer, self).__init__(org_weight, args)
@@ -349,34 +355,45 @@ class AdaRoundQuantizer(MinMaxQuantizer):
         self.fp_outputs = None
         # -> Now, We have MinMaxQuantizer's scaler and zero_point!
 
-    #     # [ ] 미완성
-    #     self._rounding_value = torch.where(torch.rand_like(org_weight) > 0.5, 1, 0)
-    #     self.v = torch.zeros_like(org_weight)
+        # [ ] 미완성
+        self._rounding_value = None
+        self._v = torch.zeros_like(org_weight)
 
-    #     self.zeta = 1.1  # fixed value
-    #     self.gamma = -0.1  # fixed value
+        self.zeta = 1.1  # fixed value
+        self.gamma = -0.1  # fixed value
 
-    #     self.rambda = 0.1
+        self.rambda = 0.1
 
-    # # [ ] 미완성
-    # def _rectified_sigmoid(self, v: Tensor) -> Tensor:
-    #     return torch.clamp(v.sigmoid() * (self.zeta - self.gamma), 0, 1)
+        self.theEndFlag = False
 
-    # # [ ] 미완성
-    # def _regularization_term(self, beta=2.0) -> Tensor:
-    #     # return {near 0 or near 1} -> meaning is that determine factor of the rounding.
-    #     return 1 - (2 * self._rectified_sigmoid(self.v) - 1).abs().pow(beta)
+    # [ ] 미완성
+    def _h(self) -> Tensor:
+        # _rectified_sigmoid (strached sigmoid function)
+        # return {0, 1} when v is determined.
+        # return [0, 1] when v is not determined.
+        return torch.clamp(self._v.sigmoid() * (self.zeta - self.gamma), 0, 1)
+
+    # [ ] 미완성
+    def _f_reg(self, beta=2.0) -> Tensor:
+        # _regularization_term for determining the v
+        return 1 - (2 * self._h(self._v) - 1).abs().pow(beta)
+
+    def setRoungingValue(self):
+        _tmp_h = self._h().clone().detach()
+        _tmp_h_2 = _tmp_h.clone().int().float()
+
+        assert _tmp_h != _tmp_h_2, "The output of h(v) has FP value."
+
+        self.theEndFlag = True
 
     def _quantize(self, input: Tensor) -> Tensor:
-        ## ResNet18 / W4A32 per-ch / MinMaxQuantizer
-        # round -> 58.24%
-        # ceil -> 0.10%
-        # floor -> 0.11%
-        # randomly half floor, half ceil -> 18.00%
+        if self.theEndFlag == False:
+            roundingValue = self._h()
+        else:
+            roundingValue = self._rounding_value
 
         return torch.clamp(
-            (input / self._scaler).round()
-            + self._zero_point,  # + self._rounding_value,
+            (input / self._scaler).round() + self._zero_point + roundingValue,
             self._repr_min,
             self._repr_max,
         )
