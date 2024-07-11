@@ -28,7 +28,7 @@ def _computeAdaRoundValues(model, layer, cali_data):
     Y_hat = layer.forward(quantized_act_input).view(-1)
     optimizer = torch.optim.Adam([layer.weight_quantizer._v], lr=0.01)
 
-    n_iter = 5001
+    n_iter = 10001
     for i in range(0, n_iter):
         optimizer.zero_grad()
         Y_hat = layer.forward(quantized_act_input)  # Y_hat = W_hat * X_hat
@@ -75,7 +75,7 @@ def runAdaRound(model, train_loader, num_samples=1024) -> None:
                 module.w_quant_enable = False
                 _, FP_OUTPUTS = save_inp_oup_data(model, module, cali_data)
                 module.fp_outputs = FP_OUTPUTS
-                # print("   ", module.fp_outputs.shape)
+                print("   ", module.fp_outputs.shape)
             else:
                 _getFpInputOutput(module)
 
@@ -109,7 +109,7 @@ def main():
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
 
     _num_eval_batches = len(test_loader)
-    _num_eval_batches = 32
+    # _num_eval_batches = 32
     # _top1, _ = evaluate(
     #     model, test_loader, neval_batches=_num_eval_batches, device="cuda"
     # )
@@ -147,7 +147,7 @@ def main():
     )
     act_quant_params = {}
     _quant_module_refactor(model, weight_quant_params, act_quant_params)
-    print("Qparams computing done...")
+    print("Qparams computing done!")
 
     # Count the number of QuantModule
     cnt = 0
@@ -160,7 +160,7 @@ def main():
 
     if weight_quant_params["scheme"] == "AdaRoundQuantizer":
         runAdaRound(model, train_loader, num_samples=1024)
-        print(f"AdaRound values computing done...")
+        print(f"AdaRound values computing done!")
 
     _top1, _ = evaluate(
         model, test_loader, neval_batches=_num_eval_batches, device="cuda"
@@ -172,7 +172,7 @@ def main():
 
 
 if __name__ == "__main__":
-    print("ResNet18 quantization with myAdaRound...")
+    print("ResNet18 quantization with myAdaRound!")
     torch.manual_seed(0)
     torch.cuda.manual_seed(0)
     torch.backends.cudnn.deterministic = True

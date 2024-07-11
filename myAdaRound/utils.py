@@ -400,11 +400,19 @@ class AdaRoundQuantizer(MinMaxQuantizer):
     #     return (1 - (2 * self._h() - 1).abs().pow(beta)).sum()
 
     def _quantize(self, input: Tensor) -> Tensor:
-        return torch.clamp(
-            (input / self._scaler).round() + self._zero_point + self._h(),
-            self._repr_min,
-            self._repr_max,
-        )
+        if self.rouning_value == None:
+            return torch.clamp(
+                (input / self._scaler).round() + self._zero_point + self._h(),
+                self._repr_min,
+                self._repr_max,
+            )
+        else:
+            print(",", end="")
+            return torch.clamp(
+                (input / self._scaler).round() + self._zero_point + self.rouning_value,
+                self._repr_min,
+                self._repr_max,
+            )
 
     def complited(self):
         # self.rouning_value = self._h().clone().detach() # 이게 맞음
@@ -460,7 +468,7 @@ class QuantModule(nn.Module):
             # print("q", end="")
             weight = self.weight_quantizer(self.weight)
         else:
-            # print(".", end="")
+            print(".", end="")
             weight = self.weight
         return self.fwd_func(x, weight, **self.fwd_kwargs)
 
