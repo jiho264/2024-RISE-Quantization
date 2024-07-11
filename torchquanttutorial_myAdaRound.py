@@ -1,7 +1,7 @@
 import torch, time
 import torch.nn as nn
 from myAdaRound.utils import QuantModule, GetDataset, evaluate
-from myAdaRound.data_utils import _save_inp_oup_data
+from myAdaRound.data_utils import save_inp_oup_data
 import torchvision.models.resnet as resnet
 
 
@@ -19,18 +19,45 @@ def _get_train_samples(train_loader, num_samples):
 
 
 def _computeAdaRoundValues(model, layer, cali_data):
-    # to optain the X_hat which is the output of the previous quantized layers
+    # [1] get X_hat_input, Y_fp
     layer.w_quant_enable = True
-    x_hat_inputs, _ = _save_inp_oup_data(model, layer, cali_data)
+    quantized_act_input, _ = save_inp_oup_data(model, layer, cali_data)
+    Y_fp = layer.fp_outputs  # Y = W * X / it is constant
 
-    print("   ", x_hat_inputs.shape)
+    # [2] init values
+    Y_hat = layer.forward(quantized_act_input).view(-1)
+    optimizer = torch.optim.Adam([layer.weight_quantizer._v], lr=0.01)
 
-    Y = layer.fp_outputs.view(-1)  # Y = W * X / it is constant
+    n_iter = 5001
+    for i in range(0, n_iter):
+        optimizer.zero_grad()
+        Y_hat = layer.forward(quantized_act_input)  # Y_hat = W_hat * X_hat
 
-    Y_hat = layer.forward(x_hat_inputs).view(-1)  # Y_hat = W_hat * X_hat
-    _norm = torch.norm(Y - Y_hat, p=2)
-    print(_norm)
-    # [ ] implement more details
+        _l2_loss = torch.mean((Y_hat - Y_fp) ** 2)
+
+        # rest for 20% of the iterations
+        _reg_loss = 0
+        _beta = 0
+
+        # # [3] regularization term (option 66% -> 68%)
+        # if i < n_iter * 0.2:
+        #     _reg_loss = 0
+        # else:
+        #     _beta = i / n_iter * 18 + 2  # 2 ~ 20
+        #     _reg_loss = layer.weight_quantizer.lamda * layer.weight_quantizer.f_reg(
+        #         beta=_beta
+        #     )
+        loss = _l2_loss + _reg_loss
+        loss.backward()
+        optimizer.step()
+        if i % 500 == 0 or i == 0:
+            print(
+                f"iter: {i: 4d}, l2 loss: {loss.item():.4f}, reg_loss: {_reg_loss:.4f}, beta = {_beta:.2f}"
+            )
+
+    torch.cuda.empty_cache()
+    layer.weight_quantizer.complited()
+
     return None
 
 
@@ -41,14 +68,14 @@ def runAdaRound(model, train_loader, num_samples=1024) -> None:
     cali_data = _get_train_samples(train_loader, num_samples)
     cali_data = _get_train_samples(train_loader, 128)
 
-    # Optain the ORIGIN input and output data of each layer
+    # Optaining the ORIGIN input and output data of each layer
     def _getFpInputOutput(module: nn.Module):
         for name, module in module.named_children():
             if isinstance(module, QuantModule):
                 module.w_quant_enable = False
-                _, FP_OUTPUTS = _save_inp_oup_data(model, module, cali_data)
+                _, FP_OUTPUTS = save_inp_oup_data(model, module, cali_data)
                 module.fp_outputs = FP_OUTPUTS
-                print("   ", module.fp_outputs.shape)
+                # print("   ", module.fp_outputs.shape)
             else:
                 _getFpInputOutput(module)
 

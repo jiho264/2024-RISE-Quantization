@@ -350,53 +350,71 @@ class AdaRoundQuantizer(MinMaxQuantizer):
         # print("- Just, add more Qparam as Rounding Value.")
 
         super(AdaRoundQuantizer, self).__init__(org_weight, args)
-        self.enable = False
-        self.fp_inputs = None
         self.fp_outputs = None
         # -> Now, We have MinMaxQuantizer's scaler and zero_point!
 
-        # [ ] 미완성
-        self._rounding_value = None
-        self._v = torch.zeros_like(org_weight)
+        self.zeta = 1.1  # fixed param for function h()
+        self.gamma = -0.1  # fixed pamam for function h()
+        self.lamda = 0.1  # lambda. fixed param for regularization function f()
 
-        self.zeta = 1.1  # fixed value
-        self.gamma = -0.1  # fixed value
+        self._v = None
+        self._init_v(org_weight=org_weight)
+        self.rouning_value = None
 
-        self.rambda = 0.1
+    # [1] init the v value. (h(v) == rounding value)
+    def _init_v(self, org_weight: Tensor):
+        # [1-1] compute the residual == initial h(v)
+        _x_q_round = torch.clamp(
+            (org_weight / self._scaler).round() + self._zero_point,
+            self._repr_min,
+            self._repr_max,
+        )
+        _x_q_floor = torch.clamp(
+            (org_weight / self._scaler).floor() + self._zero_point,
+            self._repr_min,
+            self._repr_max,
+        )
 
-        self.theEndFlag = False
+        _residual = _x_q_round - _x_q_floor
+        assert torch.all((_residual == 0) | (_residual == 1)), "The residual is {0, 1}."
+
+        # [1-2] compute the v value using inverse h() function
+        _v = -torch.log((self.zeta - self.gamma) / (_residual - self.gamma) - 1)  # h^-1
+
+        self._v = nn.Parameter(_v, requires_grad=True)
+
+        assert (_residual - self._h()).abs().sum() == 0
 
     # [ ] 미완성
     def _h(self) -> Tensor:
         # _rectified_sigmoid (strached sigmoid function)
         # return {0, 1} when v is determined.
         # return [0, 1] when v is not determined.
-        return torch.clamp(self._v.sigmoid() * (self.zeta - self.gamma), 0, 1)
+        return torch.clamp(
+            self._v.sigmoid() * (self.zeta - self.gamma) + self.gamma, 0, 1
+        )
 
-    # [ ] 미완성
-    def _f_reg(self, beta=2.0) -> Tensor:
-        # _regularization_term for determining the v
-        return 1 - (2 * self._h(self._v) - 1).abs().pow(beta)
-
-    def setRoungingValue(self):
-        _tmp_h = self._h().clone().detach()
-        _tmp_h_2 = _tmp_h.clone().int().float()
-
-        assert _tmp_h != _tmp_h_2, "The output of h(v) has FP value."
-
-        self.theEndFlag = True
+    # # [ ] 미완성
+    # def f_reg(self, beta=2.0) -> Tensor:
+    #     # _regularization_term for determining the v
+    #     return (1 - (2 * self._h() - 1).abs().pow(beta)).sum()
 
     def _quantize(self, input: Tensor) -> Tensor:
-        if self.theEndFlag == False:
-            roundingValue = self._h()
-        else:
-            roundingValue = self._rounding_value
-
         return torch.clamp(
-            (input / self._scaler).round() + self._zero_point + roundingValue,
+            (input / self._scaler).round() + self._zero_point + self._h(),
             self._repr_min,
             self._repr_max,
         )
+
+    def complited(self):
+        # self.rouning_value = self._h().clone().detach() # 이게 맞음
+        self.rouning_value = (
+            self._h().clone().detach().round()
+        )  # 임시방편으로 더 가까운 rounding value 이용
+
+        assert torch.all(
+            (self.rouning_value == 0) | (self.rouning_value == 1)
+        ), "The rounding value have to be {0, 1}."
 
 
 class QuantModule(nn.Module):
@@ -439,10 +457,10 @@ class QuantModule(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         if self.w_quant_enable == True:
-            print("q", end="")
+            # print("q", end="")
             weight = self.weight_quantizer(self.weight)
         else:
-            print(".", end="")
+            # print(".", end="")
             weight = self.weight
         return self.fwd_func(x, weight, **self.fwd_kwargs)
 

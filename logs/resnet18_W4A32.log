@@ -1,0 +1,259 @@
+ResNet18 quantization with myAdaRound...
+Qparams computing done...
+    QuantModule: conv1, torch.Size([64, 3, 7, 7])
+    QuantModule: layer1.0.conv1, torch.Size([64, 64, 3, 3])
+    QuantModule: layer1.0.conv2, torch.Size([64, 64, 3, 3])
+    QuantModule: layer1.1.conv1, torch.Size([64, 64, 3, 3])
+    QuantModule: layer1.1.conv2, torch.Size([64, 64, 3, 3])
+    QuantModule: layer2.0.conv1, torch.Size([128, 64, 3, 3])
+    QuantModule: layer2.0.conv2, torch.Size([128, 128, 3, 3])
+    QuantModule: layer2.0.downsample.0, torch.Size([128, 64, 1, 1])
+    QuantModule: layer2.1.conv1, torch.Size([128, 128, 3, 3])
+    QuantModule: layer2.1.conv2, torch.Size([128, 128, 3, 3])
+    QuantModule: layer3.0.conv1, torch.Size([256, 128, 3, 3])
+    QuantModule: layer3.0.conv2, torch.Size([256, 256, 3, 3])
+    QuantModule: layer3.0.downsample.0, torch.Size([256, 128, 1, 1])
+    QuantModule: layer3.1.conv1, torch.Size([256, 256, 3, 3])
+    QuantModule: layer3.1.conv2, torch.Size([256, 256, 3, 3])
+    QuantModule: layer4.0.conv1, torch.Size([512, 256, 3, 3])
+    QuantModule: layer4.0.conv2, torch.Size([512, 512, 3, 3])
+    QuantModule: layer4.0.downsample.0, torch.Size([512, 256, 1, 1])
+    QuantModule: layer4.1.conv1, torch.Size([512, 512, 3, 3])
+    QuantModule: layer4.1.conv2, torch.Size([512, 512, 3, 3])
+    QuantModule: fc, torch.Size([1000, 512])
+Total QuantModule: 21
+iter:    0, l2 loss: 17.5419, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.3408, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0483, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0282, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0269, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0264, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0260, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0257, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0255, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0253, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0252, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 17.0687, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.3035, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0364, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0168, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0155, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0151, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0148, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0146, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0144, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0143, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0142, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 1.1636, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0251, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0068, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0056, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0054, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0053, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0052, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0051, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0051, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0051, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0051, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 20.2285, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.3331, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0443, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0252, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0233, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0227, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0221, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0217, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0213, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0210, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0208, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 0.6327, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0185, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0083, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0075, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0074, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0073, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0072, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0072, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0072, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0072, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0072, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 15.5200, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.2931, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0702, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0551, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0535, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0525, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0515, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0508, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0502, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0499, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0496, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 2.3012, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0460, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0114, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0089, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0087, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0085, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0084, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0083, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0083, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0082, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0082, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 0.3088, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0147, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0095, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0092, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0091, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0090, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0090, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0090, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0090, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0090, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0090, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 8.9242, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.1544, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0336, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0261, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0250, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0244, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0239, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0234, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0231, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0229, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0227, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 0.3929, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0118, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0062, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0057, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0056, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0055, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0055, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0054, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0054, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0054, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0054, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 5.6377, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.1186, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0417, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0364, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0353, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0345, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0339, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0335, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0332, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0331, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0330, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 3.9899, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0780, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0202, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0162, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0156, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0152, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0149, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0147, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0146, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0145, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0145, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 0.0520, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0033, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0025, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0024, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0024, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0023, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0023, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0023, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0023, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0023, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0023, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 6.3606, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.1019, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0253, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0213, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0204, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0197, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0192, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0187, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0184, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0181, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0180, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 0.3604, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0090, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0050, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0046, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0043, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0042, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0041, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0041, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0040, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0040, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0040, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 4.0440, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0670, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0282, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0257, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0245, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0235, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0227, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0221, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0218, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0215, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0213, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 0.9965, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0182, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0073, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0066, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0062, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0059, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0057, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0056, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0055, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0054, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0054, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 0.1564, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0068, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0045, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0043, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0042, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0041, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0041, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0041, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0041, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0041, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0041, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 3.9757, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0683, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0507, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0455, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0417, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0391, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0374, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0363, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0356, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0352, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0349, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 0.7993, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 0.0218, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 0.0090, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 0.0080, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 0.0078, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 0.0076, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 0.0075, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 0.0074, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 0.0073, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 0.0073, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 0.0073, reg_loss: 0.0000, beta = 0.00
+iter:    0, l2 loss: 142.2095, reg_loss: 0.0000, beta = 0.00
+iter:  500, l2 loss: 4.2847, reg_loss: 0.0000, beta = 0.00
+iter:  1000, l2 loss: 1.9571, reg_loss: 0.0000, beta = 0.00
+iter:  1500, l2 loss: 1.8024, reg_loss: 0.0000, beta = 0.00
+iter:  2000, l2 loss: 1.7714, reg_loss: 0.0000, beta = 0.00
+iter:  2500, l2 loss: 1.7494, reg_loss: 0.0000, beta = 0.00
+iter:  3000, l2 loss: 1.7344, reg_loss: 0.0000, beta = 0.00
+iter:  3500, l2 loss: 1.7253, reg_loss: 0.0000, beta = 0.00
+iter:  4000, l2 loss: 1.7199, reg_loss: 0.0000, beta = 0.00
+iter:  4500, l2 loss: 1.7169, reg_loss: 0.0000, beta = 0.00
+iter:  5000, l2 loss: 1.7152, reg_loss: 0.0000, beta = 0.00
+AdaRound values computing done...
+
+ Quantized model Evaluation accuracy on 4096 images, 71.24
+Total time: 362.81 sec
