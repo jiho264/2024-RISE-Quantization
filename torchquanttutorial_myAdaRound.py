@@ -1,7 +1,7 @@
 import torch, time
 import torch.nn as nn
 from myAdaRound.utils import QuantModule, GetDataset, evaluate
-from myAdaRound.data_utils import save_inp_oup_data
+from myAdaRound.data_utils import _save_inp_oup_data
 import torchvision.models.resnet as resnet
 
 
@@ -9,7 +9,7 @@ import torchvision.models.resnet as resnet
 ## (option) 4. Compute AdaRound values
 #################################################################################################
 # calibration data loader code in AdaRound
-def get_train_samples(train_loader, num_samples):
+def _get_train_samples(train_loader, num_samples):
     train_data = []
     for batch in train_loader:
         train_data.append(batch[0])
@@ -18,10 +18,10 @@ def get_train_samples(train_loader, num_samples):
     return torch.cat(train_data, dim=0)[:num_samples]
 
 
-def computeAdaRoundValues(model, layer, cali_data):
-
+def _computeAdaRoundValues(model, layer, cali_data):
+    # to optain the X_hat which is the output of the previous quantized layers
     layer.w_quant_enable = True
-    x_hat_inputs, _ = save_inp_oup_data(model, layer, cali_data)
+    x_hat_inputs, _ = _save_inp_oup_data(model, layer, cali_data)
 
     print("   ", x_hat_inputs.shape)
 
@@ -38,15 +38,15 @@ def runAdaRound(model, train_loader, num_samples=1024) -> None:
 
     model.eval()
 
-    cali_data = get_train_samples(train_loader, num_samples)
-    cali_data = get_train_samples(train_loader, 128)
+    cali_data = _get_train_samples(train_loader, num_samples)
+    cali_data = _get_train_samples(train_loader, 128)
 
     # Optain the ORIGIN input and output data of each layer
     def _getFpInputOutput(module: nn.Module):
         for name, module in module.named_children():
             if isinstance(module, QuantModule):
                 module.w_quant_enable = False
-                _, FP_OUTPUTS = save_inp_oup_data(model, module, cali_data)
+                _, FP_OUTPUTS = _save_inp_oup_data(model, module, cali_data)
                 module.fp_outputs = FP_OUTPUTS
                 print("   ", module.fp_outputs.shape)
             else:
@@ -58,7 +58,7 @@ def runAdaRound(model, train_loader, num_samples=1024) -> None:
     def _runAdaRound(module: nn.Module):
         for name, module in module.named_children():
             if isinstance(module, QuantModule):
-                computeAdaRoundValues(model, module, cali_data)
+                _computeAdaRoundValues(model, module, cali_data)
             else:
                 _runAdaRound(module)
 
@@ -82,15 +82,15 @@ def main():
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
 
     _num_eval_batches = len(test_loader)
-    _num_eval_batches = 32
+    # _num_eval_batches = 32
     # _top1, _ = evaluate(
     #     model, test_loader, neval_batches=_num_eval_batches, device="cuda"
     # )
     # print(
-    #     f" Original model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"6165
+    #     f" Original model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
     # )
 
-    def quant_module_refactor(
+    def _quant_module_refactor(
         module: nn.Module,
         weight_quant_params: dict = {},
         act_quant_params: dict = {},
@@ -106,20 +106,20 @@ def main():
                     QuantModule(child_module, weight_quant_params, act_quant_params),
                 )
             else:
-                quant_module_refactor(
+                _quant_module_refactor(
                     child_module, weight_quant_params, act_quant_params
                 )
 
     weight_quant_params = dict(
         # scheme="AbsMaxQuantizer",
         # scheme="MinMaxQuantizer",
-        # scheme="L2DistanceQuantizer",
-        scheme="AdaRoundQuantizer",
+        scheme="L2DistanceQuantizer",
+        # scheme="AdaRoundQuantizer",
         per_channel=True,
-        dstDtype="INT4",
+        dstDtype="INT8",
     )
     act_quant_params = {}
-    quant_module_refactor(model, weight_quant_params, act_quant_params)
+    _quant_module_refactor(model, weight_quant_params, act_quant_params)
     print("Qparams computing done...")
 
     # Count the number of QuantModule

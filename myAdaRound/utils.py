@@ -161,7 +161,7 @@ class UniformAffineQuantizer(nn.Module):
             self._repr_min = 0  # "UINT8" -> 0
             self._repr_max = 2 ** (self._n_bits) - 1  # "UINT8" -> 255
 
-        # per_ch option is "store_true
+        # per_ch option is "store_true"
         self.per_channel = args.get("per_channel") if args.get("per_channel") else False
         self._n_ch = len(org_weight.size()) if self.per_channel else 1
         self._scaler = None
@@ -222,9 +222,6 @@ class AbsMaxQuantizer(UniformAffineQuantizer):
         # if s8 or u8, zero_point = 0
         self.zero_point = torch.zeros_like(self._scaler)
 
-        # for debug
-        # print(self.scaler.shape, self.zero_point.shape)
-
 
 class MinMaxQuantizer(UniformAffineQuantizer):
     def __init__(self, org_weight, args):
@@ -251,7 +248,6 @@ class MinMaxQuantizer(UniformAffineQuantizer):
             _min = org_weight.min()
             _max = org_weight.max()
 
-        # Same equation
         if self.signed == True:
             # if s8, scaler = (_max - _min) / (127 - (-128))
             # if s8, zero_point = -_min / scaler + (-128)
@@ -261,31 +257,17 @@ class MinMaxQuantizer(UniformAffineQuantizer):
             # if u8, zero_point = -_min / scaler + 0
             self.compute_qparams(_min, _max)
 
-        # for debug
-        # print(self.scaler.shape, self.zero_point.shape)
-        # print(self._scaler, self._zero_point)
-
 
 class L2DistanceQuantizer(UniformAffineQuantizer):
     def __init__(self, org_weight, args):
         """
-        Args:
-            args (dict): for UniformAffineQuantizer
-            org_weight (Tensor): have to need for determine the scaling factor
-        """
-        super(L2DistanceQuantizer, self).__init__(org_weight, args)
+        [ L2DistanceQuantizer ]
+        - Consider the L2 distance between the original weight and the quantized weight.
+        - The [Min, Max] range for computing Qparams are determined by the L2 distance Score.
+        - The [Min, Max] combination candicates are smallest p% and largest p% of the sorted weight. respectively.
+            - I think that considering about 0.01% ~ 0.00001% is enough. (inspired by the percentile method)
 
-        if self.per_channel == True:
-            _min = org_weight.view(org_weight.size(0), -1).min(dim=1).values
-            _max = org_weight.view(org_weight.size(0), -1).max(dim=1).values
-        else:
-            _min = org_weight.min()
-            _max = org_weight.max()
-
-        if self.signed == True:
-            # perform_2D_search [min, max]
-            """
-            myArgMinMax search
+        # perform_2D_search [min, max]
             [ResNet18 / W8A32] (p=2)
             - per-layer: 69.65%
             - per-ch: 69.76%
@@ -302,7 +284,20 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
             - per-layer: 75.95%
             - per-ch: 76.09%
 
-            """
+        # perform_1D_search [0, max]
+            [ ] perform_1D_search >> NOT YET
+        """
+        super(L2DistanceQuantizer, self).__init__(org_weight, args)
+
+        if self.per_channel == True:
+            _min = org_weight.view(org_weight.size(0), -1).min(dim=1).values
+            _max = org_weight.view(org_weight.size(0), -1).max(dim=1).values
+        else:
+            _min = org_weight.min()
+            _max = org_weight.max()
+
+        if self.signed == True:
+            # perform_2D_search [min, max]
             self.compute_qparams(_min, _max)
             best_score = (self.forward(org_weight) - org_weight).norm(p=2)
             best_min = _min.clone()
@@ -311,11 +306,15 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
             _argsorted = torch.argsort(org_weight.view(-1))
 
             for i in range(1, int(len(_argsorted) / 2 + 1)):
-                if i / len(_argsorted) > 0.01:
+                if i / len(_argsorted) > 0.001:
+                    # Percentile method mostly used 0.01% ~ 0.00001%.
+                    # the combination of smallest 0.05% and largest 0.05% is enough.
+                    # if compute all combination, there are huge overhead without significant improvement.
                     break
                 for d_min, d_max in [(0, 1), (1, 0), (1, 1)]:
                     # Consider all combination of min, max
                     # Index : (min, max), (min, max-1), (min+1, max), (min+1, max+-1)
+                    # if range is [0, 9], compute l2 distance of (0, 8), (1, 9), (1, 8) also (0, 9) is considered in before of For loop.
                     _tmp_min = org_weight.view(-1)[_argsorted[i - 1 + d_min]]
                     _tmp_max = org_weight.view(-1)[_argsorted[-i - d_max]]
 
@@ -386,7 +385,7 @@ class AdaRoundQuantizer(MinMaxQuantizer):
 
 
 class QuantModule(nn.Module):
-    def __init__(self, org_module, weight_quant_params, act_quant_params):
+    def __init__(self, org_module, w_params, act_quant_params):
         super(QuantModule, self).__init__()
         """forward function setting"""
         if isinstance(org_module, nn.Conv2d):
@@ -403,23 +402,22 @@ class QuantModule(nn.Module):
 
         self.weight = org_module.weight.clone().detach()
 
+        quantizerDict = {
+            "AbsMaxQuantizer": AbsMaxQuantizer,
+            "MinMaxQuantizer": MinMaxQuantizer,
+            "L2DistanceQuantizer": L2DistanceQuantizer,
+            "AdaRoundQuantizer": AdaRoundQuantizer,
+        }
+
         """weight quantizer"""
         self.w_quant_enable = True  # default is True. Need false option when only compute adaround values.
-        w_quantizer_type = weight_quant_params.get("scheme")
 
-        if w_quantizer_type == "AbsMaxQuantizer":
-            self.weight_quantizer = AbsMaxQuantizer(self.weight, weight_quant_params)
-
-        elif w_quantizer_type == "MinMaxQuantizer":
-            self.weight_quantizer = MinMaxQuantizer(self.weight, weight_quant_params)
-        elif w_quantizer_type == "L2DistanceQuantizer":
-            self.weight_quantizer = L2DistanceQuantizer(
-                self.weight, weight_quant_params
+        try:
+            self.weight_quantizer = quantizerDict[w_params.get("scheme")](
+                self.weight, w_params
             )
-        elif w_quantizer_type == "AdaRoundQuantizer":
-            self.weight_quantizer = AdaRoundQuantizer(self.weight, weight_quant_params)
-        else:
-            raise ValueError(f"Unknown weight quantizer type: {w_quantizer_type}")
+        except KeyError:
+            raise ValueError(f"Unknown weight quantizer type: {w_params.get('scheme')}")
 
         """activation quantizer"""
         # [ ] add activation quantizer

@@ -63,7 +63,7 @@ class GetLayerInpOut:
         )
 
 
-def save_inp_oup_data(
+def _save_inp_oup_data(
     model,
     layer,
     cali_data: torch.Tensor,
