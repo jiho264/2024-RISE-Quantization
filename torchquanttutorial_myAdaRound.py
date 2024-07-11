@@ -1,7 +1,7 @@
 import torch, time
 import torch.nn as nn
 from myAdaRound.utils import QuantModule, GetDataset, evaluate
-from myAdaRound.data_utils import _save_inp_oup_data
+from myAdaRound.data_utils import save_inp_oup_data
 import torchvision.models.resnet as resnet
 
 
@@ -19,18 +19,46 @@ def _get_train_samples(train_loader, num_samples):
 
 
 def _computeAdaRoundValues(model, layer, cali_data):
-    # to optain the X_hat which is the output of the previous quantized layers
+    # [1] get X_hat_input, Y_fp
     layer.w_quant_enable = True
-    x_hat_inputs, _ = _save_inp_oup_data(model, layer, cali_data)
+    quantized_act_input, _ = save_inp_oup_data(model, layer, cali_data)
+    Y_fp = layer.fp_outputs  # Y = W * X / it is constant
 
-    print("   ", x_hat_inputs.shape)
+    # [2] init values
+    Y_hat = layer.forward(quantized_act_input).view(-1)
+    optimizer = torch.optim.Adam([layer.weight_quantizer._v], lr=0.01)
 
-    Y = layer.fp_outputs.view(-1)  # Y = W * X / it is constant
+    n_iter = 20001
+    for i in range(0, n_iter):
+        optimizer.zero_grad()
+        Y_hat = layer.forward(quantized_act_input)  # Y_hat = W_hat * X_hat
 
-    Y_hat = layer.forward(x_hat_inputs).view(-1)  # Y_hat = W_hat * X_hat
-    _norm = torch.norm(Y - Y_hat, p=2)
-    print(_norm)
-    # [ ] implement more details
+        _l2_loss = torch.mean((Y_hat - Y_fp) ** 2)
+
+        # rest for 20% of the iterations
+        _reg_loss = 0
+        _beta = 0
+
+        # # [3] regularization term (option 66% -> 68%)
+        # _warmup = 0.2
+        # if i < n_iter * _warmup:
+        #     _reg_loss = 0
+        # else:
+        #     # 20 ~ 2
+        #     _beta = 18 * (1 - (i - n_iter * _warmup) / (n_iter * (1 - _warmup))) + 2
+        #     _reg_loss = layer.weight_quantizer.lamda * layer.weight_quantizer.f_reg(
+        #         beta=_beta
+        #     )
+        loss = _l2_loss + _reg_loss
+        loss.backward()
+        optimizer.step()
+        if i % 500 == 0 or i == 0:
+            print(
+                f"iter: {i: 4d}, l2 loss: {_l2_loss.item():.4f}, reg_loss: {_reg_loss:.4f}, beta = {_beta:.2f}"
+            )
+
+    torch.cuda.empty_cache()
+    layer.weight_quantizer.complited()
     return None
 
 
@@ -41,12 +69,12 @@ def runAdaRound(model, train_loader, num_samples=1024) -> None:
     cali_data = _get_train_samples(train_loader, num_samples)
     cali_data = _get_train_samples(train_loader, 128)
 
-    # Optain the ORIGIN input and output data of each layer
+    # Optaining the ORIGIN input and output data of each layer
     def _getFpInputOutput(module: nn.Module):
         for name, module in module.named_children():
             if isinstance(module, QuantModule):
                 module.w_quant_enable = False
-                _, FP_OUTPUTS = _save_inp_oup_data(model, module, cali_data)
+                _, FP_OUTPUTS = save_inp_oup_data(model, module, cali_data)
                 module.fp_outputs = FP_OUTPUTS
                 print("   ", module.fp_outputs.shape)
             else:
@@ -83,12 +111,19 @@ def main():
 
     _num_eval_batches = len(test_loader)
     # _num_eval_batches = 32
-    # _top1, _ = evaluate(
-    #     model, test_loader, neval_batches=_num_eval_batches, device="cuda"
-    # )
-    # print(
-    #     f" Original model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
-    # )
+    _top1, _ = evaluate(
+        model, test_loader, neval_batches=_num_eval_batches, device="cuda"
+    )
+    # for benchmarking
+    if _num_eval_batches == len(test_loader):
+        print(
+            f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}"
+        )
+    # for debugging
+    else:
+        print(
+            f"    Quantized model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
+        )
 
     def _quant_module_refactor(
         module: nn.Module,
@@ -113,14 +148,14 @@ def main():
     weight_quant_params = dict(
         # scheme="AbsMaxQuantizer",
         # scheme="MinMaxQuantizer",
-        scheme="L2DistanceQuantizer",
-        # scheme="AdaRoundQuantizer",
+        # scheme="L2DistanceQuantizer",
+        scheme="AdaRoundQuantizer",
         per_channel=True,
-        dstDtype="INT8",
+        dstDtype="INT4",
     )
     act_quant_params = {}
     _quant_module_refactor(model, weight_quant_params, act_quant_params)
-    print("Qparams computing done...")
+    print("Qparams computing done!")
 
     # Count the number of QuantModule
     cnt = 0
@@ -133,19 +168,25 @@ def main():
 
     if weight_quant_params["scheme"] == "AdaRoundQuantizer":
         runAdaRound(model, train_loader, num_samples=1024)
-        print(f"AdaRound values computing done...")
+        print(f"AdaRound values computing done!")
 
     _top1, _ = evaluate(
         model, test_loader, neval_batches=_num_eval_batches, device="cuda"
     )
-    print("")
-    print(
-        f" Quantized model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
-    )
+    # for benchmarking
+    if _num_eval_batches == len(test_loader):
+        print(
+            f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}"
+        )
+    # for debugging
+    else:
+        print(
+            f"    Quantized model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
+        )
 
 
 if __name__ == "__main__":
-    print("ResNet18 quantization with myAdaRound...")
+    print("ResNet18 quantization with myAdaRound!")
     torch.manual_seed(0)
     torch.cuda.manual_seed(0)
     torch.backends.cudnn.deterministic = True

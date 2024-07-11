@@ -339,47 +339,91 @@ class AdaRoundQuantizer(MinMaxQuantizer):
         """
         Ref: Up or Down? Adaptive Rounding for Post-Training Quantization
         - https://proceedings.mlr.press/v119/nagel20a/nagel20a.pdf
-        """
-        # print("- AdaRoundQuantizer are baesd on MinMaxQuantizer.")
-        # print("- Just, add more Qparam as Rounding Value.")
 
-        super(AdaRoundQuantizer, self).__init__(org_weight, args)
-        self.enable = False
-        self.fp_inputs = None
-        self.fp_outputs = None
-        # -> Now, We have MinMaxQuantizer's scaler and zero_point!
-
-    #     # [ ] 미완성
-    #     self._rounding_value = torch.where(torch.rand_like(org_weight) > 0.5, 1, 0)
-    #     self.v = torch.zeros_like(org_weight)
-
-    #     self.zeta = 1.1  # fixed value
-    #     self.gamma = -0.1  # fixed value
-
-    #     self.rambda = 0.1
-
-    # # [ ] 미완성
-    # def _rectified_sigmoid(self, v: Tensor) -> Tensor:
-    #     return torch.clamp(v.sigmoid() * (self.zeta - self.gamma), 0, 1)
-
-    # # [ ] 미완성
-    # def _regularization_term(self, beta=2.0) -> Tensor:
-    #     # return {near 0 or near 1} -> meaning is that determine factor of the rounding.
-    #     return 1 - (2 * self._rectified_sigmoid(self.v) - 1).abs().pow(beta)
-
-    def _quantize(self, input: Tensor) -> Tensor:
         ## ResNet18 / W4A32 per-ch / MinMaxQuantizer
         # round -> 58.24%
         # ceil -> 0.10%
         # floor -> 0.11%
         # randomly half floor, half ceil -> 18.00%
+        """
+        # print("- AdaRoundQuantizer is baesd on MinMaxQuantizer.")
+        # print("- Just, add more Qparam as Rounding Value.")
 
-        return torch.clamp(
-            (input / self._scaler).round()
-            + self._zero_point,  # + self._rounding_value,
+        super(AdaRoundQuantizer, self).__init__(org_weight, args)
+        self.fp_outputs = None
+        # -> Now, We have MinMaxQuantizer's scaler and zero_point!
+
+        self.zeta = 1.1  # fixed param for function h()
+        self.gamma = -0.1  # fixed pamam for function h()
+        self.lamda = 1  # lambda. fixed param for regularization function f()
+
+        self._v = None
+        self._init_v(org_weight=org_weight)
+        self.rouning_value = None
+
+    # [1] init the v value. (h(v) == rounding value)
+    def _init_v(self, org_weight: Tensor):
+        # [1-1] compute the residual == initial h(v)
+        _x_q_round = torch.clamp(
+            (org_weight / self._scaler).round() + self._zero_point,
             self._repr_min,
             self._repr_max,
         )
+        _x_q_floor = torch.clamp(
+            (org_weight / self._scaler).floor() + self._zero_point,
+            self._repr_min,
+            self._repr_max,
+        )
+
+        _residual = _x_q_round - _x_q_floor
+        assert torch.all((_residual == 0) | (_residual == 1)), "The residual is {0, 1}."
+
+        # [1-2] compute the v value using inverse h() function
+        _v = -torch.log((self.zeta - self.gamma) / (_residual - self.gamma) - 1)  # h^-1
+
+        self._v = nn.Parameter(_v, requires_grad=True)
+
+        assert (_residual - self._h()).abs().sum() == 0
+
+    def _h(self) -> Tensor:
+        # _rectified_sigmoid (strached sigmoid function)
+        # return {0, 1} when v is determined.
+        # return [0, 1] when v is not determined.
+        return torch.clamp(
+            self._v.sigmoid() * (self.zeta - self.gamma) + self.gamma, 0, 1
+        )
+
+    def f_reg(self, beta=2.0) -> Tensor:
+        # _regularization_term for determining the v
+        # my
+        return (1 - (2 * self._h() - 1).abs().pow(beta)).sum()
+        # org. but same.
+        # return (1 - ((self._h() - 0.5).abs() * 2).pow(beta)).sum()
+
+    def _quantize(self, input: Tensor) -> Tensor:
+        if self.rouning_value == None:
+            return torch.clamp(
+                (input / self._scaler).round() + self._zero_point + self._h(),
+                self._repr_min,
+                self._repr_max,
+            )
+        else:
+            print(",", end="")
+            return torch.clamp(
+                (input / self._scaler).round() + self._zero_point + self.rouning_value,
+                self._repr_min,
+                self._repr_max,
+            )
+
+    def complited(self):
+        # self.rouning_value = self._h().clone().detach() # 이게 맞음
+        self.rouning_value = (
+            self._h().clone().detach().round()
+        )  # 임시방편으로 더 가까운 rounding value 이용
+
+        assert torch.all(
+            (self.rouning_value == 0) | (self.rouning_value == 1)
+        ), "The rounding value have to be {0, 1}."
 
 
 class QuantModule(nn.Module):
@@ -422,7 +466,7 @@ class QuantModule(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         if self.w_quant_enable == True:
-            print("q", end="")
+            # print("q", end="")
             weight = self.weight_quantizer(self.weight)
         else:
             print(".", end="")
