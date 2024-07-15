@@ -116,19 +116,19 @@ def main():
 
     _len_eval_batches = len(test_loader)
     # _len_eval_batches = 32
-    _top1, _ = evaluate(
-        model, test_loader, neval_batches=_len_eval_batches, device="cuda"
-    )
-    # for benchmarking
-    if _len_eval_batches == len(test_loader):
-        print(
-            f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}"
-        )
-    # for debugging
-    else:
-        print(
-            f"    Original model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
-        )
+    # _top1, _ = evaluate(
+    #     model, test_loader, neval_batches=_len_eval_batches, device="cuda"
+    # )
+    # # for benchmarking
+    # if _len_eval_batches == len(test_loader):
+    #     print(
+    #         f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}"
+    #     )
+    # # for debugging
+    # else:
+    #     print(
+    #         f"    Original model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
+    #     )
 
     def _quant_module_refactor(
         module: nn.Module,
@@ -153,10 +153,12 @@ def main():
     weight_quant_params = dict(
         # scheme="AbsMaxQuantizer",
         # scheme="MinMaxQuantizer",
-        # scheme="L2DistanceQuantizer",
-        scheme="AdaRoundQuantizer",
+        # scheme="NormQuantizer",
+        # p=2,
+        scheme="OrgNormQuantizerCode",
+        # scheme="AdaRoundQuantizer",
         per_channel=True,
-        dstDtype="INT4",
+        dstDtype="INT8",
     )
     print(weight_quant_params)
     act_quant_params = {}
