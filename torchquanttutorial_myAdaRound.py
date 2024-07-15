@@ -18,79 +18,82 @@ def _get_train_samples(train_loader, num_samples):
     return torch.cat(train_data, dim=0)[:num_samples]
 
 
-def _computeAdaRoundValues(model, layer, cali_data):
+def _computeAdaRoundValues(model, layer, cali_data, batch_size):
+    model.eval()
     # [1] get X_hat_input, Y_fp
-    layer.w_quant_enable = True
+    layer.w_quant_enable = True  # Quantized inference
+
+    Y_fp = layer.fp_outputs
     quantized_act_input, _ = save_inp_oup_data(model, layer, cali_data)
-    Y_fp = layer.fp_outputs  # Y = W * X / it is constant
 
     # [2] init values
-    Y_hat = layer.forward(quantized_act_input).view(-1)
-    optimizer = torch.optim.Adam([layer.weight_quantizer._v], lr=0.01)
-
-    n_iter = 20001
-    for i in range(0, n_iter):
+    optimizer, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=0.01), 20000
+    for i in range(1, n_iter + 1):
         optimizer.zero_grad()
-        Y_hat = layer.forward(quantized_act_input)  # Y_hat = W_hat * X_hat
+        model.train()
 
-        _l2_loss = torch.mean((Y_hat - Y_fp) ** 2)
+        # random sampling (32 samples in 1024 samples)
+        idx = torch.randperm(quantized_act_input.size(0))[:batch_size]
+        Y_hat = layer.forward(quantized_act_input[idx])  # Y_hat = W_hat * X_hat
+        _mse = (Y_fp[idx] - Y_hat).abs().pow(2).mean()  # | Y - Y_hat |^2
 
-        # rest for 20% of the iterations
+        # [3] regularization term (optional)
+        _warmup = 0.2
         _reg_loss = 0
         _beta = 0
 
-        # # [3] regularization term (option 66% -> 68%)
-        # _warmup = 0.2
-        # if i < n_iter * _warmup:
-        #     _reg_loss = 0
-        # else:
-        #     # 20 ~ 2
-        #     _beta = 18 * (1 - (i - n_iter * _warmup) / (n_iter * (1 - _warmup))) + 2
-        #     _reg_loss = layer.weight_quantizer.lamda * layer.weight_quantizer.f_reg(
-        #         beta=_beta
-        #     )
-        loss = _l2_loss + _reg_loss
+        if i < n_iter * _warmup:
+            _reg_loss = 0
+            pass
+        else:
+            # 0 ~ 1 when after 4k iter of 20k len
+            decay = (i - n_iter * _warmup) / (n_iter * (1 - _warmup))
+            _beta = 18 - decay * 18 + 2
+            _reg_loss = layer.weight_quantizer.f_reg(beta=_beta)
+
+        loss = _mse + layer.weight_quantizer.lamda * _reg_loss
         loss.backward()
         optimizer.step()
-        if i % 500 == 0 or i == 0:
+        if i % 500 == 0 or i == 1:
             print(
-                f"iter: {i: 4d}, l2 loss: {_l2_loss.item():.4f}, reg_loss: {_reg_loss:.4f}, beta = {_beta:.2f}"
+                f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
             )
 
     torch.cuda.empty_cache()
-    layer.weight_quantizer.complited()
+    layer.weight_quantizer.setRoundingValues()
     return None
 
 
-def runAdaRound(model, train_loader, num_samples=1024) -> None:
+def runAdaRound(model, train_loader, num_samples=1024, batch_size=32) -> None:
 
     model.eval()
 
     cali_data = _get_train_samples(train_loader, num_samples)
-    cali_data = _get_train_samples(train_loader, 128)
 
     # Optaining the ORIGIN input and output data of each layer
     def _getFpInputOutput(module: nn.Module):
         for name, module in module.named_children():
             if isinstance(module, QuantModule):
-                module.w_quant_enable = False
+                module.w_quant_enable = False  # FP inference
                 _, FP_OUTPUTS = save_inp_oup_data(model, module, cali_data)
                 module.fp_outputs = FP_OUTPUTS
-                print("   ", module.fp_outputs.shape)
+                print("\n   FP_OUTPUTS shape", module.fp_outputs.shape)
             else:
                 _getFpInputOutput(module)
 
     _getFpInputOutput(model)
 
     # Compute the AdaRound values
-    def _runAdaRound(module: nn.Module):
+    def _runAdaRound(module: nn.Module, batch_size):
         for name, module in module.named_children():
             if isinstance(module, QuantModule):
-                _computeAdaRoundValues(model, module, cali_data)
+                _computeAdaRoundValues(model, module, cali_data, batch_size)
+                # the len of cali_data = num_samples
+                # the GD batch size = batch_size
             else:
-                _runAdaRound(module)
+                _runAdaRound(module, batch_size)
 
-    _runAdaRound(model)
+    _runAdaRound(model, batch_size)
 
     return None
 
@@ -109,20 +112,20 @@ def main():
 
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
 
-    _num_eval_batches = len(test_loader)
-    # _num_eval_batches = 32
+    _len_eval_batches = len(test_loader)
+    # _len_eval_batches = 32
     _top1, _ = evaluate(
-        model, test_loader, neval_batches=_num_eval_batches, device="cuda"
+        model, test_loader, neval_batches=_len_eval_batches, device="cuda"
     )
     # for benchmarking
-    if _num_eval_batches == len(test_loader):
+    if _len_eval_batches == len(test_loader):
         print(
             f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}"
         )
     # for debugging
     else:
         print(
-            f"    Quantized model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
+            f"    Original model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
         )
 
     def _quant_module_refactor(
@@ -153,6 +156,7 @@ def main():
         per_channel=True,
         dstDtype="INT4",
     )
+    print(weight_quant_params)
     act_quant_params = {}
     _quant_module_refactor(model, weight_quant_params, act_quant_params)
     print("Qparams computing done!")
@@ -167,21 +171,21 @@ def main():
     print(f"Total QuantModule: {cnt}")
 
     if weight_quant_params["scheme"] == "AdaRoundQuantizer":
-        runAdaRound(model, train_loader, num_samples=1024)
+        runAdaRound(model, train_loader, num_samples=1024, batch_size=32)
         print(f"AdaRound values computing done!")
 
     _top1, _ = evaluate(
-        model, test_loader, neval_batches=_num_eval_batches, device="cuda"
+        model, test_loader, neval_batches=_len_eval_batches, device="cuda"
     )
     # for benchmarking
-    if _num_eval_batches == len(test_loader):
+    if _len_eval_batches == len(test_loader):
         print(
-            f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}"
+            f"    Quantized model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}"
         )
     # for debugging
     else:
         print(
-            f"    Quantized model Evaluation accuracy on {_num_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
+            f"    Quantized model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
         )
 
 
