@@ -25,6 +25,7 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size):
 
     Y_fp = layer.fp_outputs
     quantized_act_input, _ = save_inp_oup_data(model, layer, cali_data)
+    print("")
 
     # [2] init values
     optimizer, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=0.01), 20000
@@ -87,6 +88,7 @@ def runAdaRound(model, train_loader, num_samples=1024, batch_size=32) -> None:
     def _runAdaRound(module: nn.Module, batch_size):
         for name, module in module.named_children():
             if isinstance(module, QuantModule):
+                print(f"\nAdaRound computing: {name}")
                 _computeAdaRoundValues(model, module, cali_data, batch_size)
                 # the len of cali_data = num_samples
                 # the GD batch size = batch_size

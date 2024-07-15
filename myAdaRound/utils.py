@@ -334,7 +334,7 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
             )
 
 
-class AdaRoundQuantizer(AbsMaxQuantizer):
+class AdaRoundQuantizer(MinMaxQuantizer):
     def __init__(self, org_weight, args):
         """
         Ref: Up or Down? Adaptive Rounding for Post-Training Quantization
