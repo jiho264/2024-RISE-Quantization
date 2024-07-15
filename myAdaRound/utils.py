@@ -334,24 +334,15 @@ class L2DistanceQuantizer(UniformAffineQuantizer):
             )
 
 
-class AdaRoundQuantizer(MinMaxQuantizer):
+class AdaRoundQuantizer(AbsMaxQuantizer):
     def __init__(self, org_weight, args):
         """
         Ref: Up or Down? Adaptive Rounding for Post-Training Quantization
         - https://proceedings.mlr.press/v119/nagel20a/nagel20a.pdf
-
-        ## ResNet18 / W4A32 per-ch / MinMaxQuantizer
-        # round -> 58.24%
-        # ceil -> 0.10%
-        # floor -> 0.11%
-        # randomly half floor, half ceil -> 18.00%
         """
-        # print("- AdaRoundQuantizer is baesd on MinMaxQuantizer.")
-        # print("- Just, add more Qparam as Rounding Value.")
-
         super(AdaRoundQuantizer, self).__init__(org_weight, args)
         self.fp_outputs = None
-        # -> Now, We have MinMaxQuantizer's scaler and zero_point!
+        # -> Now, We have AbsMaxQuantizer's scaler and zero_point!
 
         self.zeta = 1.1  # fixed param for function h()
         self.gamma = -0.1  # fixed pamam for function h()
@@ -380,46 +371,41 @@ class AdaRoundQuantizer(MinMaxQuantizer):
 
         # [1-2] compute the v value using inverse h() function
         _v = -torch.log((self.zeta - self.gamma) / (_residual - self.gamma) - 1)  # h^-1
-
         self._v = nn.Parameter(_v, requires_grad=True)
-
         assert (_residual - self._h()).abs().sum() == 0
 
+        print("Initiated the V")
+
     def _h(self) -> Tensor:
-        # _rectified_sigmoid (strached sigmoid function)
-        # return {0, 1} when v is determined.
-        # return [0, 1] when v is not determined.
+        # Rectified_sigmoid (strached sigmoid function)
         return torch.clamp(
             self._v.sigmoid() * (self.zeta - self.gamma) + self.gamma, 0, 1
         )
 
     def f_reg(self, beta=2.0) -> Tensor:
         # _regularization_term for determining the v
-        # my
         return (1 - (2 * self._h() - 1).abs().pow(beta)).sum()
-        # org. but same.
-        # return (1 - ((self._h() - 0.5).abs() * 2).pow(beta)).sum()
 
     def _quantize(self, input: Tensor) -> Tensor:
         if self.rouning_value == None:
+            # return FP
             return torch.clamp(
-                (input / self._scaler).round() + self._zero_point + self._h(),
+                (input / self._scaler).floor() + self._zero_point + self._h(),
                 self._repr_min,
                 self._repr_max,
             )
         else:
+            # return INT
             print(",", end="")
             return torch.clamp(
-                (input / self._scaler).round() + self._zero_point + self.rouning_value,
+                (input / self._scaler).floor() + self._zero_point + self.rouning_value,
                 self._repr_min,
                 self._repr_max,
             )
 
-    def complited(self):
-        # self.rouning_value = self._h().clone().detach() # 이게 맞음
-        self.rouning_value = (
-            self._h().clone().detach().round()
-        )  # 임시방편으로 더 가까운 rounding value 이용
+    def setRoundingValues(self):
+        FIXED_ROUNDDING_VALUE = self._h().clone().detach()
+        self.rouning_value = FIXED_ROUNDDING_VALUE
 
         assert torch.all(
             (self.rouning_value == 0) | (self.rouning_value == 1)
