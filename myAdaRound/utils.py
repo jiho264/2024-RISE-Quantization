@@ -105,8 +105,8 @@ def evaluate(model, data_loader, neval_batches, device):
     top5 = AverageMeter("Acc@5", ":6.2f")
     cnt = 0
     with torch.no_grad():
-        # for image, target in tqdm.tqdm(data_loader):
-        for image, target in data_loader:
+        for image, target in tqdm.tqdm(data_loader):
+            # for image, target in data_loader:
             image, target = image.to(device), target.to(device)
             output = model(image)
             # loss = criterion(output, target)

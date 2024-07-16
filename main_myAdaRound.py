@@ -1,4 +1,4 @@
-import torch, time
+import torch, time, argparse
 import torch.nn as nn
 from myAdaRound.utils import QuantModule, GetDataset, evaluate
 from myAdaRound.data_utils import save_inp_oup_data
@@ -18,7 +18,7 @@ def _get_train_samples(train_loader, num_samples):
     return torch.cat(train_data, dim=0)[:num_samples]
 
 
-def _computeAdaRoundValues(model, layer, cali_data, batch_size):
+def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
     model.eval()
     # [1] get X_hat_input, Y_fp
     layer.w_quant_enable = True  # Quantized inference
@@ -28,7 +28,7 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size):
     print(" <- Commas indicate the INT inference.")
 
     # [2] init values
-    optimizer, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=0.01), 20000
+    optimizer, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=lr), 20000
     print(optimizer, n_iter)
     for i in range(1, n_iter + 1):
         optimizer.zero_grad()
@@ -66,7 +66,9 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size):
     return None
 
 
-def runAdaRound(model, train_loader, num_samples=1024, batch_size=32, num_layers=None):
+def runAdaRound(
+    model, train_loader, num_samples=1024, batch_size=32, lr=0.01, num_layers=None
+):
 
     model.eval()
 
@@ -95,7 +97,7 @@ def runAdaRound(model, train_loader, num_samples=1024, batch_size=32, num_layers
             if isinstance(module, QuantModule):
                 _layer_cnt += 1
                 print(f"\n[{_layer_cnt}/{num_layers}] AdaRound computing: {name}")
-                _computeAdaRoundValues(model, module, cali_data, batch_size)
+                _computeAdaRoundValues(model, module, cali_data, batch_size, lr)
                 # the len of cali_data = num_samples
                 # the GD batch size = batch_size
             else:
@@ -109,14 +111,28 @@ def runAdaRound(model, train_loader, num_samples=1024, batch_size=32, num_layers
 #################################################################################################
 ## 3. Main function
 #################################################################################################
-def main():
+def seed_all(seed=0):
+    # random.seed(seed)
+    # os.environ["PYTHONHASHSEED"] = str(seed)
+    # np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+
+
+def main(weight_quant_params, act_quant_params, args):
 
     # resnet18 Acc@1: 69.758%
     # resnet50 Acc@1: 76.130%
-    model = resnet.resnet18(weights="IMAGENET1K_V1")
+    if args["arch"] == "resnet18":
+        model = resnet.resnet18(weights="IMAGENET1K_V1")
+    else:
+        raise NotImplementedError
     model.eval().to("cuda")
 
-    _batch_size = 128
+    _batch_size = args["batch_size"]
 
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
 
@@ -155,18 +171,6 @@ def main():
                     child_module, weight_quant_params, act_quant_params
                 )
 
-    weight_quant_params = dict(
-        # scheme="AbsMaxQuantizer",
-        # scheme="MinMaxQuantizer",
-        # scheme="NormQuantizer",
-        # p=2.4,
-        # scheme="OrgNormQuantizerCode",
-        scheme="AdaRoundQuantizer",
-        per_channel=True,
-        dstDtype="INT4",
-    )
-    print(weight_quant_params)
-    act_quant_params = {}
     _quant_module_refactor(model, weight_quant_params, act_quant_params)
     print("Qparams computing done!")
 
@@ -181,7 +185,12 @@ def main():
 
     if weight_quant_params["scheme"] == "AdaRoundQuantizer":
         runAdaRound(
-            model, train_loader, num_samples=1024, batch_size=32, num_layers=num_layers
+            model,
+            train_loader,
+            num_samples=args["num_samples"],
+            batch_size=args["batch_size_AdaRound"],
+            num_layers=num_layers,
+            lr=args["lr"],
         )
         print(f"AdaRound values computing done!")
 
@@ -201,12 +210,98 @@ def main():
 
 
 if __name__ == "__main__":
-    print("ResNet18 quantization with myAdaRound!")
-    torch.manual_seed(0)
-    torch.cuda.manual_seed(0)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    parser = argparse.ArgumentParser(
+        description="myAdaRound", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument("--arch", default="resnet18", type=str, help="architecture")
+    parser.add_argument("--seed", default=0, type=int, help="seed")
+    parser.add_argument(
+        "--batch_size", default=128, type=int, help="batch size for evaluation"
+    )
+    parser.add_argument(
+        "--batch_size_AdaRound", default=32, type=int, help="batch size for AdaRound"
+    )
+
+    parser.add_argument(
+        "--num_samples",
+        default=1024,
+        type=int,
+        help="number of samples for calibration",
+    )
+
+    parser.add_argument(
+        "--scheme",
+        default="AdaRoundQuantizer",
+        type=str,
+        help="quantization scheme",
+        choices=[
+            "AbsMaxQuantizer",
+            "MinMaxQuantizer",
+            "NormQuantizer",
+            "OrgNormQuantizerCode",
+            "AdaRoundQuantizer",
+        ],
+    )
+    parser.add_argument(
+        "--per_channel", action="store_true", help="per channel quantization"
+    )
+    parser.add_argument(
+        "--dstDtypeW",
+        default="INT4",
+        type=str,
+        help="destination data type",
+        choices=["INT4", "INT8"],
+    )
+    parser.add_argument(
+        "--dstDtypeA",
+        default="FP32",
+        type=str,
+        help="destination data type",
+        choices=["INT4", "INT8", "FP32"],
+    )
+    parser.add_argument(
+        "--p", default=2.4, type=float, help="L_p norm for NormQuantizer"
+    )
+    parser.add_argument(
+        "--lr", default=0.01, type=float, help="learning rate for AdaRound"
+    )
+
+    ##### Setup
+    args = parser.parse_args()
+
+    weight_quant_params = dict(
+        scheme=args.scheme,
+        per_channel=args.per_channel,
+        dstDtype=args.dstDtypeW,
+    )
+    act_quant_params = {
+        # Not implemented yet
+    }
+    main_args = dict(
+        arch=args.arch,
+        batch_size=args.batch_size,
+        num_samples=args.num_samples,
+    )
+    if args.scheme == "NormQuantizer":
+        weight_quant_params.update(dict(p=args.p))
+    elif args.scheme == "AdaRoundQuantizer":
+        main_args.update(dict(batch_size_AdaRound=args.batch_size_AdaRound))
+        main_args.update(dict(lr=args.lr))
+        weight_quant_params["per_channel"] = "True"  # always True when using AdaRound
+        args.per_channel = True
+
+    _case_name = f"{args.arch}_{args.scheme}"
+    _case_name += "_CH" if args.per_channel else "_Layer"
+    _case_name += "_W" + args.dstDtypeW[-1]
+    _case_name += "A" + "32" if args.dstDtypeA == "FP32" else args.dstDtypeA[-1]
+
+    print(f"Case: [ {_case_name} ]")
+    print(f"    - {main_args}")
+    print(f"    - weight params: {weight_quant_params}")
+    print(f"    - activation params: {act_quant_params}")
+    # exit()
+    seed_all(args.seed)
 
     STARTTIME = time.time()
-    main()
+    main(weight_quant_params, act_quant_params, main_args)
     print(f"Total time: {time.time() - STARTTIME:.2f} sec")
