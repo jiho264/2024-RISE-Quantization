@@ -299,7 +299,7 @@ if __name__ == "__main__":
     elif args.scheme == "AdaRoundQuantizer":
         main_args.update(dict(batch_size_AdaRound=args.batch_size_AdaRound))
         main_args.update(dict(lr=args.lr))
-        weight_quant_params["per_channel"] = "True"  # always True when using AdaRound
+        weight_quant_params["per_channel"] = True  # always True when using AdaRound
         args.per_channel = True
         weight_quant_params.update(dict(BaseScheme=args.BaseScheme))
 
