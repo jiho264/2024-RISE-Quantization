@@ -243,6 +243,18 @@ if __name__ == "__main__":
         ],
     )
     parser.add_argument(
+        "--BaseScheme",
+        default="AbsMaxQuantizer",
+        type=str,
+        help="quantization scheme for init v in AdaRound",
+        choices=[
+            "AbsMaxQuantizer",
+            "MinMaxQuantizer",
+            "NormQuantizer",
+            "OrgNormQuantizerCode",
+        ],
+    )
+    parser.add_argument(
         "--per_channel", action="store_true", help="per channel quantization"
     )
     parser.add_argument(
@@ -289,6 +301,7 @@ if __name__ == "__main__":
         main_args.update(dict(lr=args.lr))
         weight_quant_params["per_channel"] = "True"  # always True when using AdaRound
         args.per_channel = True
+        weight_quant_params.update(dict(BaseScheme=args.BaseScheme))
 
     _case_name = f"{args.arch}_{args.scheme}"
     _case_name += "_CH" if args.per_channel else "_Layer"

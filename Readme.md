@@ -30,7 +30,7 @@
 
 | Quantization Scheme (Per-Channel) | W8A32 | W4A32(old) | W4A32(new) |
 | --------------------------------- | ----- | ---------- | ---------- |
-| AdaRoundAbsMax_CH_lr0.01          | -     | 68.54%     |            |
+| AdaRoundAbsMax_CH_lr0.01          | -     | 68.54%     | 56.63%     |
 | AdaRoundAbsMax_CH_lr0.001         | -     | 67.17%     |            |
 | AdaRoundMinMax_CH_lr0.01          | -     | 68.95%     |            |
 | AdaRoundMinMax_CH_lr0.001         | -     | 67.91%     |            |
@@ -38,6 +38,8 @@
 | AdaRoundNorm_CH_lr0.001_p2.4      | -     |            |            |
 | AdaRoundOrgNorm_CH_lr0.01_p2.4    | -     | 68.55%     |            |
 | AdaRoundOrgNorm_CH_lr0.001_p2.4   | -     | 68.44%     |            |
+
+AdaRoundNorm_CH_lr0.01_p2.4 68.86% : p(2, 2.4로 추정)
 
 # ToDo
 - [ ] L2Distance quantization for one side distribution (Activation values with ReLU function)

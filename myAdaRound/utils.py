@@ -275,6 +275,7 @@ class NormQuantizer(UniformAffineQuantizer):
         # L_p norm minimization as described in LAPQ
         # https://arxiv.org/abs/1911.07190
         self._p = args.get("p") if args.get("p") else 2.4
+        print(f"p = {self._p}")
 
         def forward_copy(input: Tensor) -> Tensor:
             # Avoid override errors when using AdaRound's self.forward function to perform the initialization process.
@@ -399,84 +400,103 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
             ...
 
 
-class AdaRoundQuantizer(NormQuantizer):
-    def __init__(self, org_weight, args):
-        """
-        Ref: Up or Down? Adaptive Rounding for Post-Training Quantization
-        - https://proceedings.mlr.press/v119/nagel20a/nagel20a.pdf
-        """
-        super(AdaRoundQuantizer, self).__init__(org_weight, args)
-        print(f"Parent class is {self.__class__.__bases__[0].__name__}")
+def create_AdaRound_Quantizer(base_class_name, org_weight, args):
+    base_classes = {
+        "AbsMaxQuantizer": AbsMaxQuantizer,
+        "MinMaxQuantizer": MinMaxQuantizer,
+        "NormQuantizer": NormQuantizer,
+        "OrgNormQuantizerCode": OrgNormQuantizerCode,
+    }
+    base_class = base_classes.get(base_class_name)
+    if not base_class:
+        raise ValueError(f"Unknown base class: {base_class_name}")
 
-        self.fp_outputs = None
-        # -> Now, We have AbsMaxQuantizer's scaler and zero_point!
+    class AdaRoundQuantizer(base_class):
+        def __init__(self, org_weight, args):
+            """
+            Ref: Up or Down? Adaptive Rounding for Post-Training Quantization
+            - https://proceedings.mlr.press/v119/nagel20a/nagel20a.pdf
+            """
+            super(AdaRoundQuantizer, self).__init__(org_weight, args)
+            print(f"Parent class is {self.__class__.__bases__[0].__name__}")
 
-        self.zeta = 1.1  # fixed param for function h()
-        self.gamma = -0.1  # fixed pamam for function h()
-        self.lamda = 1  # lambda. fixed param for regularization function f()
+            self.fp_outputs = None
+            # -> Now, We have AbsMaxQuantizer's scaler and zero_point!
 
-        self._v = None
-        self._init_v(org_weight=org_weight)
-        self.rouning_value = None
+            self.zeta = 1.1  # fixed param for function h()
+            self.gamma = -0.1  # fixed pamam for function h()
+            self.lamda = 1  # lambda. fixed param for regularization function f()
 
-    # [1] init the v value. (h(v) == rounding value)
-    def _init_v(self, org_weight: Tensor):
-        # [1-1] compute the residual == initial h(v)
-        _x_q_round = torch.clamp(
-            (org_weight / self._scaler).round() + self._zero_point,
-            self._repr_min,
-            self._repr_max,
-        )
-        _x_q_floor = torch.clamp(
-            (org_weight / self._scaler).floor() + self._zero_point,
-            self._repr_min,
-            self._repr_max,
-        )
+            self._v = None
+            self._init_v(org_weight=org_weight)
+            self.rouning_value = None
 
-        _residual = _x_q_round - _x_q_floor
-        assert torch.all((_residual == 0) | (_residual == 1)), "The residual is {0, 1}."
-
-        # [1-2] compute the v value using inverse h() function
-        _v = -torch.log((self.zeta - self.gamma) / (_residual - self.gamma) - 1)  # h^-1
-        self._v = nn.Parameter(_v, requires_grad=True)
-        assert (_residual - self._h()).abs().sum() == 0
-
-        print("Initiated the V")
-
-    def _h(self) -> Tensor:
-        # Rectified_sigmoid (strached sigmoid function)
-        return torch.clamp(
-            self._v.sigmoid() * (self.zeta - self.gamma) + self.gamma, 0, 1
-        )
-
-    def f_reg(self, beta=2.0) -> Tensor:
-        # _regularization_term for determining the v
-        return (1 - (2 * self._h() - 1).abs().pow(beta)).sum()
-
-    def _quantize(self, input: Tensor) -> Tensor:
-        if self.rouning_value == None:
-            # return FP
-            return torch.clamp(
-                (input / self._scaler).floor() + self._zero_point + self._h(),
+        # [1] init the v value. (h(v) == rounding value)
+        def _init_v(self, org_weight: Tensor):
+            # [1-1] compute the residual == initial h(v)
+            _x_q_round = torch.clamp(
+                (org_weight / self._scaler).round() + self._zero_point,
                 self._repr_min,
                 self._repr_max,
             )
-        else:
-            # return INT
-            print(",", end="")
-            return torch.clamp(
-                (input / self._scaler).floor() + self._zero_point + self.rouning_value,
+            _x_q_floor = torch.clamp(
+                (org_weight / self._scaler).floor() + self._zero_point,
                 self._repr_min,
                 self._repr_max,
             )
 
-    def setRoundingValues(self):
-        FIXED_ROUNDDING_VALUE = self._h().clone().detach()
-        self.rouning_value = FIXED_ROUNDDING_VALUE
+            _residual = _x_q_round - _x_q_floor
+            assert torch.all(
+                (_residual == 0) | (_residual == 1)
+            ), "The residual is {0, 1}."
 
-        assert torch.all(
-            (self.rouning_value == 0) | (self.rouning_value == 1)
-        ), "The rounding value have to be {0, 1}."
+            # [1-2] compute the v value using inverse h() function
+            _v = -torch.log(
+                (self.zeta - self.gamma) / (_residual - self.gamma) - 1
+            )  # h^-1
+            self._v = nn.Parameter(_v, requires_grad=True)
+            assert (_residual - self._h()).abs().sum() == 0
+
+            print("Initiated the V")
+
+        def _h(self) -> Tensor:
+            # Rectified_sigmoid (strached sigmoid function)
+            return torch.clamp(
+                self._v.sigmoid() * (self.zeta - self.gamma) + self.gamma, 0, 1
+            )
+
+        def f_reg(self, beta=2.0) -> Tensor:
+            # _regularization_term for determining the v
+            return (1 - (2 * self._h() - 1).abs().pow(beta)).sum()
+
+        def _quantize(self, input: Tensor) -> Tensor:
+            if self.rouning_value == None:
+                # return FP
+                return torch.clamp(
+                    (input / self._scaler).floor() + self._zero_point + self._h(),
+                    self._repr_min,
+                    self._repr_max,
+                )
+            else:
+                # return INT
+                print(",", end="")
+                return torch.clamp(
+                    (input / self._scaler).floor()
+                    + self._zero_point
+                    + self.rouning_value,
+                    self._repr_min,
+                    self._repr_max,
+                )
+
+        def setRoundingValues(self):
+            FIXED_ROUNDDING_VALUE = self._h().clone().detach()
+            self.rouning_value = FIXED_ROUNDDING_VALUE
+
+            assert torch.all(
+                (self.rouning_value == 0) | (self.rouning_value == 1)
+            ), "The rounding value have to be {0, 1}."
+
+    return AdaRoundQuantizer(org_weight, args)
 
 
 class QuantModule(nn.Module):
@@ -497,21 +517,26 @@ class QuantModule(nn.Module):
 
         self.weight = org_module.weight.clone().detach()
 
-        quantizerDict = {
-            "AbsMaxQuantizer": AbsMaxQuantizer,
-            "MinMaxQuantizer": MinMaxQuantizer,
-            "NormQuantizer": NormQuantizer,
-            "OrgNormQuantizerCode": OrgNormQuantizerCode,
-            "AdaRoundQuantizer": AdaRoundQuantizer,
-        }
-
         """weight quantizer"""
         self.w_quant_enable = True  # default is True. Need false option when only compute adaround values.
 
         try:
-            self.weight_quantizer = quantizerDict[w_params.get("scheme")](
-                self.weight, w_params
-            )
+            if w_params.get("scheme") == "AdaRoundQuantizer":
+                self.weight_quantizer = create_AdaRound_Quantizer(
+                    base_class_name=w_params.get("BaseScheme"),
+                    org_weight=self.weight,
+                    args=w_params,
+                )
+            else:
+                quantizerDict = {
+                    "AbsMaxQuantizer": AbsMaxQuantizer,
+                    "MinMaxQuantizer": MinMaxQuantizer,
+                    "NormQuantizer": NormQuantizer,
+                    "OrgNormQuantizerCode": OrgNormQuantizerCode,
+                }
+                self.weight_quantizer = quantizerDict[w_params.get("scheme")](
+                    self.weight, w_params
+                )
         except KeyError:
             raise ValueError(f"Unknown weight quantizer type: {w_params.get('scheme')}")
 
