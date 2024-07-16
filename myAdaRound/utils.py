@@ -271,10 +271,26 @@ class NormQuantizer(UniformAffineQuantizer):
             best_min = org_weight.view(-1)[_argsorted[0]].clone()
             best_max = org_weight.view(-1)[_argsorted[-1]].clone()
 
+        # Default p is 2.4
+        # L_p norm minimization as described in LAPQ
+        # https://arxiv.org/abs/1911.07190
+        self._p = args.get("p") if args.get("p") else 2.4
+
+        def forward_copy(input: Tensor) -> Tensor:
+            # Avoid override errors when using AdaRound's self.forward function to perform the initialization process.
+            return self._dequantize(
+                torch.clamp(
+                    (input / self._scaler).round() + self._zero_point,
+                    self._repr_min,
+                    self._repr_max,
+                )
+            )
+
         if self.signed == True:
             # perform_2D_search [min, max]
             self.compute_qparams(best_min, best_max)
-            best_score = (self.forward(org_weight) - org_weight).norm(p=2)
+            # best_score = (self.forward(org_weight) - org_weight).norm(p=self._p)
+            best_score = (forward_copy(org_weight) - org_weight).norm(p=self._p)
 
             _iter_len = int((len(_argsorted / 2) + 1) * 0.001) + 10
             # the combination of smallest 0.05% and largest 0.05% is enough.
@@ -302,9 +318,9 @@ class NormQuantizer(UniformAffineQuantizer):
 
                     self.compute_qparams(_tmp_min, _tmp_max)
                     # -> Changed the scaler and zero_point
-                    _tmp_score = (self.forward(org_weight) - org_weight).norm(
-                        p=args.get("p")
-                    )
+
+                    # _tmp_score = (self.forward(org_weight) - org_weight).norm(p=self._p)
+                    _tmp_score = (forward_copy(org_weight) - org_weight).norm(p=self._p)
 
                     best_min = torch.where(_tmp_score < best_score, _tmp_min, best_min)
                     best_max = torch.where(_tmp_score < best_score, _tmp_max, best_max)
@@ -325,14 +341,6 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
     def __init__(self, org_weight, args):
         """ORIGIN SOURCE CODE"""
         super(OrgNormQuantizerCode, self).__init__(org_weight, args)
-
-        """below is uncomplited"""
-        if self.per_channel == True:
-            _min = org_weight.view(org_weight.size(0), -1).min(dim=1).values
-            _max = org_weight.view(org_weight.size(0), -1).max(dim=1).values
-        else:
-            _min = org_weight.min()
-            _max = org_weight.max()
 
         if self.signed == True:
             self.channel_wise = self.per_channel
@@ -372,7 +380,14 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
                     new_min = tmp_min - zp * tmp_delta
                     new_max = tmp_max - zp * tmp_delta
                     self.compute_qparams(new_max, new_min)
-                    x_q = self.forward(x)
+                    # x_q = self.forward(x)
+                    x_q = torch.clamp(
+                        (x / self._scaler).round() + self._zero_point,
+                        self._repr_min,
+                        self._repr_max,
+                    )
+                    x_q = self._dequantize(x_q)
+
                     score = lp_loss(x, x_q, 2.4)
                     best_min = torch.where(score < best_score, new_min, best_min)
                     best_max = torch.where(score < best_score, new_max, best_max)
@@ -384,13 +399,15 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
             ...
 
 
-class AdaRoundQuantizer(MinMaxQuantizer):
+class AdaRoundQuantizer(NormQuantizer):
     def __init__(self, org_weight, args):
         """
         Ref: Up or Down? Adaptive Rounding for Post-Training Quantization
         - https://proceedings.mlr.press/v119/nagel20a/nagel20a.pdf
         """
         super(AdaRoundQuantizer, self).__init__(org_weight, args)
+        print(f"Parent class is {self.__class__.__bases__[0].__name__}")
+
         self.fp_outputs = None
         # -> Now, We have AbsMaxQuantizer's scaler and zero_point!
 

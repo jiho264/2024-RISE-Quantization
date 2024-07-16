@@ -8,8 +8,8 @@ import torchvision.models.resnet as resnet
 #################################################################################################
 ## (option) 4. Compute AdaRound values
 #################################################################################################
-# calibration data loader code in AdaRound
 def _get_train_samples(train_loader, num_samples):
+    # calibration data loader code in AdaRound
     train_data = []
     for batch in train_loader:
         train_data.append(batch[0])
@@ -25,10 +25,11 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size):
 
     Y_fp = layer.fp_outputs
     quantized_act_input, _ = save_inp_oup_data(model, layer, cali_data)
-    print("")
+    print(" <- Commas indicate the INT inference.")
 
     # [2] init values
     optimizer, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=0.01), 20000
+    print(optimizer, n_iter)
     for i in range(1, n_iter + 1):
         optimizer.zero_grad()
         model.train()
@@ -55,7 +56,7 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size):
         loss = _mse + layer.weight_quantizer.lamda * _reg_loss
         loss.backward()
         optimizer.step()
-        if i % 500 == 0 or i == 1:
+        if i % 2000 == 0 or i == 1:
             print(
                 f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
             )
@@ -65,7 +66,7 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size):
     return None
 
 
-def runAdaRound(model, train_loader, num_samples=1024, batch_size=32) -> None:
+def runAdaRound(model, train_loader, num_samples=1024, batch_size=32, num_layers=None):
 
     model.eval()
 
@@ -78,17 +79,22 @@ def runAdaRound(model, train_loader, num_samples=1024, batch_size=32) -> None:
                 module.w_quant_enable = False  # FP inference
                 _, FP_OUTPUTS = save_inp_oup_data(model, module, cali_data)
                 module.fp_outputs = FP_OUTPUTS
-                print("\n   FP_OUTPUTS shape", module.fp_outputs.shape)
+                print(" <- Dots indicate the Original FP inference.")
+                print("   FP_OUTPUTS shape", module.fp_outputs.shape)
             else:
                 _getFpInputOutput(module)
 
     _getFpInputOutput(model)
 
+    _layer_cnt = 0
+
     # Compute the AdaRound values
     def _runAdaRound(module: nn.Module, batch_size):
+        nonlocal _layer_cnt
         for name, module in module.named_children():
             if isinstance(module, QuantModule):
-                print(f"\nAdaRound computing: {name}")
+                _layer_cnt += 1
+                print(f"\n[{_layer_cnt}/{num_layers}] AdaRound computing: {name}")
                 _computeAdaRoundValues(model, module, cali_data, batch_size)
                 # the len of cali_data = num_samples
                 # the GD batch size = batch_size
@@ -115,19 +121,18 @@ def main():
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
 
     _len_eval_batches = len(test_loader)
-    # _len_eval_batches = 32
     # _top1, _ = evaluate(
     #     model, test_loader, neval_batches=_len_eval_batches, device="cuda"
     # )
     # # for benchmarking
     # if _len_eval_batches == len(test_loader):
     #     print(
-    #         f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}"
+    #         f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}%"
     #     )
     # # for debugging
     # else:
     #     print(
-    #         f"    Original model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
+    #         f"    Original model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.2f}%"
     #     )
 
     def _quant_module_refactor(
@@ -154,11 +159,11 @@ def main():
         # scheme="AbsMaxQuantizer",
         # scheme="MinMaxQuantizer",
         # scheme="NormQuantizer",
-        # p=2,
-        scheme="OrgNormQuantizerCode",
-        # scheme="AdaRoundQuantizer",
+        # p=2.4,
+        # scheme="OrgNormQuantizerCode",
+        scheme="AdaRoundQuantizer",
         per_channel=True,
-        dstDtype="INT8",
+        dstDtype="INT4",
     )
     print(weight_quant_params)
     act_quant_params = {}
@@ -166,16 +171,18 @@ def main():
     print("Qparams computing done!")
 
     # Count the number of QuantModule
-    cnt = 0
+    num_layers = 0
     for name, module in model.named_modules():
         if isinstance(module, QuantModule):
-            cnt += 1
+            num_layers += 1
             print(f"    QuantModule: {name}, {module.weight.shape}")
 
-    print(f"Total QuantModule: {cnt}")
+    print(f"Total QuantModule: {num_layers}")
 
     if weight_quant_params["scheme"] == "AdaRoundQuantizer":
-        runAdaRound(model, train_loader, num_samples=1024, batch_size=32)
+        runAdaRound(
+            model, train_loader, num_samples=1024, batch_size=32, num_layers=num_layers
+        )
         print(f"AdaRound values computing done!")
 
     _top1, _ = evaluate(
@@ -184,12 +191,12 @@ def main():
     # for benchmarking
     if _len_eval_batches == len(test_loader):
         print(
-            f"    Quantized model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}"
+            f"    Quantized model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}%"
         )
     # for debugging
     else:
         print(
-            f"    Quantized model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.2f}"
+            f"    Quantized model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.2f}%"
         )
 
 

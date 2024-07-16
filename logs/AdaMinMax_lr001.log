@@ -1,0 +1,679 @@
+ResNet18 quantization with myAdaRound!
+{'scheme': 'AdaRoundQuantizer', 'per_channel': True, 'dstDtype': 'INT4'}
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Parent class is NormQuantizer
+Initiated the V
+Qparams computing done!
+    QuantModule: conv1, torch.Size([64, 3, 7, 7])
+    QuantModule: layer1.0.conv1, torch.Size([64, 64, 3, 3])
+    QuantModule: layer1.0.conv2, torch.Size([64, 64, 3, 3])
+    QuantModule: layer1.1.conv1, torch.Size([64, 64, 3, 3])
+    QuantModule: layer1.1.conv2, torch.Size([64, 64, 3, 3])
+    QuantModule: layer2.0.conv1, torch.Size([128, 64, 3, 3])
+    QuantModule: layer2.0.conv2, torch.Size([128, 128, 3, 3])
+    QuantModule: layer2.0.downsample.0, torch.Size([128, 64, 1, 1])
+    QuantModule: layer2.1.conv1, torch.Size([128, 128, 3, 3])
+    QuantModule: layer2.1.conv2, torch.Size([128, 128, 3, 3])
+    QuantModule: layer3.0.conv1, torch.Size([256, 128, 3, 3])
+    QuantModule: layer3.0.conv2, torch.Size([256, 256, 3, 3])
+    QuantModule: layer3.0.downsample.0, torch.Size([256, 128, 1, 1])
+    QuantModule: layer3.1.conv1, torch.Size([256, 256, 3, 3])
+    QuantModule: layer3.1.conv2, torch.Size([256, 256, 3, 3])
+    QuantModule: layer4.0.conv1, torch.Size([512, 256, 3, 3])
+    QuantModule: layer4.0.conv2, torch.Size([512, 512, 3, 3])
+    QuantModule: layer4.0.downsample.0, torch.Size([512, 256, 1, 1])
+    QuantModule: layer4.1.conv1, torch.Size([512, 512, 3, 3])
+    QuantModule: layer4.1.conv2, torch.Size([512, 512, 3, 3])
+    QuantModule: fc, torch.Size([1000, 512])
+Total QuantModule: 21
+........
+   FP_OUTPUTS shape torch.Size([1024, 64, 112, 112])
+................
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+........................
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+................................
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+........................................
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+................................................
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+........................................................
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+................................................................
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+........................................................................
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+........................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+................................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+........................................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+................................................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+........................................................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+................................................................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+........................................................................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+................................................................................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+........................................................................................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+................................................................................................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+........................................................................................................................................................................
+   FP_OUTPUTS shape torch.Size([1024, 1000])
+
+AdaRound computing: conv1
+
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0573 (MSE:0.0573, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0038 (MSE:0.0038, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 785.2014 (MSE:0.0036, Reg:785.1978) beta=20.00
+Iter  6000 | Total loss: 62.0008 (MSE:0.0039, Reg:61.9969) beta=17.75
+Iter  8000 | Total loss: 34.5779 (MSE:0.0046, Reg:34.5733) beta=15.50
+Iter 10000 | Total loss: 25.3891 (MSE:0.0048, Reg:25.3842) beta=13.25
+Iter 12000 | Total loss: 21.0049 (MSE:0.0049, Reg:21.0000) beta=11.00
+Iter 14000 | Total loss: 4.9234 (MSE:0.0044, Reg:4.9190) beta=8.75
+Iter 16000 | Total loss: 0.0052 (MSE:0.0052, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0042 (MSE:0.0042, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0038 (MSE:0.0038, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv1
+,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0224 (MSE:0.0224, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0022 (MSE:0.0022, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 1832.0181 (MSE:0.0021, Reg:1832.0159) beta=20.00
+Iter  6000 | Total loss: 91.0023 (MSE:0.0023, Reg:91.0000) beta=17.75
+Iter  8000 | Total loss: 61.0024 (MSE:0.0024, Reg:61.0000) beta=15.50
+Iter 10000 | Total loss: 29.0019 (MSE:0.0019, Reg:29.0000) beta=13.25
+Iter 12000 | Total loss: 14.0024 (MSE:0.0024, Reg:14.0000) beta=11.00
+Iter 14000 | Total loss: 2.7328 (MSE:0.0019, Reg:2.7309) beta=8.75
+Iter 16000 | Total loss: 0.0020 (MSE:0.0020, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0018 (MSE:0.0018, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0019 (MSE:0.0019, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv2
+,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0016 (MSE:0.0016, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0007 (MSE:0.0007, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 3420.9958 (MSE:0.0007, Reg:3420.9951) beta=20.00
+Iter  6000 | Total loss: 214.9479 (MSE:0.0006, Reg:214.9473) beta=17.75
+Iter  8000 | Total loss: 132.8951 (MSE:0.0007, Reg:132.8944) beta=15.50
+Iter 10000 | Total loss: 53.0007 (MSE:0.0007, Reg:53.0000) beta=13.25
+Iter 12000 | Total loss: 34.0007 (MSE:0.0007, Reg:34.0000) beta=11.00
+Iter 14000 | Total loss: 2.0006 (MSE:0.0006, Reg:2.0000) beta=8.75
+Iter 16000 | Total loss: 0.0007 (MSE:0.0007, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0006 (MSE:0.0006, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0006 (MSE:0.0006, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv1
+,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0151 (MSE:0.0151, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0052 (MSE:0.0052, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 2526.2649 (MSE:0.0048, Reg:2526.2603) beta=20.00
+Iter  6000 | Total loss: 218.6172 (MSE:0.0059, Reg:218.6113) beta=17.75
+Iter  8000 | Total loss: 118.0051 (MSE:0.0051, Reg:118.0000) beta=15.50
+Iter 10000 | Total loss: 63.0055 (MSE:0.0055, Reg:63.0000) beta=13.25
+Iter 12000 | Total loss: 16.0048 (MSE:0.0048, Reg:16.0000) beta=11.00
+Iter 14000 | Total loss: 1.0047 (MSE:0.0047, Reg:1.0000) beta=8.75
+Iter 16000 | Total loss: 0.0046 (MSE:0.0046, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0055 (MSE:0.0055, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0046 (MSE:0.0046, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv2
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0020 (MSE:0.0020, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 5235.3140 (MSE:0.0011, Reg:5235.3130) beta=20.00
+Iter  6000 | Total loss: 423.7730 (MSE:0.0011, Reg:423.7720) beta=17.75
+Iter  8000 | Total loss: 233.0010 (MSE:0.0010, Reg:233.0000) beta=15.50
+Iter 10000 | Total loss: 124.9750 (MSE:0.0012, Reg:124.9738) beta=13.25
+Iter 12000 | Total loss: 32.6321 (MSE:0.0011, Reg:32.6310) beta=11.00
+Iter 14000 | Total loss: 3.0012 (MSE:0.0012, Reg:3.0000) beta=8.75
+Iter 16000 | Total loss: 0.0012 (MSE:0.0012, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv1
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0213 (MSE:0.0213, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0107 (MSE:0.0107, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 5321.4785 (MSE:0.0119, Reg:5321.4668) beta=20.00
+Iter  6000 | Total loss: 537.9737 (MSE:0.0109, Reg:537.9628) beta=17.75
+Iter  8000 | Total loss: 362.0118 (MSE:0.0118, Reg:362.0000) beta=15.50
+Iter 10000 | Total loss: 206.3762 (MSE:0.0122, Reg:206.3640) beta=13.25
+Iter 12000 | Total loss: 78.4883 (MSE:0.0127, Reg:78.4756) beta=11.00
+Iter 14000 | Total loss: 3.0113 (MSE:0.0113, Reg:3.0000) beta=8.75
+Iter 16000 | Total loss: 0.0114 (MSE:0.0114, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0118 (MSE:0.0118, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0125 (MSE:0.0125, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv2
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0029 (MSE:0.0029, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0016 (MSE:0.0016, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 18845.9238 (MSE:0.0019, Reg:18845.9219) beta=20.00
+Iter  6000 | Total loss: 1060.8015 (MSE:0.0017, Reg:1060.7998) beta=17.75
+Iter  8000 | Total loss: 714.7318 (MSE:0.0018, Reg:714.7299) beta=15.50
+Iter 10000 | Total loss: 385.7741 (MSE:0.0019, Reg:385.7722) beta=13.25
+Iter 12000 | Total loss: 121.9069 (MSE:0.0017, Reg:121.9052) beta=11.00
+Iter 14000 | Total loss: 7.0018 (MSE:0.0018, Reg:7.0000) beta=8.75
+Iter 16000 | Total loss: 0.0018 (MSE:0.0018, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0019 (MSE:0.0019, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0017 (MSE:0.0017, Reg:0.0000) beta=2.00
+
+AdaRound computing: 0
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0036 (MSE:0.0036, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0016 (MSE:0.0016, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 1944.1061 (MSE:0.0015, Reg:1944.1045) beta=20.00
+Iter  6000 | Total loss: 151.0018 (MSE:0.0018, Reg:151.0000) beta=17.75
+Iter  8000 | Total loss: 118.0019 (MSE:0.0019, Reg:118.0000) beta=15.50
+Iter 10000 | Total loss: 64.9919 (MSE:0.0018, Reg:64.9901) beta=13.25
+Iter 12000 | Total loss: 30.0018 (MSE:0.0018, Reg:30.0000) beta=11.00
+Iter 14000 | Total loss: 11.0016 (MSE:0.0016, Reg:11.0000) beta=8.75
+Iter 16000 | Total loss: 0.0017 (MSE:0.0017, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0018 (MSE:0.0018, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0018 (MSE:0.0018, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv1
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0078 (MSE:0.0078, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0051 (MSE:0.0051, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 13702.0869 (MSE:0.0052, Reg:13702.0820) beta=20.00
+Iter  6000 | Total loss: 1101.9420 (MSE:0.0048, Reg:1101.9373) beta=17.75
+Iter  8000 | Total loss: 726.4757 (MSE:0.0050, Reg:726.4707) beta=15.50
+Iter 10000 | Total loss: 430.9128 (MSE:0.0050, Reg:430.9077) beta=13.25
+Iter 12000 | Total loss: 119.6781 (MSE:0.0049, Reg:119.6733) beta=11.00
+Iter 14000 | Total loss: 15.8322 (MSE:0.0052, Reg:15.8270) beta=8.75
+Iter 16000 | Total loss: 0.0051 (MSE:0.0051, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0050 (MSE:0.0050, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0051 (MSE:0.0051, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv2
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0009 (MSE:0.0009, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 33207.9727 (MSE:0.0010, Reg:33207.9727) beta=20.00
+Iter  6000 | Total loss: 2089.0479 (MSE:0.0009, Reg:2089.0469) beta=17.75
+Iter  8000 | Total loss: 1343.2197 (MSE:0.0009, Reg:1343.2188) beta=15.50
+Iter 10000 | Total loss: 749.1572 (MSE:0.0010, Reg:749.1561) beta=13.25
+Iter 12000 | Total loss: 301.0215 (MSE:0.0010, Reg:301.0204) beta=11.00
+Iter 14000 | Total loss: 47.9172 (MSE:0.0009, Reg:47.9163) beta=8.75
+Iter 16000 | Total loss: 0.0009 (MSE:0.0009, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0010 (MSE:0.0010, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0010 (MSE:0.0010, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv1
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0073 (MSE:0.0073, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0056 (MSE:0.0056, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 31519.4766 (MSE:0.0055, Reg:31519.4707) beta=20.00
+Iter  6000 | Total loss: 2222.1794 (MSE:0.0052, Reg:2222.1743) beta=17.75
+Iter  8000 | Total loss: 1462.6348 (MSE:0.0055, Reg:1462.6293) beta=15.50
+Iter 10000 | Total loss: 723.1210 (MSE:0.0056, Reg:723.1154) beta=13.25
+Iter 12000 | Total loss: 215.6937 (MSE:0.0057, Reg:215.6880) beta=11.00
+Iter 14000 | Total loss: 24.9979 (MSE:0.0056, Reg:24.9923) beta=8.75
+Iter 16000 | Total loss: 0.0055 (MSE:0.0055, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0054 (MSE:0.0054, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0060 (MSE:0.0060, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv2
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0027 (MSE:0.0027, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0021 (MSE:0.0021, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 67068.8594 (MSE:0.0022, Reg:67068.8594) beta=20.00
+Iter  6000 | Total loss: 3624.9880 (MSE:0.0021, Reg:3624.9861) beta=17.75
+Iter  8000 | Total loss: 2066.0769 (MSE:0.0023, Reg:2066.0747) beta=15.50
+Iter 10000 | Total loss: 1095.6915 (MSE:0.0023, Reg:1095.6892) beta=13.25
+Iter 12000 | Total loss: 415.4576 (MSE:0.0023, Reg:415.4554) beta=11.00
+Iter 14000 | Total loss: 44.6975 (MSE:0.0022, Reg:44.6953) beta=8.75
+Iter 16000 | Total loss: 0.0021 (MSE:0.0021, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0021 (MSE:0.0021, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0023 (MSE:0.0023, Reg:0.0000) beta=2.00
+
+AdaRound computing: 0
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0007 (MSE:0.0007, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0005 (MSE:0.0005, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 9490.5361 (MSE:0.0004, Reg:9490.5361) beta=20.00
+Iter  6000 | Total loss: 597.7003 (MSE:0.0005, Reg:597.6997) beta=17.75
+Iter  8000 | Total loss: 424.5475 (MSE:0.0005, Reg:424.5471) beta=15.50
+Iter 10000 | Total loss: 218.0005 (MSE:0.0005, Reg:218.0000) beta=13.25
+Iter 12000 | Total loss: 94.2359 (MSE:0.0005, Reg:94.2353) beta=11.00
+Iter 14000 | Total loss: 28.9962 (MSE:0.0005, Reg:28.9956) beta=8.75
+Iter 16000 | Total loss: 0.1422 (MSE:0.0005, Reg:0.1417) beta=6.50
+Iter 18000 | Total loss: 0.0005 (MSE:0.0005, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0005 (MSE:0.0005, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv1
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0041 (MSE:0.0041, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0027 (MSE:0.0027, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 51566.9102 (MSE:0.0027, Reg:51566.9062) beta=20.00
+Iter  6000 | Total loss: 2877.6765 (MSE:0.0028, Reg:2877.6736) beta=17.75
+Iter  8000 | Total loss: 1661.1191 (MSE:0.0029, Reg:1661.1162) beta=15.50
+Iter 10000 | Total loss: 857.9293 (MSE:0.0027, Reg:857.9266) beta=13.25
+Iter 12000 | Total loss: 256.6264 (MSE:0.0029, Reg:256.6235) beta=11.00
+Iter 14000 | Total loss: 21.0028 (MSE:0.0028, Reg:21.0000) beta=8.75
+Iter 16000 | Total loss: 1.0030 (MSE:0.0030, Reg:1.0000) beta=6.50
+Iter 18000 | Total loss: 0.0027 (MSE:0.0027, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0030 (MSE:0.0030, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv2
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0008 (MSE:0.0008, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0005 (MSE:0.0005, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 120585.3984 (MSE:0.0005, Reg:120585.3984) beta=20.00
+Iter  6000 | Total loss: 1407.1234 (MSE:0.0005, Reg:1407.1229) beta=17.75
+Iter  8000 | Total loss: 748.3483 (MSE:0.0005, Reg:748.3477) beta=15.50
+Iter 10000 | Total loss: 441.4724 (MSE:0.0005, Reg:441.4719) beta=13.25
+Iter 12000 | Total loss: 239.2520 (MSE:0.0006, Reg:239.2514) beta=11.00
+Iter 14000 | Total loss: 59.0005 (MSE:0.0005, Reg:59.0000) beta=8.75
+Iter 16000 | Total loss: 1.0005 (MSE:0.0005, Reg:1.0000) beta=6.50
+Iter 18000 | Total loss: 0.0005 (MSE:0.0005, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0005 (MSE:0.0005, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv1
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0040 (MSE:0.0040, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0030 (MSE:0.0030, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 117198.7812 (MSE:0.0029, Reg:117198.7812) beta=20.00
+Iter  6000 | Total loss: 4170.5615 (MSE:0.0031, Reg:4170.5586) beta=17.75
+Iter  8000 | Total loss: 2277.0815 (MSE:0.0030, Reg:2277.0786) beta=15.50
+Iter 10000 | Total loss: 1224.7299 (MSE:0.0031, Reg:1224.7268) beta=13.25
+Iter 12000 | Total loss: 487.3676 (MSE:0.0029, Reg:487.3646) beta=11.00
+Iter 14000 | Total loss: 75.8738 (MSE:0.0030, Reg:75.8708) beta=8.75
+Iter 16000 | Total loss: 0.0030 (MSE:0.0030, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0029 (MSE:0.0029, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0028 (MSE:0.0028, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv2
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0008 (MSE:0.0008, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0007 (MSE:0.0007, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 442285.4375 (MSE:0.0007, Reg:442285.4375) beta=20.00
+Iter  6000 | Total loss: 873.5124 (MSE:0.0008, Reg:873.5116) beta=17.75
+Iter  8000 | Total loss: 430.7294 (MSE:0.0008, Reg:430.7286) beta=15.50
+Iter 10000 | Total loss: 231.0005 (MSE:0.0008, Reg:230.9997) beta=13.25
+Iter 12000 | Total loss: 122.7340 (MSE:0.0008, Reg:122.7332) beta=11.00
+Iter 14000 | Total loss: 46.0008 (MSE:0.0008, Reg:46.0000) beta=8.75
+Iter 16000 | Total loss: 2.0008 (MSE:0.0008, Reg:2.0000) beta=6.50
+Iter 18000 | Total loss: 0.0008 (MSE:0.0008, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0008 (MSE:0.0008, Reg:0.0000) beta=2.00
+
+AdaRound computing: 0
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0009 (MSE:0.0009, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0006 (MSE:0.0006, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 31291.5898 (MSE:0.0006, Reg:31291.5898) beta=20.00
+Iter  6000 | Total loss: 1567.1427 (MSE:0.0006, Reg:1567.1421) beta=17.75
+Iter  8000 | Total loss: 1055.5780 (MSE:0.0006, Reg:1055.5774) beta=15.50
+Iter 10000 | Total loss: 603.1434 (MSE:0.0007, Reg:603.1427) beta=13.25
+Iter 12000 | Total loss: 212.8009 (MSE:0.0006, Reg:212.8002) beta=11.00
+Iter 14000 | Total loss: 50.4752 (MSE:0.0006, Reg:50.4746) beta=8.75
+Iter 16000 | Total loss: 1.0006 (MSE:0.0006, Reg:1.0000) beta=6.50
+Iter 18000 | Total loss: 0.0006 (MSE:0.0006, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0006 (MSE:0.0006, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv1
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0055 (MSE:0.0055, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0043 (MSE:0.0043, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 248614.7188 (MSE:0.0042, Reg:248614.7188) beta=20.00
+Iter  6000 | Total loss: 7122.8213 (MSE:0.0045, Reg:7122.8169) beta=17.75
+Iter  8000 | Total loss: 3634.9971 (MSE:0.0043, Reg:3634.9927) beta=15.50
+Iter 10000 | Total loss: 1835.4412 (MSE:0.0043, Reg:1835.4368) beta=13.25
+Iter 12000 | Total loss: 707.6905 (MSE:0.0043, Reg:707.6862) beta=11.00
+Iter 14000 | Total loss: 86.2216 (MSE:0.0040, Reg:86.2176) beta=8.75
+Iter 16000 | Total loss: 0.0041 (MSE:0.0041, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.0043 (MSE:0.0043, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0043 (MSE:0.0043, Reg:0.0000) beta=2.00
+
+AdaRound computing: conv2
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0008 (MSE:0.0008, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0008 (MSE:0.0008, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 355272.3750 (MSE:0.0007, Reg:355272.3750) beta=20.00
+Iter  6000 | Total loss: 682.5449 (MSE:0.0008, Reg:682.5441) beta=17.75
+Iter  8000 | Total loss: 314.2550 (MSE:0.0007, Reg:314.2543) beta=15.50
+Iter 10000 | Total loss: 177.7698 (MSE:0.0007, Reg:177.7690) beta=13.25
+Iter 12000 | Total loss: 84.0008 (MSE:0.0008, Reg:84.0000) beta=11.00
+Iter 14000 | Total loss: 22.3934 (MSE:0.0008, Reg:22.3927) beta=8.75
+Iter 16000 | Total loss: 3.0008 (MSE:0.0008, Reg:3.0000) beta=6.50
+Iter 18000 | Total loss: 0.0008 (MSE:0.0008, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.0008 (MSE:0.0008, Reg:0.0000) beta=2.00
+
+AdaRound computing: fc
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.2208 (MSE:0.2208, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.1502 (MSE:0.1502, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 31809.3066 (MSE:0.1356, Reg:31809.1719) beta=20.00
+Iter  6000 | Total loss: 4899.2876 (MSE:0.1636, Reg:4899.1240) beta=17.75
+Iter  8000 | Total loss: 2583.9929 (MSE:0.1555, Reg:2583.8374) beta=15.50
+Iter 10000 | Total loss: 913.5571 (MSE:0.1356, Reg:913.4215) beta=13.25
+Iter 12000 | Total loss: 115.1212 (MSE:0.1433, Reg:114.9780) beta=11.00
+Iter 14000 | Total loss: 5.7173 (MSE:0.1407, Reg:5.5766) beta=8.75
+Iter 16000 | Total loss: 0.1533 (MSE:0.1533, Reg:0.0000) beta=6.50
+Iter 18000 | Total loss: 0.1498 (MSE:0.1498, Reg:0.0000) beta=4.25
+Iter 20000 | Total loss: 0.1530 (MSE:0.1530, Reg:0.0000) beta=2.00
+AdaRound values computing done!
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,    Quantized model Evaluation accuracy on 50000 images, 68.86%
+Total time: 850.71 sec
