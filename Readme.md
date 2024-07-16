@@ -12,32 +12,33 @@
 # Results on ResNet18 
 - Full precision ResNet18: **69.76%**
  
-| Quantization Scheme (Per-Layer) | W8A32  | W4A32  |
-| ------------------------------- | ------ | ------ |
-| AbsMaxQuantizer_Layer           | 69.54% | 0.76%  |
-| MinMaxQuantizer_Layer           | 69.65% | 1.92%  |
-| NormQuantizer_Layer_p2.0        | 69.65% | 48.32% |
-| NormQuantizer_Layer_p2.4        | 69.67% | 51.41% |
-| OrgNormQuantizerCode_Layer_p2.4 | 69.62% | 51.07% |
+| Quantization Scheme (Per-Layer) | W8A32      | W4A32      |
+| ------------------------------- | ---------- | ---------- |
+| AbsMaxQuantizer_Layer           | 69.54%     | 0.76%      |
+| MinMaxQuantizer_Layer           | **69.65%** | 1.92%      |
+| NormQuantizer_Layer_p2.0        | **69.65%** | 48.32%     |
+| NormQuantizer_Layer_p2.4        | 69.58%     | **51.41%** |
+| OrgNormQuantizerCode_Layer_p2.4 | 69.62%     | 51.07%     |
 
-| Quantization Scheme (Per-Channel) | W8A32  | W4A32  |
-| --------------------------------- | ------ | ------ |
-| AbsMaxQuantizer_CH                | 69.64% | 50.37% |
-| MinMaxQuantizer_CH                | 69.76% | 58.24% |
-| NormQuantizer_CH_p2.0             | 69.76% | 58.14% |
-| NormQuantizer_CH_p2.4             | 69.80% | 60.81% |
-| OrgNormQuantizerCode_CH_p2.4      | 69.79% | 57.58% |
+| Quantization Scheme (Per-Channel) | W8A32      | W4A32      |
+| --------------------------------- | ---------- | ---------- |
+| AbsMaxQuantizer_CH                | 69.64%     | 50.37%     |
+| MinMaxQuantizer_CH                | 69.76%     | 58.24%     |
+| NormQuantizer_CH_p2.0             | 69.76%     | 58.14%     |
+| NormQuantizer_CH_p2.4             | 69.76%     | **60.81%** |
+| OrgNormQuantizerCode_CH_p2.4      | **69.79%** | 57.58%     |
 
-| Quantization Scheme (Per-Channel) | W8A32 | W4A32      |
-| --------------------------------- | ----- | ---------- |
-| AdaRoundAbsMax_CH_lr0.01          | -     | 68.54%     |
-| AdaRoundAbsMax_CH_lr0.001         | -     | 67.17%     |
-| AdaRoundMinMax_CH_lr0.01          | -     | **68.95%** |
-| AdaRoundMinMax_CH_lr0.001         | -     | 67.91%     |
-| AdaRoundNorm_CH_lr0.01_p2.4       | -     | 68.86%     |
-| AdaRoundNorm_CH_lr0.001_p2.4      | -     |            |
-| AdaRoundOrgNorm_CH_lr0.01_p2.4    | -     | 68.55%     |
-| AdaRoundOrgNorm_CH_lr0.001_p2.4   | -     | 68.44%     |
+| Quantization Scheme (Per-Channel) | W8A32 | W4A32  |
+| --------------------------------- | ----- | ------ |
+| AdaRoundAbsMax_CH_lr0.01          | -     | 68.56% |
+| AdaRoundAbsMax_CH_lr0.001         | -     | 67.14% |
+| AdaRoundMinMax_CH_lr0.01          | -     | 69.06% |
+| AdaRoundMinMax_CH_lr0.001         | -     | 68.01% |
+| AdaRoundNorm_CH_lr0.01_p2.4       | -     | 68.86% |
+| AdaRoundNorm_CH_lr0.001_p2.4      | -     | 68.08% |
+| AdaRoundOrgNorm_CH_lr0.01_p2.4    | -     | 68.55% |
+| AdaRoundOrgNorm_CH_lr0.001_p2.4   | -     | 68.44% |
+
 
 # ToDo
 - [ ] L2Distance quantization for one side distribution (Activation values with ReLU function)
