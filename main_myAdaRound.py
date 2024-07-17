@@ -108,6 +108,14 @@ def runAdaRound(
     return None
 
 
+class StraightThrough(nn.Module):
+    def __int__(self):
+        super().__init__()
+
+    def forward(self, input):
+        return input
+
+
 #################################################################################################
 ## 3. Main function
 #################################################################################################
@@ -143,13 +151,54 @@ def main(weight_quant_params, act_quant_params, args):
     # # for benchmarking
     # if _len_eval_batches == len(test_loader):
     #     print(
-    #         f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}%"
+    #         f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.3f}%"
     #     )
     # # for debugging
     # else:
     #     print(
-    #         f"    Original model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.2f}%"
+    #         f"    Original model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.3f}%"
     #     )
+
+    def _quant_module_refactor_with_bn_folding(
+        module: nn.Module,
+        weight_quant_params: dict = {},
+        act_quant_params: dict = {},
+    ):
+        """
+        Recursively replace the normal conv2d and Linear layer to QuantModule
+        """
+        prev_module = None
+        for name, child_module in module.named_children():
+            if isinstance(child_module, (nn.Conv2d)):
+                prev_module = child_module
+                prev_name = name
+            elif isinstance(child_module, nn.BatchNorm2d):
+                print(
+                    f"    {prev_module._get_name()} <- {child_module._get_name()}",
+                    end="",
+                )
+                setattr(
+                    module,
+                    prev_name,
+                    QuantModule(
+                        prev_module,  # prev == conv2d or linear
+                        weight_quant_params,
+                        act_quant_params,
+                        child_module,  # child == BN
+                    ),
+                )
+                setattr(module, name, StraightThrough())  # remove bn layer
+            elif isinstance(child_module, nn.Linear):
+                # FC layer does not have BN
+                setattr(
+                    module,
+                    name,
+                    QuantModule(child_module, weight_quant_params, act_quant_params),
+                )
+            else:
+                _quant_module_refactor_with_bn_folding(
+                    child_module, weight_quant_params, act_quant_params
+                )
 
     def _quant_module_refactor(
         module: nn.Module,
@@ -171,17 +220,27 @@ def main(weight_quant_params, act_quant_params, args):
                     child_module, weight_quant_params, act_quant_params
                 )
 
-    _quant_module_refactor(model, weight_quant_params, act_quant_params)
+    print("Replace to QuantModule")
+    with torch.no_grad():
+        if args["fold"] == True:
+            _quant_module_refactor_with_bn_folding(
+                model, weight_quant_params, act_quant_params
+            )
+        else:
+            _quant_module_refactor(model, weight_quant_params, act_quant_params)
+
     print("Qparams computing done!")
 
     # Count the number of QuantModule
     num_layers = 0
+    num_bn = 0
     for name, module in model.named_modules():
         if isinstance(module, QuantModule):
             num_layers += 1
             print(f"    QuantModule: {name}, {module.weight.shape}")
-
-    print(f"Total QuantModule: {num_layers}")
+        elif isinstance(module, StraightThrough):
+            num_bn += 1
+    print(f"Total QuantModule: {num_layers}, Folded BN layers : {num_bn}")
 
     if weight_quant_params["scheme"] == "AdaRoundQuantizer":
         runAdaRound(
@@ -200,12 +259,12 @@ def main(weight_quant_params, act_quant_params, args):
     # for benchmarking
     if _len_eval_batches == len(test_loader):
         print(
-            f"    Quantized model Evaluation accuracy on 50000 images, {_top1.avg:2.2f}%"
+            f"    Quantized model Evaluation accuracy on 50000 images, {_top1.avg:2.3f}%"
         )
     # for debugging
     else:
         print(
-            f"    Quantized model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.2f}%"
+            f"    Quantized model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.3f}%"
         )
 
 
@@ -231,7 +290,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--scheme",
-        default="AdaRoundQuantizer",
+        default="AbsMaxQuantizer",
         type=str,
         help="quantization scheme",
         choices=[
@@ -259,7 +318,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeW",
-        default="INT4",
+        default="INT8",
         type=str,
         help="destination data type",
         choices=["INT4", "INT8"],
@@ -277,6 +336,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--lr", default=0.01, type=float, help="learning rate for AdaRound"
     )
+    parser.add_argument("--fold", action="store_false", help="BN folding")
 
     ##### Setup
     args = parser.parse_args()
@@ -286,13 +346,17 @@ if __name__ == "__main__":
         per_channel=args.per_channel,
         dstDtype=args.dstDtypeW,
     )
-    act_quant_params = {
+    act_quant_params = dict(
         # Not implemented yet
-    }
+        scheme=args.scheme,
+        dstDtype=args.dstDtypeA,
+        per_channel=False,  # activation quantization is always per layer
+    )
     main_args = dict(
         arch=args.arch,
         batch_size=args.batch_size,
         num_samples=args.num_samples,
+        fold=args.fold,
     )
     if args.scheme == "NormQuantizer":
         weight_quant_params.update(dict(p=args.p))
@@ -312,7 +376,7 @@ if __name__ == "__main__":
     print(f"    - {main_args}")
     print(f"    - weight params: {weight_quant_params}")
     print(f"    - activation params: {act_quant_params}")
-    # exit()
+    print("")
     seed_all(args.seed)
 
     STARTTIME = time.time()

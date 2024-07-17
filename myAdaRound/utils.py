@@ -418,7 +418,7 @@ def create_AdaRound_Quantizer(base_class_name, org_weight, args):
             - https://proceedings.mlr.press/v119/nagel20a/nagel20a.pdf
             """
             super(AdaRoundQuantizer, self).__init__(org_weight, args)
-            print(f"Parent class is {self.__class__.__bases__[0].__name__}")
+            print(f"    Parent class is {self.__class__.__bases__[0].__name__}")
 
             self.fp_outputs = None
             # -> Now, We have AbsMaxQuantizer's scaler and zero_point!
@@ -457,7 +457,7 @@ def create_AdaRound_Quantizer(base_class_name, org_weight, args):
             self._v = nn.Parameter(_v, requires_grad=True)
             assert (_residual - self._h()).abs().sum() == 0
 
-            print("Initiated the V")
+            print("    Initiated the V")
 
         def _h(self) -> Tensor:
             # Rectified_sigmoid (strached sigmoid function)
@@ -499,8 +499,45 @@ def create_AdaRound_Quantizer(base_class_name, org_weight, args):
     return AdaRoundQuantizer(org_weight, args)
 
 
+# Origin Bn fonlding function (2)
+def _fold_bn(conv_module, bn_module):
+    w = conv_module.weight.data
+    y_mean = bn_module.running_mean
+    y_var = bn_module.running_var
+    safe_std = torch.sqrt(y_var + bn_module.eps)
+    w_view = (conv_module.out_channels, 1, 1, 1)
+    if bn_module.affine:
+        weight = w * (bn_module.weight / safe_std).view(w_view)
+        beta = bn_module.bias - bn_module.weight * y_mean / safe_std
+        if conv_module.bias is not None:
+            bias = bn_module.weight * conv_module.bias / safe_std + beta
+        else:
+            bias = beta
+    else:
+        weight = w / safe_std.view(w_view)
+        beta = -y_mean / safe_std
+        if conv_module.bias is not None:
+            bias = conv_module.bias / safe_std + beta
+        else:
+            bias = beta
+    return weight, bias
+
+
+# Origin Bn fonlding function (1)
+def fold_bn_into_conv(conv_module, bn_module):
+    w, b = _fold_bn(conv_module, bn_module)
+    if conv_module.bias is None:
+        conv_module.bias = nn.Parameter(b)
+    else:
+        conv_module.bias.data = b
+    conv_module.weight.data = w
+    # set bn running stats
+    bn_module.running_mean = bn_module.bias.data
+    bn_module.running_var = bn_module.weight.data**2
+
+
 class QuantModule(nn.Module):
-    def __init__(self, org_module, w_params, act_quant_params):
+    def __init__(self, org_module, w_quant_args, a_quant_args, bn_module=None):
         super(QuantModule, self).__init__()
         """forward function setting"""
         if isinstance(org_module, nn.Conv2d):
@@ -517,15 +554,45 @@ class QuantModule(nn.Module):
 
         self.weight = org_module.weight.clone().detach()
 
+        if org_module.bias != None:
+            self.bias = org_module.bias.clone().detach()
+        else:
+            self.bias = torch.zeros(org_module.weight.size(0)).to(
+                org_module.weight.device
+            )
+
+        """Bn folding"""
+        if bn_module != None:
+            ## (1) My folding code / org_resnet18 : 69.758%
+            _safe_std = torch.sqrt(bn_module.running_var + bn_module.eps)
+            w_view = (org_module.out_channels, 1, 1, 1)
+            _gamma = bn_module.weight
+
+            self.weight = self.weight * (_gamma / _safe_std).view(w_view)
+
+            self.bias = (
+                _gamma * (self.bias - bn_module.running_mean) / _safe_std
+                + bn_module.bias
+            )
+
+            ## (2) Origin bn folding code / org_resnet18: 69.758%
+            # fold_bn_into_conv(org_module, bn_module)
+            # self.weight = org_module.weight
+            # if org_module.bias is not None:
+            #     self.bias = org_module.bias
+
+            print("    BN Folded!")
+
         """weight quantizer"""
-        self.w_quant_enable = True  # default is True. Need false option when only compute adaround values.
+        # default is True. Need false option when only compute adaround values.
+        self.w_quant_enable = True
 
         try:
-            if w_params.get("scheme") == "AdaRoundQuantizer":
+            if w_quant_args.get("scheme") == "AdaRoundQuantizer":
                 self.weight_quantizer = create_AdaRound_Quantizer(
-                    base_class_name=w_params.get("BaseScheme"),
+                    base_class_name=w_quant_args.get("BaseScheme"),
                     org_weight=self.weight,
-                    args=w_params,
+                    args=w_quant_args,
                 )
             else:
                 quantizerDict = {
@@ -534,11 +601,13 @@ class QuantModule(nn.Module):
                     "NormQuantizer": NormQuantizer,
                     "OrgNormQuantizerCode": OrgNormQuantizerCode,
                 }
-                self.weight_quantizer = quantizerDict[w_params.get("scheme")](
-                    self.weight, w_params
+                self.weight_quantizer = quantizerDict[w_quant_args.get("scheme")](
+                    org_weight=self.weight, args=w_quant_args
                 )
         except KeyError:
-            raise ValueError(f"Unknown weight quantizer type: {w_params.get('scheme')}")
+            raise ValueError(
+                f"Unknown weight quantizer type: {w_quant_args.get('scheme')}"
+            )
 
         """activation quantizer"""
         # [ ] add activation quantizer
@@ -550,4 +619,5 @@ class QuantModule(nn.Module):
         else:
             print(".", end="")
             weight = self.weight
-        return self.fwd_func(x, weight, **self.fwd_kwargs)
+
+        return self.fwd_func(x, weight, self.bias, **self.fwd_kwargs)
