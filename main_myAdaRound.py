@@ -289,8 +289,8 @@ if __name__ == "__main__":
         type=int,
         help="number of samples for calibration",
     )
-    # parser.add_argument("--folding", action="store_false", help="BN folding")
-    parser.add_argument("--folding", action="store_true", help="BN folding")
+    parser.add_argument("--folding", action="store_false", help="BN folding")
+    # parser.add_argument("--folding", action="store_true", help="BN folding")
 
     """ weight quantization"""
     parser.add_argument(
@@ -338,7 +338,7 @@ if __name__ == "__main__":
         default="FP32",
         type=str,
         help="destination data type",
-        choices=["UINT4", "UINT8", "FP32"],
+        choices=["UINT4", "UINT8", "INT4", "INT8", "FP32"],
     )
 
     ##### Setup
