@@ -30,28 +30,38 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
     layer.w_quant_enable = True  # Quantized inference
 
     Y_fp = layer.fp_outputs
-    quantized_act_input, fp_act_output = save_inp_oup_data(model, layer, cali_data)
+    # be affected by the previous layer's quantization
+    quantized_act_input, hasbeenquantized_act_output = save_inp_oup_data(
+        model, layer, cali_data
+    )
     print(" <- Commas indicate the INT inference.")
-    if layer.a_quant_inited == False and layer.a_quant_enable == True:
-        idx = torch.randperm(fp_act_output.size(0))[: max(256, batch_size)]
-        layer.init_act_quantizer(fp_act_output[idx])
-        print("activation quantizer initialized")
-        layer.a_quant_inited = True
 
-    # [2] init values
+    # Y_fp : Original FP output
+    # hasbeenquantized_act_output : Quantized output (previous layer are quantized)
+
+    # [2] Create weight optimizer and activation quantizer + optimizer (optional)
     optimizer_w, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=lr), 20000
     optimizer_a = None
-    if layer.a_quant_enable == True:
+    if layer.a_quant_inited == False and layer.a_quant_enable == True:
+        idx = torch.randperm(hasbeenquantized_act_output.size(0))[
+            # : max(256, batch_size)
+            :batch_size
+        ]
+        layer.init_act_quantizer(hasbeenquantized_act_output[idx])
+        layer.a_quant_inited = True
         optimizer_a = torch.optim.Adam([layer.act_quantizer._scaler])
+        print("Activation quantizer initialized")
+
     print(optimizer_w, n_iter)
     for i in range(1, n_iter + 1):
         optimizer_w.zero_grad()
-        if layer.a_quant_enable == True:
+        if layer.a_quant_inited == True and layer.a_quant_enable == True:
             optimizer_a.zero_grad()
         model.train()
 
         # random sampling (32 samples in 1024 samples)
         idx = torch.randperm(quantized_act_input.size(0))[:batch_size]
+        # below code is weight quantizer + activation quantizer
         Y_hat = layer.forward(quantized_act_input[idx])  # Y_hat = W_hat * X_hat
         _mse = (Y_fp[idx] - Y_hat).abs().pow(2).mean()  # | Y - Y_hat |^2
 
@@ -72,7 +82,7 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
         loss = _mse + layer.weight_quantizer.lamda * _reg_loss
         loss.backward()
         optimizer_w.step()
-        if layer.a_quant_enable == True:
+        if layer.a_quant_inited == True and layer.a_quant_enable == True:
             optimizer_a.step()
         if i % 1000 == 0 or i == 1:
             print(
@@ -279,8 +289,8 @@ if __name__ == "__main__":
         type=int,
         help="number of samples for calibration",
     )
-    parser.add_argument("--folding", action="store_false", help="BN folding")
-    # parser.add_argument("--folding", action="store_true", help="BN folding")
+    # parser.add_argument("--folding", action="store_false", help="BN folding")
+    parser.add_argument("--folding", action="store_true", help="BN folding")
 
     """ weight quantization"""
     parser.add_argument(
@@ -292,13 +302,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeW",
-        default="INT8",
+        default="INT4",
         type=str,
         help="destination data type",
         choices=["INT4", "INT8"],
     )
     parser.add_argument(
-        "--AdaRound", default=False, type=bool, help="AdaRound for weights"
+        "--AdaRound", default=True, type=bool, help="AdaRound for weights"
     )
     parser.add_argument(
         "--per_channel",
@@ -318,7 +328,7 @@ if __name__ == "__main__":
     """ Activation quantization """
     parser.add_argument(
         "--scheme_a",
-        default="AbsMaxQuantizer",
+        default="MinMaxQuantizer",
         type=str,
         help="quantization scheme for activations",
         choices=quantizerDict,
@@ -357,7 +367,8 @@ if __name__ == "__main__":
     )
     if args.scheme_w == "NormQuantizer":
         weight_quant_params.update(dict(p=args.p))
-    elif args.AdaRound == True:
+
+    if args.AdaRound == True:
         main_args.update(dict(batch_size_AdaRound=args.batch_size_AdaRound))
         main_args.update(dict(lr=args.lr))
         weight_quant_params.update(dict(AdaRound=True))

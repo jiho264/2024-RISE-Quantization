@@ -275,7 +275,7 @@ class NormQuantizer(UniformAffineQuantizer):
         # L_p norm minimization as described in LAPQ
         # https://arxiv.org/abs/1911.07190
         self._p = args.get("p") if args.get("p") else 2.4
-        print(f"p = {self._p}")
+        print(f"    p = {self._p}")
 
         def forward_copy(input: Tensor) -> Tensor:
             # Avoid override errors when using AdaRound's self.forward function to perform the initialization process.
@@ -667,6 +667,7 @@ class QuantModule(nn.Module):
 
         """ activation """
         if self.a_quant_inited == True and self.a_quant_enable == True:
+            print("A", end="")
             return self.act_quantizer(_Z)
         else:
             return _Z
