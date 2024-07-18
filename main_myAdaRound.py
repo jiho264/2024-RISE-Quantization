@@ -26,25 +26,26 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
     Y_fp = layer.fp_outputs
     quantized_act_input, fp_act_output = save_inp_oup_data(model, layer, cali_data)
     print(" <- Commas indicate the INT inference.")
-    if layer.a_quant_inited == False:
-        idx = torch.randperm(fp_act_output.size(0))[: max(batch_size, 256)]
+    if layer.a_quant_inited == False and layer.a_quant_enable == True:
+        idx = torch.randperm(fp_act_output.size(0))[: max(256, batch_size)]
         layer.init_act_quantizer(fp_act_output[idx])
         print("activation quantizer initialized")
         layer.a_quant_inited = True
 
     # [2] init values
     optimizer_w, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=lr), 20000
-    optimizer_a = torch.optim.Adam([layer.act_quantizer._scaler])
+    optimizer_a = None
+    if layer.a_quant_enable == True:
+        optimizer_a = torch.optim.Adam([layer.act_quantizer._scaler])
     print(optimizer_w, n_iter)
     for i in range(1, n_iter + 1):
         optimizer_w.zero_grad()
-        optimizer_a.zero_grad()
+        if layer.a_quant_enable == True:
+            optimizer_a.zero_grad()
         model.train()
 
         # random sampling (32 samples in 1024 samples)
         idx = torch.randperm(quantized_act_input.size(0))[:batch_size]
-        # init act quantizer
-
         Y_hat = layer.forward(quantized_act_input[idx])  # Y_hat = W_hat * X_hat
         _mse = (Y_fp[idx] - Y_hat).abs().pow(2).mean()  # | Y - Y_hat |^2
 
@@ -65,7 +66,8 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
         loss = _mse + layer.weight_quantizer.lamda * _reg_loss
         loss.backward()
         optimizer_w.step()
-        optimizer_a.step()
+        if layer.a_quant_enable == True:
+            optimizer_a.step()
         if i % 1000 == 0 or i == 1:
             print(
                 f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
@@ -252,17 +254,18 @@ def main(weight_quant_params, act_quant_params, args):
             num_bn += 1
     print(f"Total QuantModule: {num_layers}, Folded BN layers : {num_bn}")
 
-    if weight_quant_params["scheme"] == "AdaRoundQuantizer":
-        runAdaRound(
-            model,
-            train_loader,
-            num_samples=args["num_samples"],
-            batch_size=args["batch_size_AdaRound"],
-            num_layers=num_layers,
-            lr=args["lr"],
-        )
-        print(f"AdaRound values computing done!")
-
+    if "AdaRound" in weight_quant_params:
+        if weight_quant_params["AdaRound"] == True:
+            runAdaRound(
+                model,
+                train_loader,
+                num_samples=args["num_samples"],
+                batch_size=args["batch_size_AdaRound"],
+                num_layers=num_layers,
+                lr=args["lr"],
+            )
+            print(f"AdaRound values computing done!")
+    exit()
     _top1, _ = evaluate(
         model, test_loader, neval_batches=_len_eval_batches, device="cuda"
     )
@@ -312,7 +315,7 @@ if __name__ == "__main__":
         choices=["INT4", "INT8"],
     )
     parser.add_argument(
-        "--AdaRound", default=False, type=bool, help="AdaRound for weights"
+        "--AdaRound", default=True, type=bool, help="AdaRound for weights"
     )
     parser.add_argument(
         "--per_channel",
@@ -332,7 +335,7 @@ if __name__ == "__main__":
     """ Activation quantization """
     parser.add_argument(
         "--scheme_a",
-        default="NormQuantizer",
+        default="AbsMaxQuantizer",
         type=str,
         help="quantization scheme for activations",
         choices=quantizerDict,
@@ -376,7 +379,11 @@ if __name__ == "__main__":
         main_args.update(dict(lr=args.lr))
         weight_quant_params.update(dict(AdaRound=True))
         weight_quant_params["per_channel"] = True  # always Per-CH when using AdaRound
-        args.per_channel = True  # always Per-CH when using AdaRound
+        args.per_channel = True  # always Per-CH when using AdaRound for weights
+
+        if args.dstDtypeA != "FP32":
+            main_args.update(dict(folding=True))
+            args.folding = True  # always folding when using AdaRound
 
     _case_name = f"{args.arch}_"
     if args.AdaRound:

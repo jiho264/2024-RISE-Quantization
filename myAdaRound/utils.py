@@ -610,9 +610,14 @@ class QuantModule(nn.Module):
             raise ValueError(f"Unknown quantizer type: {w_quant_args.get('scheme')}")
 
         """activation quantizer"""
-        # [ ] add activation quantizer
-        self.a_quant_inited = False
-        self.a_quant_args = a_quant_args
+        if a_quant_args == {}:
+            self.a_quant_enable = False
+            self.a_quant_inited = False
+        else:
+            self.a_quant_enable = True
+            self.a_quant_inited = False
+            self.a_quant_args = a_quant_args
+            self.act_quantizer = None
 
     def init_act_quantizer(self, calib):
         try:
@@ -637,7 +642,7 @@ class QuantModule(nn.Module):
 
         _Z = self.fwd_func(x, weight, self.bias, **self.fwd_kwargs)
 
-        if self.a_quant_inited == True:
+        if self.a_quant_inited == True and self.a_quant_enable == True:
             return self.act_quantizer(_Z)
         else:
             return _Z
