@@ -7,27 +7,27 @@
  - AdaRoundPaper(base: 69.68%, W4A32): **68.71** +-0.06%
    - Symmetric quantization (AbsMaxQuantizer)
    - AdaRound GD batch = 32
-   - Optimizer : Defalut Adam (lr=0.001 from pytorch)
+   - Optimizer : Defalut Adam (lr=0.**001** from pytorch)
     
 # Results on ResNet18 
 - Full precision ResNet18: **69.758%**
-- 
+- BN folding is referred to https://nathanhubens.github.io/fasterai/misc.bn_folding.html
  
-| Quantization Scheme (Per-Layer) | W8A32      | W4A32      |
-| ------------------------------- | ---------- | ---------- |
-| AbsMaxQuantizer_Layer           | 69.54%     | 0.76%      |
-| MinMaxQuantizer_Layer           | **69.65%** | 1.92%      |
-| NormQuantizer_Layer_p2.0        | **69.65%** | 48.32%     |
-| NormQuantizer_Layer_p2.4        | 69.58%     | **51.41%** |
-| OrgNormQuantizerCode_Layer_p2.4 | 69.62%     | 51.07%     |
+| Quantization Scheme (Per-Layer) | W8A32  | W8A32_Folded | W4A32  | W4A32_Folded |
+| ------------------------------- | ------ | ------------ | ------ | ------------ |
+| AbsMaxQuantizer_Layer           | 69.54% | 69.516%      | 0.76%  | 0.246%       |
+| MinMaxQuantizer_Layer           | 69.65% | 69.494%      | 1.92%  | 0.284%       |
+| NormQuantizer_Layer_p2.0        | 69.65% | 69.462%      | 48.32% | 24.248%      |
+| NormQuantizer_Layer_p2.4        | 69.58% | 69.504%      | 51.41% | 21.970%      |
+| OrgNormQuantizerCode_Layer_p2.4 | 69.62% | 69.406%      | 51.07% | 27.032%      |
 
-| Quantization Scheme (Per-Channel) | W8A32      | W4A32      |
-| --------------------------------- | ---------- | ---------- |
-| AbsMaxQuantizer_CH                | 69.64%     | 50.37%     |
-| MinMaxQuantizer_CH                | 69.76%     | 58.24%     |
-| NormQuantizer_CH_p2.0             | 69.76%     | 58.14%     |
-| NormQuantizer_CH_p2.4             | 69.76%     | **60.81%** |
-| OrgNormQuantizerCode_CH_p2.4      | **69.79%** | 57.58%     |
+| Quantization Scheme (Per-Channel) | W8A32  | W8A32_Folded | W4A32  | W4A32_Folded |
+| --------------------------------- | ------ | ------------ | ------ | ------------ |
+| AbsMaxQuantizer_CH                | 69.64% | 69.654%      | 50.37% | 51.232%      |
+| MinMaxQuantizer_CH                | 69.76% | 69.744%      | 58.24% | 58.236%      |
+| NormQuantizer_CH_p2.0             | 69.76% | 69.744%      | 58.14% | 58.296%      |
+| NormQuantizer_CH_p2.4             | 69.76% | 69.744%      | 60.81% | 59.864%      |
+| OrgNormQuantizerCode_CH_p2.4      | 69.79% | 69.788%      | 57.58% | 57.606%      |
 
 | Quantization Scheme (Per-Channel) | W8A32 | W4A32  |
 | --------------------------------- | ----- | ------ |

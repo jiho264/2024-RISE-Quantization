@@ -27,7 +27,7 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
     quantized_act_input, fp_act_output = save_inp_oup_data(model, layer, cali_data)
     print(" <- Commas indicate the INT inference.")
     if layer.a_quant_inited == False:
-        idx = torch.randperm(quantized_act_input.size(0))[:batch_size]
+        idx = torch.randperm(fp_act_output.size(0))[: max(batch_size, 256)]
         layer.init_act_quantizer(fp_act_output[idx])
         print("activation quantizer initialized")
         layer.a_quant_inited = True
@@ -300,7 +300,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--scheme",
-        default="AdaRoundQuantizer",
+        default="AbsMaxQuantizer",
         type=str,
         help="quantization scheme",
         choices=[
@@ -335,7 +335,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeA",
-        default="INT8",
+        default="FP32",
         type=str,
         help="destination data type",
         choices=["INT4", "INT8", "FP32"],
@@ -346,7 +346,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--lr", default=0.01, type=float, help="learning rate for AdaRound"
     )
-    parser.add_argument("--fold", action="store_false", help="BN folding")
+    parser.add_argument("--fold", action="store_true", help="BN folding")
 
     ##### Setup
     args = parser.parse_args()
