@@ -309,7 +309,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeW",
-        default="INT8",
+        default="INT4",
         type=str,
         help="destination data type",
         choices=["INT4", "INT8"],

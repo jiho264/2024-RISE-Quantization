@@ -29,16 +29,16 @@
 | NormQuantizer_CH_p2.4             | 69.744% | 69.744%      | 60.836% | 59.864%      |
 | OrgNormQuantizerCode_CH_p2.4      | 69.788% | 69.788%      | 57.606% | 57.606%      |
 
-| Quantization Scheme (Per-Channel) | W8A32 | W8A32_Folded | W4A32  | W4A32_Folded |
-| --------------------------------- | ----- | ------------ | ------ | ------------ |
-| AdaRoundAbsMax_CH_lr0.01          | -     |              | 68.56% |              |
-| AdaRoundAbsMax_CH_lr0.001         | -     |              | 67.14% |              |
-| AdaRoundMinMax_CH_lr0.01          | -     |              | 69.06% |              |
-| AdaRoundMinMax_CH_lr0.001         | -     |              | 68.01% |              |
-| AdaRoundNorm_CH_lr0.01_p2.4       | -     |              | 68.86% |              |
-| AdaRoundNorm_CH_lr0.001_p2.4      | -     |              | 68.08% |              |
-| AdaRoundOrgNorm_CH_lr0.01_p2.4    | -     |              | 68.55% |              |
-| AdaRoundOrgNorm_CH_lr0.001_p2.4   | -     |              | 68.44% |              |
+| Quantization Scheme (Per-Channel) | W4A32  | W4A32_Folded |
+| --------------------------------- | ------ | ------------ |
+| AdaRoundAbsMax_CH_lr0.01          | 68.56% |              |
+| AdaRoundAbsMax_CH_lr0.001         | 67.14% |              |
+| AdaRoundMinMax_CH_lr0.01          | 69.06% |              |
+| AdaRoundMinMax_CH_lr0.001         | 68.01% |              |
+| AdaRoundNorm_CH_lr0.01_p2.4       | 68.86% |              |
+| AdaRoundNorm_CH_lr0.001_p2.4      | 68.08% |              |
+| AdaRoundOrgNorm_CH_lr0.01_p2.4    | 68.55% |              |
+| AdaRoundOrgNorm_CH_lr0.001_p2.4   | 68.44% |              |
 
 
 # Made by
