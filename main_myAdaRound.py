@@ -24,18 +24,27 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
     layer.w_quant_enable = True  # Quantized inference
 
     Y_fp = layer.fp_outputs
-    quantized_act_input, _ = save_inp_oup_data(model, layer, cali_data)
+    quantized_act_input, fp_act_output = save_inp_oup_data(model, layer, cali_data)
     print(" <- Commas indicate the INT inference.")
+    if layer.a_quant_inited == False:
+        idx = torch.randperm(quantized_act_input.size(0))[:batch_size]
+        layer.init_act_quantizer(fp_act_output[idx])
+        print("activation quantizer initialized")
+        layer.a_quant_inited = True
 
     # [2] init values
-    optimizer, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=lr), 20000
-    print(optimizer, n_iter)
+    optimizer_w, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=lr), 20000
+    optimizer_a = torch.optim.Adam([layer.act_quantizer._scaler])
+    print(optimizer_w, n_iter)
     for i in range(1, n_iter + 1):
-        optimizer.zero_grad()
+        optimizer_w.zero_grad()
+        optimizer_a.zero_grad()
         model.train()
 
         # random sampling (32 samples in 1024 samples)
         idx = torch.randperm(quantized_act_input.size(0))[:batch_size]
+        # init act quantizer
+
         Y_hat = layer.forward(quantized_act_input[idx])  # Y_hat = W_hat * X_hat
         _mse = (Y_fp[idx] - Y_hat).abs().pow(2).mean()  # | Y - Y_hat |^2
 
@@ -55,8 +64,9 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
 
         loss = _mse + layer.weight_quantizer.lamda * _reg_loss
         loss.backward()
-        optimizer.step()
-        if i % 2000 == 0 or i == 1:
+        optimizer_w.step()
+        optimizer_a.step()
+        if i % 1000 == 0 or i == 1:
             print(
                 f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
             )
@@ -290,7 +300,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--scheme",
-        default="AbsMaxQuantizer",
+        default="AdaRoundQuantizer",
         type=str,
         help="quantization scheme",
         choices=[
@@ -303,7 +313,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--BaseScheme",
-        default="AbsMaxQuantizer",
+        default="NormQuantizer",
         type=str,
         help="quantization scheme for init v in AdaRound",
         choices=[
@@ -325,7 +335,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeA",
-        default="FP32",
+        default="INT8",
         type=str,
         help="destination data type",
         choices=["INT4", "INT8", "FP32"],
@@ -348,7 +358,8 @@ if __name__ == "__main__":
     )
     act_quant_params = dict(
         # Not implemented yet
-        scheme=args.scheme,
+        # scheme=args.BaseScheme,
+        scheme="AbsMaxQuantizer",
         dstDtype=args.dstDtypeA,
         per_channel=False,  # activation quantization is always per layer
     )
@@ -370,7 +381,7 @@ if __name__ == "__main__":
     _case_name = f"{args.arch}_{args.scheme}"
     _case_name += "_CH" if args.per_channel else "_Layer"
     _case_name += "_W" + args.dstDtypeW[-1]
-    _case_name += "A" + "32" if args.dstDtypeA == "FP32" else args.dstDtypeA[-1]
+    _case_name += "A" + "32" if args.dstDtypeA == "FP32" else "A" + args.dstDtypeA[-1]
 
     print(f"Case: [ {_case_name} ]")
     print(f"    - {main_args}")

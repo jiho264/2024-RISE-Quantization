@@ -105,8 +105,8 @@ def evaluate(model, data_loader, neval_batches, device):
     top5 = AverageMeter("Acc@5", ":6.2f")
     cnt = 0
     with torch.no_grad():
-        for image, target in tqdm.tqdm(data_loader):
-            # for image, target in data_loader:
+        # for image, target in tqdm.tqdm(data_loader):
+        for image, target in data_loader:
             image, target = image.to(device), target.to(device)
             output = model(image)
             # loss = criterion(output, target)
@@ -605,12 +605,31 @@ class QuantModule(nn.Module):
                     org_weight=self.weight, args=w_quant_args
                 )
         except KeyError:
-            raise ValueError(
-                f"Unknown weight quantizer type: {w_quant_args.get('scheme')}"
-            )
+            raise ValueError(f"Unknown quantizer type: {w_quant_args.get('scheme')}")
 
         """activation quantizer"""
         # [ ] add activation quantizer
+        self.a_quant_inited = False
+        self.a_quant_args = a_quant_args
+
+    def init_act_quantizer(self, calib):
+        try:
+            quantizerDict = {
+                "AbsMaxQuantizer": AbsMaxQuantizer,
+                "MinMaxQuantizer": MinMaxQuantizer,
+                "NormQuantizer": NormQuantizer,
+                "OrgNormQuantizerCode": OrgNormQuantizerCode,
+            }
+            self.act_quantizer = quantizerDict[self.a_quant_args.get("scheme")](
+                org_weight=calib, args=self.a_quant_args
+            )
+            self.act_quantizer._scaler = nn.Parameter(
+                self.act_quantizer._scaler, requires_grad=True
+            )
+        except KeyError:
+            raise ValueError(
+                f"Unknown quantizer type: {self.a_quant_args.get('scheme')}"
+            )
 
     def forward(self, x: Tensor) -> Tensor:
         if self.w_quant_enable == True:
@@ -620,4 +639,9 @@ class QuantModule(nn.Module):
             print(".", end="")
             weight = self.weight
 
-        return self.fwd_func(x, weight, self.bias, **self.fwd_kwargs)
+        _Z = self.fwd_func(x, weight, self.bias, **self.fwd_kwargs)
+
+        if self.a_quant_inited == True:
+            return self.act_quantizer(_Z)
+        else:
+            return _Z

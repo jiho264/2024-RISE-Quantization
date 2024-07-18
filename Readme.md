@@ -13,13 +13,13 @@
 - Full precision ResNet18: **69.758%**
 - 
  
-| Quantization Scheme (Per-Layer) | W8A32      | W4A32      | Folded W8A32 | Folded W4A32 |
-| ------------------------------- | ---------- | ---------- | ------------ | ------------ |
-| AbsMaxQuantizer_Layer           | 69.54%     | 0.76%      | 69.52%       |              |
-| MinMaxQuantizer_Layer           | **69.65%** | 1.92%      | 69.49%       |              |
-| NormQuantizer_Layer_p2.0        | **69.65%** | 48.32%     |              |              |
-| NormQuantizer_Layer_p2.4        | 69.58%     | **51.41%** |              |              |
-| OrgNormQuantizerCode_Layer_p2.4 | 69.62%     | 51.07%     |              |              |
+| Quantization Scheme (Per-Layer) | W8A32      | W4A32      |
+| ------------------------------- | ---------- | ---------- |
+| AbsMaxQuantizer_Layer           | 69.54%     | 0.76%      |
+| MinMaxQuantizer_Layer           | **69.65%** | 1.92%      |
+| NormQuantizer_Layer_p2.0        | **69.65%** | 48.32%     |
+| NormQuantizer_Layer_p2.4        | 69.58%     | **51.41%** |
+| OrgNormQuantizerCode_Layer_p2.4 | 69.62%     | 51.07%     |
 
 | Quantization Scheme (Per-Channel) | W8A32      | W4A32      |
 | --------------------------------- | ---------- | ---------- |
@@ -40,11 +40,6 @@
 | AdaRoundOrgNorm_CH_lr0.01_p2.4    | -     | 68.55% |
 | AdaRoundOrgNorm_CH_lr0.001_p2.4   | -     | 68.44% |
 
-
-# ToDo
-- [ ] L2Distance quantization for one side distribution (Activation values with ReLU function)
-- [x] L2Distance forward code for AdaRound.
-- [ ] Activation quantization code.
 
 # Made by
 - LEE, JIHO
