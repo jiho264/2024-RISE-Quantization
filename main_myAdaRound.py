@@ -1,6 +1,6 @@
 import torch, time, argparse
 import torch.nn as nn
-from myAdaRound.utils import QuantModule, GetDataset, evaluate
+from myAdaRound.utils import QuantModule, GetDataset, evaluate, quantizerDict
 from myAdaRound.data_utils import save_inp_oup_data
 import torchvision.models.resnet as resnet
 
@@ -232,7 +232,7 @@ def main(weight_quant_params, act_quant_params, args):
 
     print("Replace to QuantModule")
     with torch.no_grad():
-        if args["fold"] == True:
+        if args["folding"] == True:
             _quant_module_refactor_with_bn_folding(
                 model, weight_quant_params, act_quant_params
             )
@@ -287,9 +287,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--batch_size", default=128, type=int, help="batch size for evaluation"
     )
-    parser.add_argument(
-        "--batch_size_AdaRound", default=32, type=int, help="batch size for AdaRound"
-    )
 
     parser.add_argument(
         "--num_samples",
@@ -297,34 +294,15 @@ if __name__ == "__main__":
         type=int,
         help="number of samples for calibration",
     )
+    parser.add_argument("--folding", action="store_true", help="BN folding")
 
+    """ weight quantization"""
     parser.add_argument(
-        "--scheme",
+        "--scheme_w",
         default="AbsMaxQuantizer",
         type=str,
-        help="quantization scheme",
-        choices=[
-            "AbsMaxQuantizer",
-            "MinMaxQuantizer",
-            "NormQuantizer",
-            "OrgNormQuantizerCode",
-            "AdaRoundQuantizer",
-        ],
-    )
-    parser.add_argument(
-        "--BaseScheme",
-        default="NormQuantizer",
-        type=str,
-        help="quantization scheme for init v in AdaRound",
-        choices=[
-            "AbsMaxQuantizer",
-            "MinMaxQuantizer",
-            "NormQuantizer",
-            "OrgNormQuantizerCode",
-        ],
-    )
-    parser.add_argument(
-        "--per_channel", action="store_true", help="per channel quantization"
+        help="quantization scheme for weights",
+        choices=quantizerDict,
     )
     parser.add_argument(
         "--dstDtypeW",
@@ -334,11 +312,15 @@ if __name__ == "__main__":
         choices=["INT4", "INT8"],
     )
     parser.add_argument(
-        "--dstDtypeA",
-        default="FP32",
-        type=str,
-        help="destination data type",
-        choices=["INT4", "INT8", "FP32"],
+        "--AdaRound", default=False, type=bool, help="AdaRound for weights"
+    )
+    parser.add_argument(
+        "--per_channel",
+        action="store_true",
+        help="per channel quantization for weights",
+    )
+    parser.add_argument(
+        "--batch_size_AdaRound", default=32, type=int, help="batch size for AdaRound"
     )
     parser.add_argument(
         "--p", default=2.4, type=float, help="L_p norm for NormQuantizer"
@@ -346,47 +328,75 @@ if __name__ == "__main__":
     parser.add_argument(
         "--lr", default=0.01, type=float, help="learning rate for AdaRound"
     )
-    parser.add_argument("--fold", action="store_true", help="BN folding")
+
+    """ Activation quantization """
+    parser.add_argument(
+        "--scheme_a",
+        default="NormQuantizer",
+        type=str,
+        help="quantization scheme for activations",
+        choices=quantizerDict,
+    )
+    parser.add_argument(
+        "--dstDtypeA",
+        default="FP32",
+        type=str,
+        help="destination data type",
+        choices=["INT4", "INT8", "FP32"],
+    )
 
     ##### Setup
     args = parser.parse_args()
 
     weight_quant_params = dict(
-        scheme=args.scheme,
-        per_channel=args.per_channel,
+        scheme=args.scheme_w,
         dstDtype=args.dstDtypeW,
+        per_channel=args.per_channel,
     )
-    act_quant_params = dict(
-        # Not implemented yet
-        # scheme=args.BaseScheme,
-        scheme="AbsMaxQuantizer",
-        dstDtype=args.dstDtypeA,
-        per_channel=False,  # activation quantization is always per layer
-    )
+    act_quant_params = {}
+    if args.dstDtypeA != "FP32":
+        act_quant_params = dict(
+            scheme=args.scheme_a,
+            dstDtype=args.dstDtypeA,
+            per_channel=False,  # activation quantization is always per layer
+        )
+        if args.scheme_a == "NormQuantizer":
+            act_quant_params.update(dict(p=args.p))
+
     main_args = dict(
         arch=args.arch,
         batch_size=args.batch_size,
         num_samples=args.num_samples,
-        fold=args.fold,
+        folding=args.folding,
     )
-    if args.scheme == "NormQuantizer":
+    if args.scheme_w == "NormQuantizer":
         weight_quant_params.update(dict(p=args.p))
-    elif args.scheme == "AdaRoundQuantizer":
+    elif args.AdaRound == True:
         main_args.update(dict(batch_size_AdaRound=args.batch_size_AdaRound))
         main_args.update(dict(lr=args.lr))
-        weight_quant_params["per_channel"] = True  # always True when using AdaRound
-        args.per_channel = True
-        weight_quant_params.update(dict(BaseScheme=args.BaseScheme))
+        weight_quant_params.update(dict(AdaRound=True))
+        weight_quant_params["per_channel"] = True  # always Per-CH when using AdaRound
+        args.per_channel = True  # always Per-CH when using AdaRound
 
-    _case_name = f"{args.arch}_{args.scheme}"
+    _case_name = f"{args.arch}_"
+    if args.AdaRound:
+        _case_name += "AdaRound_"
+    _case_name += args.scheme_w
     _case_name += "_CH" if args.per_channel else "_Layer"
     _case_name += "_W" + args.dstDtypeW[-1]
     _case_name += "A" + "32" if args.dstDtypeA == "FP32" else "A" + args.dstDtypeA[-1]
+    _case_name += "_BNFold" if args.folding else ""
 
-    print(f"Case: [ {_case_name} ]")
-    print(f"    - {main_args}")
-    print(f"    - weight params: {weight_quant_params}")
-    print(f"    - activation params: {act_quant_params}")
+    print(f"\nCase: [ {_case_name} ]")
+    for k, v in main_args.items():
+        print(f"    - {k}: {v}")
+    print(f"\n- weight params:")
+    for k, v in weight_quant_params.items():
+
+        print(f"    - {k}: {v}")
+    print(f"\n- activation params:")
+    for k, v in act_quant_params.items():
+        print(f"    - {k}: {v}")
     print("")
     seed_all(args.seed)
 

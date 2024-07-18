@@ -400,16 +400,16 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
             ...
 
 
-def create_AdaRound_Quantizer(base_class_name, org_weight, args):
+def create_AdaRound_Quantizer(scheme, org_weight, args):
     base_classes = {
         "AbsMaxQuantizer": AbsMaxQuantizer,
         "MinMaxQuantizer": MinMaxQuantizer,
         "NormQuantizer": NormQuantizer,
         "OrgNormQuantizerCode": OrgNormQuantizerCode,
     }
-    base_class = base_classes.get(base_class_name)
+    base_class = base_classes.get(scheme)
     if not base_class:
-        raise ValueError(f"Unknown base class: {base_class_name}")
+        raise ValueError(f"Unknown base class: {scheme}")
 
     class AdaRoundQuantizer(base_class):
         def __init__(self, org_weight, args):
@@ -536,6 +536,14 @@ def fold_bn_into_conv(conv_module, bn_module):
     bn_module.running_var = bn_module.weight.data**2
 
 
+quantizerDict = {
+    "AbsMaxQuantizer": AbsMaxQuantizer,
+    "MinMaxQuantizer": MinMaxQuantizer,
+    "NormQuantizer": NormQuantizer,
+    "OrgNormQuantizerCode": OrgNormQuantizerCode,
+}
+
+
 class QuantModule(nn.Module):
     def __init__(self, org_module, w_quant_args, a_quant_args, bn_module=None):
         super(QuantModule, self).__init__()
@@ -588,19 +596,13 @@ class QuantModule(nn.Module):
         self.w_quant_enable = True
 
         try:
-            if w_quant_args.get("scheme") == "AdaRoundQuantizer":
+            if w_quant_args.get("AdaRound") == True:
                 self.weight_quantizer = create_AdaRound_Quantizer(
-                    base_class_name=w_quant_args.get("BaseScheme"),
+                    scheme=w_quant_args.get("scheme"),
                     org_weight=self.weight,
                     args=w_quant_args,
                 )
             else:
-                quantizerDict = {
-                    "AbsMaxQuantizer": AbsMaxQuantizer,
-                    "MinMaxQuantizer": MinMaxQuantizer,
-                    "NormQuantizer": NormQuantizer,
-                    "OrgNormQuantizerCode": OrgNormQuantizerCode,
-                }
                 self.weight_quantizer = quantizerDict[w_quant_args.get("scheme")](
                     org_weight=self.weight, args=w_quant_args
                 )
@@ -614,12 +616,6 @@ class QuantModule(nn.Module):
 
     def init_act_quantizer(self, calib):
         try:
-            quantizerDict = {
-                "AbsMaxQuantizer": AbsMaxQuantizer,
-                "MinMaxQuantizer": MinMaxQuantizer,
-                "NormQuantizer": NormQuantizer,
-                "OrgNormQuantizerCode": OrgNormQuantizerCode,
-            }
             self.act_quantizer = quantizerDict[self.a_quant_args.get("scheme")](
                 org_weight=calib, args=self.a_quant_args
             )
