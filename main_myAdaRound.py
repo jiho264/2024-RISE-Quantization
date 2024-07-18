@@ -265,7 +265,7 @@ def main(weight_quant_params, act_quant_params, args):
                 lr=args["lr"],
             )
             print(f"AdaRound values computing done!")
-    exit()
+
     _top1, _ = evaluate(
         model, test_loader, neval_batches=_len_eval_batches, device="cuda"
     )
@@ -342,10 +342,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeA",
-        default="FP32",
+        default="UINT8",
         type=str,
         help="destination data type",
-        choices=["INT4", "INT8", "FP32"],
+        choices=["UINT4", "UINT8", "FP32"],
     )
 
     ##### Setup
