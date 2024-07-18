@@ -544,8 +544,18 @@ quantizerDict = {
 }
 
 
+class StraightThrough(nn.Module):
+    def __int__(self):
+        super().__init__()
+
+    def forward(self, input):
+        return input
+
+
 class QuantModule(nn.Module):
-    def __init__(self, org_module, w_quant_args, a_quant_args, bn_module=None):
+    def __init__(
+        self, org_module, w_quant_args, a_quant_args, bn_module=None, folding=False
+    ):
         super(QuantModule, self).__init__()
         """forward function setting"""
         if isinstance(org_module, nn.Conv2d):
@@ -570,7 +580,9 @@ class QuantModule(nn.Module):
             )
 
         """Bn folding"""
-        if bn_module != None:
+        self.folding = folding
+        # conv + bn
+        if self.folding == True and bn_module != None:
             ## (1) My folding code / org_resnet18 : 69.758%
             _safe_std = torch.sqrt(bn_module.running_var + bn_module.eps)
             w_view = (org_module.out_channels, 1, 1, 1)
@@ -588,8 +600,16 @@ class QuantModule(nn.Module):
             # self.weight = org_module.weight
             # if org_module.bias is not None:
             #     self.bias = org_module.bias
-
+            self.bn_func = StraightThrough()
             print("    BN Folded!")
+        elif self.folding == False and bn_module == None:
+            # FC layer dose not have bn layer
+            self.bn_func = StraightThrough()
+        elif self.folding == False and bn_module != None:
+            # conv and bn are not folded!!!
+            self.bn_func = bn_module
+        else:
+            raise ValueError("Unknown folding option")
 
         """weight quantizer"""
         # default is True. Need false option when only compute adaround values.
@@ -633,15 +653,19 @@ class QuantModule(nn.Module):
             )
 
     def forward(self, x: Tensor) -> Tensor:
+        """convolution"""
         if self.w_quant_enable == True:
             # print("q", end="")
             weight = self.weight_quantizer(self.weight)
         else:
             print(".", end="")
             weight = self.weight
-
         _Z = self.fwd_func(x, weight, self.bias, **self.fwd_kwargs)
 
+        """ batch normalization """
+        _Z = self.bn_func(_Z)
+
+        """ activation """
         if self.a_quant_inited == True and self.a_quant_enable == True:
             return self.act_quantizer(_Z)
         else:

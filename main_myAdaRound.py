@@ -1,6 +1,12 @@
 import torch, time, argparse
 import torch.nn as nn
-from myAdaRound.utils import QuantModule, GetDataset, evaluate, quantizerDict
+from myAdaRound.utils import (
+    QuantModule,
+    GetDataset,
+    evaluate,
+    quantizerDict,
+    StraightThrough,
+)
 from myAdaRound.data_utils import save_inp_oup_data
 import torchvision.models.resnet as resnet
 
@@ -120,14 +126,6 @@ def runAdaRound(
     return None
 
 
-class StraightThrough(nn.Module):
-    def __int__(self):
-        super().__init__()
-
-    def forward(self, input):
-        return input
-
-
 #################################################################################################
 ## 3. Main function
 #################################################################################################
@@ -185,62 +183,46 @@ def main(weight_quant_params, act_quant_params, args):
                 prev_module = child_module
                 prev_name = name
             elif isinstance(child_module, nn.BatchNorm2d):
-                print(
-                    f"    {prev_module._get_name()} <- {child_module._get_name()}",
-                    end="",
-                )
+                if args["folding"] == True:
+                    print(
+                        f"    {prev_module._get_name()} <- {child_module._get_name()}",
+                        end="",
+                    )
                 setattr(
                     module,
                     prev_name,
                     QuantModule(
-                        prev_module,  # prev == conv2d or linear
-                        weight_quant_params,
-                        act_quant_params,
-                        child_module,  # child == BN
+                        org_module=prev_module,  # prev == conv2d or linear
+                        w_quant_args=weight_quant_params,
+                        a_quant_args=act_quant_params,
+                        bn_module=child_module,  # child == BN
+                        folding=args["folding"],
                     ),
                 )
-                setattr(module, name, StraightThrough())  # remove bn layer
+                # remove bn layer
+                setattr(module, name, StraightThrough())
             elif isinstance(child_module, nn.Linear):
-                # FC layer does not have BN
                 setattr(
                     module,
                     name,
-                    QuantModule(child_module, weight_quant_params, act_quant_params),
+                    QuantModule(
+                        org_module=child_module,
+                        w_quant_args=weight_quant_params,
+                        a_quant_args=act_quant_params,
+                        bn_module=None,  # FC layer does not have BN
+                        folding=False,  # FC layer does not have BN
+                    ),
                 )
             else:
                 _quant_module_refactor_with_bn_folding(
                     child_module, weight_quant_params, act_quant_params
                 )
 
-    def _quant_module_refactor(
-        module: nn.Module,
-        weight_quant_params: dict = {},
-        act_quant_params: dict = {},
-    ):
-        """
-        Recursively replace the normal conv2d and Linear layer to QuantModule
-        """
-        for name, child_module in module.named_children():
-            if isinstance(child_module, (nn.Conv2d, nn.Linear)):
-                setattr(
-                    module,
-                    name,
-                    QuantModule(child_module, weight_quant_params, act_quant_params),
-                )
-            else:
-                _quant_module_refactor(
-                    child_module, weight_quant_params, act_quant_params
-                )
-
     print("Replace to QuantModule")
     with torch.no_grad():
-        if args["folding"] == True:
-            _quant_module_refactor_with_bn_folding(
-                model, weight_quant_params, act_quant_params
-            )
-        else:
-            _quant_module_refactor(model, weight_quant_params, act_quant_params)
-
+        _quant_module_refactor_with_bn_folding(
+            model, weight_quant_params, act_quant_params
+        )
     print("Qparams computing done!")
 
     # Count the number of QuantModule
@@ -250,8 +232,8 @@ def main(weight_quant_params, act_quant_params, args):
         if isinstance(module, QuantModule):
             num_layers += 1
             print(f"    QuantModule: {name}, {module.weight.shape}")
-        elif isinstance(module, StraightThrough):
-            num_bn += 1
+            if module.folding == True:
+                num_bn += 1
     print(f"Total QuantModule: {num_layers}, Folded BN layers : {num_bn}")
 
     if "AdaRound" in weight_quant_params:
@@ -297,7 +279,8 @@ if __name__ == "__main__":
         type=int,
         help="number of samples for calibration",
     )
-    parser.add_argument("--folding", action="store_true", help="BN folding")
+    parser.add_argument("--folding", action="store_false", help="BN folding")
+    # parser.add_argument("--folding", action="store_true", help="BN folding")
 
     """ weight quantization"""
     parser.add_argument(
@@ -309,13 +292,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeW",
-        default="INT4",
+        default="INT8",
         type=str,
         help="destination data type",
         choices=["INT4", "INT8"],
     )
     parser.add_argument(
-        "--AdaRound", default=True, type=bool, help="AdaRound for weights"
+        "--AdaRound", default=False, type=bool, help="AdaRound for weights"
     )
     parser.add_argument(
         "--per_channel",
@@ -342,7 +325,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeA",
-        default="UINT8",
+        default="FP32",
         type=str,
         help="destination data type",
         choices=["UINT4", "UINT8", "FP32"],
