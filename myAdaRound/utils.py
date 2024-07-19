@@ -667,7 +667,7 @@ class QuantModule(nn.Module):
 
         """ activation """
         if self.a_quant_inited == True and self.a_quant_enable == True:
-            print("A", end="")
+            # print("A", end="")
             return self.act_quantizer(_Z)
         else:
             return _Z

@@ -171,12 +171,12 @@ def main(weight_quant_params, act_quant_params, args):
     # # for benchmarking
     # if _len_eval_batches == len(test_loader):
     #     print(
-    #         f"    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.3f}%"
+    #         f"\n    Original model Evaluation accuracy on 50000 images, {_top1.avg:2.3f}%"
     #     )
     # # for debugging
     # else:
     #     print(
-    #         f"    Original model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.3f}%"
+    #         f"\n    Original model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.3f}%"
     #     )
 
     def _quant_module_refactor_with_bn_folding(
@@ -264,12 +264,12 @@ def main(weight_quant_params, act_quant_params, args):
     # for benchmarking
     if _len_eval_batches == len(test_loader):
         print(
-            f"    Quantized model Evaluation accuracy on 50000 images, {_top1.avg:2.3f}%"
+            f"\n    Quantized model Evaluation accuracy on 50000 images, {_top1.avg:2.3f}%"
         )
     # for debugging
     else:
         print(
-            f"    Quantized model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.3f}%"
+            f"\n    Quantized model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.3f}%"
         )
 
 
@@ -289,13 +289,13 @@ if __name__ == "__main__":
         type=int,
         help="number of samples for calibration",
     )
-    parser.add_argument("--folding", action="store_false", help="BN folding")
-    # parser.add_argument("--folding", action="store_true", help="BN folding")
+    # parser.add_argument("--folding", action="store_false", help="BN folding")
+    parser.add_argument("--folding", action="store_true", help="BN folding")
 
     """ weight quantization"""
     parser.add_argument(
         "--scheme_w",
-        default="AbsMaxQuantizer",
+        default="MinMaxQuantizer",
         type=str,
         help="quantization scheme for weights",
         choices=quantizerDict,
@@ -335,7 +335,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeA",
-        default="FP32",
+        default="INT8",
         type=str,
         help="destination data type",
         choices=["UINT4", "UINT8", "INT4", "INT8", "FP32"],
@@ -375,9 +375,9 @@ if __name__ == "__main__":
         weight_quant_params["per_channel"] = True  # always Per-CH when using AdaRound
         args.per_channel = True  # always Per-CH when using AdaRound for weights
 
-        if args.dstDtypeA != "FP32":
-            main_args.update(dict(folding=True))
-            args.folding = True  # always folding when using AdaRound
+        # if args.dstDtypeA != "FP32":
+        #     main_args.update(dict(folding=True))
+        #     args.folding = True  # always folding when using AdaRound
 
     _case_name = f"{args.arch}_"
     if args.AdaRound:
