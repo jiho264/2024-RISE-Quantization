@@ -188,19 +188,21 @@ def main(weight_quant_params, act_quant_params, args):
                         f"    {prev_module._get_name()} <- {child_module._get_name()}",
                         end="",
                     )
+                _quant_module = QuantModule(
+                    org_module=prev_module,  # prev == conv2d or linear
+                    w_quant_args=weight_quant_params,
+                    a_quant_args=act_quant_params,
+                    bn_module=child_module,  # child == BN
+                    folding=args["folding"],
+                )
                 setattr(
                     module,
                     prev_name,
-                    QuantModule(
-                        org_module=prev_module,  # prev == conv2d or linear
-                        w_quant_args=weight_quant_params,
-                        a_quant_args=act_quant_params,
-                        bn_module=child_module,  # child == BN
-                        folding=args["folding"],
-                    ),
+                    _quant_module,
                 )
                 # remove bn layer
                 setattr(module, name, StraightThrough())
+                prev_module = _quant_module
             elif isinstance(child_module, nn.Linear):
                 setattr(
                     module,
@@ -213,6 +215,14 @@ def main(weight_quant_params, act_quant_params, args):
                         folding=False,  # FC layer does not have BN
                     ),
                 )
+            elif isinstance(child_module, nn.ReLU):
+                prev_module.act_func = child_module
+                # 9 ConvBNRelu layers in resnet18
+                # 8 ConvBn
+                # 1 FC (Linear)
+                print(f"    {child_module._get_name()} merged")
+                # for the first conv layer which first block of each stage.
+                # run only 9 times.
             else:
                 _quant_module_refactor_with_bn_folding(
                     child_module, weight_quant_params, act_quant_params
@@ -279,7 +289,6 @@ if __name__ == "__main__":
         type=int,
         help="number of samples for calibration",
     )
-    # parser.add_argument("--folding", action="store_false", help="BN folding")
     parser.add_argument("--folding", action="store_true", help="BN folding")
 
     """ weight quantization"""
@@ -340,7 +349,7 @@ if __name__ == "__main__":
         per_channel=args.per_channel,
     )
     act_quant_params = {}
-    if args.dstDtypeA != "FP32":
+    if args.dstDtypeA != "FP32" and args.AdaRound == True:
         act_quant_params = dict(
             scheme=args.scheme_a,
             dstDtype=args.dstDtypeA,
@@ -365,10 +374,6 @@ if __name__ == "__main__":
         weight_quant_params["per_channel"] = True  # always Per-CH when using AdaRound
         args.per_channel = True  # always Per-CH when using AdaRound for weights
 
-        # if args.dstDtypeA != "FP32":
-        #     main_args.update(dict(folding=True))
-        #     args.folding = True  # always folding when using AdaRound
-
     _case_name = f"{args.arch}_"
     if args.AdaRound:
         _case_name += "AdaRound_"
@@ -377,6 +382,10 @@ if __name__ == "__main__":
     _case_name += "_W" + args.dstDtypeW[-1]
     _case_name += "A" + "32" if args.dstDtypeA == "FP32" else "A" + args.dstDtypeA[-1]
     _case_name += "_BNFold" if args.folding else ""
+    if args.scheme_w == "NormQuantizer":
+        _case_name += "_p" + str(args.p)
+    if args.AdaRound:
+        _case_name += "_AdaRoundLR" + str(args.lr)
 
     print(f"\nCase: [ {_case_name} ]")
     for k, v in main_args.items():

@@ -585,6 +585,8 @@ class QuantModule(nn.Module):
                 org_module.weight.device
             )
 
+        self.act_func = StraightThrough()
+
         """Bn folding"""
         self.folding = folding
         # conv + bn
@@ -672,8 +674,12 @@ class QuantModule(nn.Module):
         _Z = self.bn_func(_Z)
 
         """ activation """
+        # If first conv of first block of each stage, it is ReLU.
+        # Otherwise, it is StraightThrough.
+        _A = self.act_func(_Z)
+
         if self.a_quant_inited == True and self.a_quant_enable == True:
             # print("A", end="")
-            return self.act_quantizer(_Z)
+            return self.act_quantizer(_A)
         else:
-            return _Z
+            return _A
