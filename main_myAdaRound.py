@@ -26,63 +26,53 @@ def _get_train_samples(train_loader, num_samples):
 
 def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
     model.eval()
-    # [1] get X_hat_input, Y_fp
-    layer.w_quant_enable = True  # Quantized inference
-
-    Y_fp = layer.fp_outputs
-    # be affected by the previous layer's quantization
-    quantized_act_input, hasbeenquantized_act_output = save_inp_oup_data(
-        model, layer, cali_data
-    )
+    # [1] get {Origin FP output(A_fp_lth), Quantized input and output(X_q_lth, A_q_lth)}
+    layer.w_quant_enable = True
+    A_fp_lth = layer.fp_outputs
+    X_q_lth, A_q_lth = save_inp_oup_data(model, layer, cali_data)
     print(" <- Commas indicate the INT inference.")
 
-    # Y_fp : Original FP output
-    # hasbeenquantized_act_output : Quantized output (previous layer are quantized)
-
-    # [2] Create weight optimizer and activation quantizer + optimizer (optional)
+    # [2] Define the optimizer and loss function
     optimizer_w, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=lr), 20000
     optimizer_a = None
     if layer.a_quant_inited == False and layer.a_quant_enable == True:
-        idx = torch.randperm(hasbeenquantized_act_output.size(0))[
-            # : max(256, batch_size)
-            :batch_size
-        ]
-        layer.init_act_quantizer(hasbeenquantized_act_output[idx])
+        idx = torch.randperm(A_q_lth.size(0))[: max(256, batch_size)]
+        layer.init_act_quantizer(A_q_lth[idx])
         layer.a_quant_inited = True
         optimizer_a = torch.optim.Adam([layer.act_quantizer._scaler])
         print("Activation quantizer initialized")
 
     print(optimizer_w, n_iter)
-    for i in range(1, n_iter + 1):
-        optimizer_w.zero_grad()
-        if layer.a_quant_inited == True and layer.a_quant_enable == True:
-            optimizer_a.zero_grad()
-        model.train()
+    if optimizer_a != None:
+        print(optimizer_a)
 
-        # random sampling (32 samples in 1024 samples)
-        idx = torch.randperm(quantized_act_input.size(0))[:batch_size]
-        # below code is weight quantizer + activation quantizer
-        Y_hat = layer.forward(quantized_act_input[idx])  # Y_hat = W_hat * X_hat
-        _mse = (Y_fp[idx] - Y_hat).abs().pow(2).mean()  # | Y - Y_hat |^2
+    model.train()
 
-        # [3] regularization term (optional)
-        _warmup = 0.2
-        _reg_loss = 0
-        _beta = 0
-
+    def _get_f_reg_with_decayed_beta(_i, n_iter, _warmup=0.2):
         if i < n_iter * _warmup:
-            _reg_loss = 0
-            pass
+            return torch.tensor(0.0), torch.tensor(0.0)
         else:
             # 0 ~ 1 when after 4k iter of 20k len
             decay = (i - n_iter * _warmup) / (n_iter * (1 - _warmup))
             _beta = 18 - decay * 18 + 2
-            _reg_loss = layer.weight_quantizer.f_reg(beta=_beta)
+            return layer.weight_quantizer.f_reg(beta=_beta), _beta
+
+    for i in range(1, n_iter + 1):
+
+        idx = torch.randperm(X_q_lth.size(0))[:batch_size]
+
+        optimizer_w.zero_grad()
+        if optimizer_a != None:
+            optimizer_a.zero_grad()
+
+        _tmp_A_q_lth = layer.forward(X_q_lth[idx])
+        _mse = (A_fp_lth[idx] - _tmp_A_q_lth).abs().pow(2).mean()
+        _reg_loss, _beta = _get_f_reg_with_decayed_beta(i, n_iter)
 
         loss = _mse + layer.weight_quantizer.lamda * _reg_loss
         loss.backward()
         optimizer_w.step()
-        if layer.a_quant_inited == True and layer.a_quant_enable == True:
+        if optimizer_a != None:
             optimizer_a.step()
         if i % 1000 == 0 or i == 1:
             print(

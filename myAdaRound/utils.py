@@ -167,6 +167,12 @@ class UniformAffineQuantizer(nn.Module):
         self._scaler = None
         self._zero_point = None
 
+    def round_ste(self, input: torch.Tensor):
+        """
+        Implement Straight-Through Estimator for rounding operation.
+        """
+        return (input.round() - input).detach() + input
+
     def compute_qparams(self, _min, _max) -> None:
         # Origin tensor shape: [out_channel, in_channel, k, k]
         # per_ch Qparam shape: [n_channel, 1, 1, 1]
@@ -175,11 +181,11 @@ class UniformAffineQuantizer(nn.Module):
         self._scaler = scaler.view(-1, *([1] * (self._n_ch - 1)))
 
         _min = _min.view(-1, *([1] * (self._n_ch - 1)))
-        self._zero_point = -(_min / self._scaler).round() + self._repr_min
+        self._zero_point = -self.round_ste(_min / self._scaler) + self._repr_min
 
     def _quantize(self, input: Tensor) -> Tensor:
         return torch.clamp(
-            (input / self._scaler).round() + self._zero_point,
+            self.round_ste(input / self._scaler) + self._zero_point,
             self._repr_min,
             self._repr_max,
         )
@@ -281,7 +287,7 @@ class NormQuantizer(UniformAffineQuantizer):
             # Avoid override errors when using AdaRound's self.forward function to perform the initialization process.
             return self._dequantize(
                 torch.clamp(
-                    (input / self._scaler).round() + self._zero_point,
+                    self.round_ste(input / self._scaler) + self._zero_point,
                     self._repr_min,
                     self._repr_max,
                 )
@@ -383,7 +389,7 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
                     self.compute_qparams(new_max, new_min)
                     # x_q = self.forward(x)
                     x_q = torch.clamp(
-                        (x / self._scaler).round() + self._zero_point,
+                        self.round_ste(x / self._scaler) + self._zero_point,
                         self._repr_min,
                         self._repr_max,
                     )
