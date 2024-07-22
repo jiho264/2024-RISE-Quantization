@@ -6,7 +6,7 @@ DSTDTYPEA=( "INT4" "INT8" "FP32" )
 #   reason is that, activation quantization is apply to the output of the BN layer.
 LR=( "0.01" "0.001")
 FOLDING=( "True" "False" )
-# "" > logs/summary_AdaRound.log
+"" > logs/summary_AdaRound.log
 
 for _i in "${SCHEMES[@]}"; do
     for _lr in "${LR[@]}"; do
@@ -41,10 +41,10 @@ for _i in "${SCHEMES[@]}"; do
                     fi
                     FILENAME="logs/AdaRound_${_i}_W${W_bit}A${A_bit}${FOLDIED}_LR${lr_name}.log"
                     echo "Running test case for ${FILENAME}"
-                    python main_myAdaRound.py --scheme_w $_i --scheme_a $_i --lr ${_lr} --dstDtypeW $_w --dstDtypeA $_a $FOLDING_FLAG #| tee ${FILENAME}
+                    python main_myAdaRound.py --scheme_w $_i --scheme_a $_i --lr ${_lr} --dstDtypeW $_w --dstDtypeA $_a $FOLDING_FLAG --AdaRound True | tee ${FILENAME}
                     echo ""
-                    # head -n 2 ${FILENAME} >> logs/summary_AdaRound.log
-                    # tail -n 2 ${FILENAME} >> logs/summary_AdaRound.log
+                    head -n 2 ${FILENAME} >> logs/summary_AdaRound.log
+                    tail -n 2 ${FILENAME} >> logs/summary_AdaRound.log
                 done
             done
         done

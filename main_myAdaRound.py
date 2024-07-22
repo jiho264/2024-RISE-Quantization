@@ -307,7 +307,7 @@ if __name__ == "__main__":
         choices=["INT4", "INT8"],
     )
     parser.add_argument(
-        "--AdaRound", default=True, type=bool, help="AdaRound for weights"
+        "--AdaRound", default=False, type=bool, help="AdaRound for weights"
     )
     parser.add_argument(
         "--per_channel",
@@ -334,7 +334,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeA",
-        default="INT8",
+        default="FP32",
         type=str,
         help="destination data type",
         choices=["UINT4", "UINT8", "INT4", "INT8", "FP32"],

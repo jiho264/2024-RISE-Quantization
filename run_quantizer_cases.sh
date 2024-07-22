@@ -39,18 +39,18 @@ for _i in "${SCHEMES[@]}"; do
                         fi
                         FILENAME="logs/${_i}_${PER_Which}_W${W_bit}A32_p${p_norm}${FOLDIED}.log"
                         echo "Running test case for ${FILENAME}"
-                        # python main_myAdaRound.py --scheme_w $_i $PER_CHANNEL_FLAG $FOLDING_FLAG --dstDtypeW $_w --p ${_p} | tee ${FILENAME}
-                        # echo ""
-                        # head -n 2 ${FILENAME} >> logs/summary.log
-                        # tail -n 2 ${FILENAME} >> logs/summary.log
+                        python main_myAdaRound.py --scheme_w $_i $PER_CHANNEL_FLAG $FOLDING_FLAG --dstDtypeW $_w --p ${_p} | tee ${FILENAME}
+                        echo ""
+                        head -n 2 ${FILENAME} >> logs/summary.log
+                        tail -n 2 ${FILENAME} >> logs/summary.log
                     done
                 else
                     FILENAME="logs/${_i}_${PER_Which}_W${W_bit}A32${FOLDIED}.log"
                     echo "Running test case for ${FILENAME}"
-                    # python main_myAdaRound.py --scheme_w $_i $PER_CHANNEL_FLAG $FOLDING_FLAG --dstDtypeW $_w | tee ${FILENAME}
-                    # echo ""
-                    # head -n 2 ${FILENAME} >> logs/summary.log
-                    # tail -n 2 ${FILENAME} >> logs/summary.log
+                    python main_myAdaRound.py --scheme_w $_i $PER_CHANNEL_FLAG $FOLDING_FLAG --dstDtypeW $_w | tee ${FILENAME}
+                    echo ""
+                    head -n 2 ${FILENAME} >> logs/summary.log
+                    tail -n 2 ${FILENAME} >> logs/summary.log
                 fi
             done
         done
