@@ -18,8 +18,8 @@
 | ------------------------------- | ------- | ------------ | ------- | ------------ |
 | AbsMaxQuantizer_Layer           | 69.534% | 69.516%      | 0.762%  | 0.246%       |
 | MinMaxQuantizer_Layer           | 69.636% | 69.494%      | 1.926%  | 0.284%       |
-| NormQuantizer_Layer_p2.0        | 69.612% | 69.462%      | 48.322% | 24.248%      |
-| NormQuantizer_Layer_p2.4        | 69.614% | 69.504%      | 51.396% | 21.970%      |
+| NormQuantizer_Layer_p2.0        | 69.612% | 69.462%      | 48.322% | 24.248%      | <BigO설계오류> |
+| NormQuantizer_Layer_p2.4        | 69.614% | 69.504%      | 51.396% | 21.970%      | <BigO설계오류> |
 | OrgNormQuantizerCode_Layer_p2.4 | 69.584% | 69.406%      | 51.054% | 27.032%      |
 
 ## Per Channel with different quantization schemes 
@@ -27,23 +27,33 @@
 | --------------------------------- | ------- | ------------ | ------- | ------------ |
 | AbsMaxQuantizer_CH                | 69.654% | 69.654%      | 50.348% | 51.232%      |
 | MinMaxQuantizer_CH                | 69.744% | 69.744%      | 58.242% | 58.236%      |
-| NormQuantizer_CH_p2.0             | 69.744% | 69.744%      | 58.114% | 58.296%      |
-| NormQuantizer_CH_p2.4             | 69.744% | 69.744%      | 60.836% | 59.864%      |
+| NormQuantizer_CH_p2.0             | 69.744% | 69.744%      | 58.114% | 58.296%      | <BigO설계오류> |
+| NormQuantizer_CH_p2.4             | 69.744% | 69.744%      | 60.836% | 59.864%      | <BigO설계오류> |
 | OrgNormQuantizerCode_CH_p2.4      | 69.788% | 69.788%      | 57.606% | 57.606%      |
 
 ## AdaRound with different BASE quantization schemes (The lr which for AdaRound is 0.01)
-| Quantization Scheme (Per-Channel) | W4A32   | W4A32_Folded | W4A8    | W4A8_Folded | W4A4    | W4A4_Folded |
-| --------------------------------- | ------- | ------------ | ------- | ----------- | ------- | ----------- |
-| AdaRoundAbsMax_CH_lr0.01          | 68.992% | 68.692%      | 68.834% | 68.544%     | 25.476% | 22.928%     |
-| AdaRoundMinMax_CH_lr0.01          | 69.176% | 69.046%      | 69.212% | 68.994%     | 48.010% | 49.414%     |
-| AdaRoundNorm_CH_lr0.01_p2.4       | 68.86%  | 68.994%      |         |             |         | 39.374%     |
-| AdaRoundOrgNorm_CH_lr0.01_p2.4    | 68.55%  | 68.684%      |         |             |         |             |
+| Quantization Scheme (Per-Channel) | W4A32   | W4A32_Folded | W4A8    | W4A8_Folded |
+| --------------------------------- | ------- | ------------ | ------- | ----------- |
+| AdaRoundAbsMax_CH_lr0.01          | 68.992% | 68.692%      | 68.834% | 68.544%     |
+| AdaRoundMinMax_CH_lr0.01          | 69.176% | 69.046%      | 69.212% | 68.994%     |
+| AdaRoundNorm_CH_lr0.01_p2.4       | 68.86%  | 68.994%      |         |             |
+| AdaRoundOrgNorm_CH_lr0.01_p2.4    | 69.282% | 69.154%      | 69.222% | 69.076%     |
 
 - ReLU인 곳에서 1D Search시, AdaRoundAbsMax_CH_lr0.01에서 68.482%  -> 68.544%로 성능 향상. 
 - OrgNorm에서도 ReLU인 부분 1D로 변경시 0.1%p미만의 미미한 성능 향상.
 
+
+
+# Not comfirmed yet
+## AdaRound with different BASE quantization schemes (The lr which for AdaRound is 0.01)
+| Quantization Scheme (Per-Channel) | W4A4    | W4A4_Folded |
+| --------------------------------- | ------- | ----------- |
+| AdaRoundAbsMax_CH_lr0.01          | 25.476% | 22.928%     |
+| AdaRoundMinMax_CH_lr0.01          | 48.010% | 49.414%     |
+| AdaRoundNorm_CH_lr0.01_p2.4       |         | 39.374%     |
+| AdaRoundOrgNorm_CH_lr0.01_p2.4    |         |             |
+
 ## AdaRound with different BASE quantization schemes (The lr which for AdaRound is 0.001)
-- Stopped..
 | Quantization Scheme (Per-Channel) | W4A32   | W4A32_Folded | W4A8    | W4A8_Folded | W4A4    | W4A4_Folded |
 | --------------------------------- | ------- | ------------ | ------- | ----------- | ------- | ----------- |
 | AdaRoundAbsMax_CH_lr0.001         | 68.124% | 67.128%      | 67.966% | 66.848%     | 24.698% | 25.412%     |

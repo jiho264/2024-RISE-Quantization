@@ -1,10 +1,12 @@
 SCHEMES=( "AbsMaxQuantizer" "MinMaxQuantizer" "NormQuantizer" "OrgNormQuantizerCode" )
 DSTDTYPEW=( "INT4" )
-DSTDTYPEA=( "INT4" "INT8" "FP32" )
+# DSTDTYPEA=( "INT4" "INT8" "FP32" )
+DSTDTYPEA=( "INT8" "FP32" )
 # when using AdaRound, per-ch is default
 # when using AdaRound, BN fold is default. 
 #   reason is that, activation quantization is apply to the output of the BN layer.
-LR=( "0.01" "0.001")
+# LR=( "0.01" "0.001")
+LR=( "0.01" )
 FOLDING=( "True" "False" )
 "" > logs/summary_AdaRound.log
 
