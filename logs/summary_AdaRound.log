@@ -1,95 +1,100 @@
-Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A4_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.100%
-Total time: 1203.89 sec
 
-Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A8_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.176%
-Total time: 1206.24 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A4_BNFold_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 22.928%
+Total time: 1224.91 sec
 
-Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A32_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 68.580%
-Total time: 870.49 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A8_BNFold_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 68.482%
+Total time: 1229.81 sec
 
-Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A4_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.100%
-Total time: 1205.38 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A32_BNFold_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 68.692%
+Total time: 863.82 sec
 
-Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A8_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.176%
-Total time: 1199.41 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A4_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 25.476%
+Total time: 1302.75 sec
 
-Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A32_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 67.190%
-Total time: 872.93 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A8_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 68.834%
+Total time: 1300.83 sec
 
-Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A4_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.100%
-Total time: 1203.89 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A32_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 68.992%
+Total time: 934.90 sec
 
-Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A8_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.528%
-Total time: 1201.99 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A4_BNFold_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 25.412%
+Total time: 1231.28 sec
 
-Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A32_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 69.154%
-Total time: 869.26 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A8_BNFold_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 66.848%
+Total time: 1229.91 sec
 
-Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A4_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.100%
-Total time: 1208.61 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A32_BNFold_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 67.128%
+Total time: 867.85 sec
 
-Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A8_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.528%
-Total time: 1199.87 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A4_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 24.698%
+Total time: 1302.24 sec
 
-Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A32_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 68.096%
-Total time: 867.66 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A8_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 67.966%
+Total time: 1300.80 sec
 
-Case: [ resnet18_AdaRound_NormQuantizer_CH_W4A4_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.100%
-Total time: 1438.62 sec
+Case: [ resnet18_AdaRound_AbsMaxQuantizer_CH_W4A32_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 68.124%
+Total time: 937.76 sec
 
-Case: [ resnet18_AdaRound_NormQuantizer_CH_W4A8_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.198%
-Total time: 1437.25 sec
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A4_BNFold_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 49.414%
+Total time: 1228.06 sec
 
-Case: [ resnet18_AdaRound_NormQuantizer_CH_W4A32_BNFold ]
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A8_BNFold_AdaRoundLR0.01 ]
     Quantized model Evaluation accuracy on 50000 images, 68.994%
-Total time: 877.33 sec
+Total time: 1227.72 sec
 
-Case: [ resnet18_AdaRound_NormQuantizer_CH_W4A4_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.100%
-Total time: 1433.33 sec
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A32_BNFold_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 69.046%
+Total time: 861.07 sec
 
-Case: [ resnet18_AdaRound_NormQuantizer_CH_W4A8_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.198%
-Total time: 1433.40 sec
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A4_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 48.010%
+Total time: 1297.60 sec
 
-Case: [ resnet18_AdaRound_NormQuantizer_CH_W4A32_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 68.210%
-Total time: 872.74 sec
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A8_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 69.212%
+Total time: 1302.98 sec
 
-Case: [ resnet18_AdaRound_OrgNormQuantizerCode_CH_W4A4_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.100%
-Total time: 1223.49 sec
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A32_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 69.176%
+Total time: 935.76 sec
 
-Case: [ resnet18_AdaRound_OrgNormQuantizerCode_CH_W4A8_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.574%
-Total time: 1442.95 sec
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A4_BNFold_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 47.298%
+Total time: 1230.09 sec
 
-Case: [ resnet18_AdaRound_OrgNormQuantizerCode_CH_W4A32_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 68.684%
-Total time: 881.86 sec
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A8_BNFold_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 67.764%
+Total time: 1234.84 sec
 
-Case: [ resnet18_AdaRound_OrgNormQuantizerCode_CH_W4A4_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.100%
-Total time: 1219.65 sec
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A32_BNFold_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 68.038%
+Total time: 862.50 sec
 
-Case: [ resnet18_AdaRound_OrgNormQuantizerCode_CH_W4A8_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 0.574%
-Total time: 1448.70 sec
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A4_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 46.804%
+Total time: 1298.74 sec
 
-Case: [ resnet18_AdaRound_OrgNormQuantizerCode_CH_W4A32_BNFold ]
-    Quantized model Evaluation accuracy on 50000 images, 68.360%
-Total time: 886.29 sec
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A8_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 68.438%
+Total time: 1301.60 sec
+
+Case: [ resnet18_AdaRound_MinMaxQuantizer_CH_W4A32_AdaRoundLR0.001 ]
+    Quantized model Evaluation accuracy on 50000 images, 68.634%
+Total time: 935.18 sec
+
+Case: [ resnet18_AdaRound_NormQuantizer_CH_W4A4_BNFold_p2.4_AdaRoundLR0.01 ]
+    Quantized model Evaluation accuracy on 50000 images, 39.374%
+Total time: 19305.37 sec

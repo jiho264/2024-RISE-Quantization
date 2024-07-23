@@ -1,160 +1,160 @@
 
 Case: [ resnet18_AbsMaxQuantizer_Layer_W4A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 0.246%
-Total time: 45.77 sec
+Total time: 45.70 sec
 
 Case: [ resnet18_AbsMaxQuantizer_Layer_W8A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 69.516%
-Total time: 46.26 sec
+Total time: 46.13 sec
 
 Case: [ resnet18_AbsMaxQuantizer_Layer_W4A32 ]
     Quantized model Evaluation accuracy on 50000 images, 0.762%
-Total time: 45.78 sec
+Total time: 46.00 sec
 
 Case: [ resnet18_AbsMaxQuantizer_Layer_W8A32 ]
     Quantized model Evaluation accuracy on 50000 images, 69.534%
-Total time: 45.93 sec
+Total time: 45.62 sec
 
 Case: [ resnet18_AbsMaxQuantizer_CH_W4A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 51.232%
-Total time: 45.53 sec
+Total time: 45.68 sec
 
 Case: [ resnet18_AbsMaxQuantizer_CH_W8A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 69.654%
-Total time: 45.60 sec
+Total time: 45.52 sec
 
 Case: [ resnet18_AbsMaxQuantizer_CH_W4A32 ]
     Quantized model Evaluation accuracy on 50000 images, 50.348%
-Total time: 45.51 sec
+Total time: 45.78 sec
 
 Case: [ resnet18_AbsMaxQuantizer_CH_W8A32 ]
     Quantized model Evaluation accuracy on 50000 images, 69.654%
-Total time: 45.68 sec
+Total time: 45.56 sec
 
 Case: [ resnet18_MinMaxQuantizer_Layer_W4A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 0.284%
-Total time: 45.91 sec
+Total time: 45.72 sec
 
 Case: [ resnet18_MinMaxQuantizer_Layer_W8A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 69.494%
-Total time: 46.05 sec
+Total time: 45.53 sec
 
 Case: [ resnet18_MinMaxQuantizer_Layer_W4A32 ]
     Quantized model Evaluation accuracy on 50000 images, 1.926%
-Total time: 45.78 sec
+Total time: 45.67 sec
 
 Case: [ resnet18_MinMaxQuantizer_Layer_W8A32 ]
     Quantized model Evaluation accuracy on 50000 images, 69.636%
-Total time: 45.97 sec
+Total time: 45.50 sec
 
 Case: [ resnet18_MinMaxQuantizer_CH_W4A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 58.236%
-Total time: 45.40 sec
+Total time: 46.15 sec
 
 Case: [ resnet18_MinMaxQuantizer_CH_W8A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 69.744%
-Total time: 45.68 sec
+Total time: 45.77 sec
 
 Case: [ resnet18_MinMaxQuantizer_CH_W4A32 ]
     Quantized model Evaluation accuracy on 50000 images, 58.242%
-Total time: 45.74 sec
+Total time: 45.97 sec
 
 Case: [ resnet18_MinMaxQuantizer_CH_W8A32 ]
     Quantized model Evaluation accuracy on 50000 images, 69.744%
-Total time: 46.03 sec
+Total time: 45.54 sec
 
-Case: [ resnet18_NormQuantizer_Layer_W4A32_BNFold ]
+Case: [ resnet18_NormQuantizer_Layer_W4A32_BNFold_p2.0 ]
     Quantized model Evaluation accuracy on 50000 images, 24.248%
-Total time: 55.60 sec
+Total time: 57.51 sec
 
-Case: [ resnet18_NormQuantizer_Layer_W4A32_BNFold ]
+Case: [ resnet18_NormQuantizer_Layer_W4A32_BNFold_p2.4 ]
     Quantized model Evaluation accuracy on 50000 images, 21.970%
-Total time: 55.64 sec
+Total time: 57.40 sec
 
-Case: [ resnet18_NormQuantizer_Layer_W8A32_BNFold ]
+Case: [ resnet18_NormQuantizer_Layer_W8A32_BNFold_p2.0 ]
     Quantized model Evaluation accuracy on 50000 images, 69.462%
-Total time: 55.01 sec
+Total time: 57.22 sec
 
-Case: [ resnet18_NormQuantizer_Layer_W8A32_BNFold ]
+Case: [ resnet18_NormQuantizer_Layer_W8A32_BNFold_p2.4 ]
     Quantized model Evaluation accuracy on 50000 images, 69.504%
-Total time: 55.90 sec
+Total time: 57.33 sec
 
-Case: [ resnet18_NormQuantizer_Layer_W4A32 ]
+Case: [ resnet18_NormQuantizer_Layer_W4A32_p2.0 ]
     Quantized model Evaluation accuracy on 50000 images, 48.322%
-Total time: 55.41 sec
+Total time: 57.33 sec
 
-Case: [ resnet18_NormQuantizer_Layer_W4A32 ]
+Case: [ resnet18_NormQuantizer_Layer_W4A32_p2.4 ]
     Quantized model Evaluation accuracy on 50000 images, 51.396%
-Total time: 55.35 sec
+Total time: 57.64 sec
 
-Case: [ resnet18_NormQuantizer_Layer_W8A32 ]
+Case: [ resnet18_NormQuantizer_Layer_W8A32_p2.0 ]
     Quantized model Evaluation accuracy on 50000 images, 69.612%
-Total time: 55.26 sec
+Total time: 57.47 sec
 
-Case: [ resnet18_NormQuantizer_Layer_W8A32 ]
+Case: [ resnet18_NormQuantizer_Layer_W8A32_p2.4 ]
     Quantized model Evaluation accuracy on 50000 images, 69.614%
-Total time: 55.86 sec
+Total time: 57.68 sec
 
-Case: [ resnet18_NormQuantizer_CH_W4A32_BNFold ]
+Case: [ resnet18_NormQuantizer_CH_W4A32_BNFold_p2.0 ]
     Quantized model Evaluation accuracy on 50000 images, 58.296%
-Total time: 45.50 sec
+Total time: 45.58 sec
 
-Case: [ resnet18_NormQuantizer_CH_W4A32_BNFold ]
+Case: [ resnet18_NormQuantizer_CH_W4A32_BNFold_p2.4 ]
     Quantized model Evaluation accuracy on 50000 images, 59.864%
-Total time: 46.12 sec
+Total time: 45.57 sec
 
-Case: [ resnet18_NormQuantizer_CH_W8A32_BNFold ]
+Case: [ resnet18_NormQuantizer_CH_W8A32_BNFold_p2.0 ]
     Quantized model Evaluation accuracy on 50000 images, 69.744%
-Total time: 46.23 sec
+Total time: 45.32 sec
 
-Case: [ resnet18_NormQuantizer_CH_W8A32_BNFold ]
+Case: [ resnet18_NormQuantizer_CH_W8A32_BNFold_p2.4 ]
     Quantized model Evaluation accuracy on 50000 images, 69.744%
-Total time: 46.35 sec
+Total time: 45.55 sec
 
-Case: [ resnet18_NormQuantizer_CH_W4A32 ]
+Case: [ resnet18_NormQuantizer_CH_W4A32_p2.0 ]
     Quantized model Evaluation accuracy on 50000 images, 58.114%
-Total time: 46.08 sec
+Total time: 45.39 sec
 
-Case: [ resnet18_NormQuantizer_CH_W4A32 ]
+Case: [ resnet18_NormQuantizer_CH_W4A32_p2.4 ]
     Quantized model Evaluation accuracy on 50000 images, 60.836%
-Total time: 46.05 sec
+Total time: 45.69 sec
 
-Case: [ resnet18_NormQuantizer_CH_W8A32 ]
+Case: [ resnet18_NormQuantizer_CH_W8A32_p2.0 ]
     Quantized model Evaluation accuracy on 50000 images, 69.744%
-Total time: 45.80 sec
+Total time: 45.42 sec
 
-Case: [ resnet18_NormQuantizer_CH_W8A32 ]
+Case: [ resnet18_NormQuantizer_CH_W8A32_p2.4 ]
     Quantized model Evaluation accuracy on 50000 images, 69.744%
-Total time: 45.75 sec
+Total time: 46.13 sec
 
 Case: [ resnet18_OrgNormQuantizerCode_Layer_W4A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 27.032%
-Total time: 53.28 sec
+Total time: 53.68 sec
 
 Case: [ resnet18_OrgNormQuantizerCode_Layer_W8A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 69.406%
-Total time: 163.06 sec
+Total time: 181.27 sec
 
 Case: [ resnet18_OrgNormQuantizerCode_Layer_W4A32 ]
     Quantized model Evaluation accuracy on 50000 images, 51.054%
-Total time: 53.77 sec
+Total time: 53.76 sec
 
 Case: [ resnet18_OrgNormQuantizerCode_Layer_W8A32 ]
     Quantized model Evaluation accuracy on 50000 images, 69.584%
-Total time: 160.31 sec
+Total time: 177.40 sec
 
 Case: [ resnet18_OrgNormQuantizerCode_CH_W4A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 57.606%
-Total time: 53.01 sec
+Total time: 54.25 sec
 
 Case: [ resnet18_OrgNormQuantizerCode_CH_W8A32_BNFold ]
     Quantized model Evaluation accuracy on 50000 images, 69.788%
-Total time: 158.74 sec
+Total time: 182.33 sec
 
 Case: [ resnet18_OrgNormQuantizerCode_CH_W4A32 ]
     Quantized model Evaluation accuracy on 50000 images, 57.606%
-Total time: 53.71 sec
+Total time: 54.28 sec
 
 Case: [ resnet18_OrgNormQuantizerCode_CH_W8A32 ]
     Quantized model Evaluation accuracy on 50000 images, 69.788%
-Total time: 162.38 sec
+Total time: 182.93 sec

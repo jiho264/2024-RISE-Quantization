@@ -29,16 +29,16 @@
 | NormQuantizer_CH_p2.4             | 69.744% | 69.744%      | 60.836% | 59.864%      |
 | OrgNormQuantizerCode_CH_p2.4      | 69.788% | 69.788%      | 57.606% | 57.606%      |
 
-| Quantization Scheme (Per-Channel) | W4A32  | W4A32_Folded | W4A8 | W4A8_Folded | W4A4 | W4A4_Folded |
-| --------------------------------- | ------ | ------------ | ---- | ----------- | ---- | ----------- |
-| AdaRoundAbsMax_CH_lr0.01          | 68.56% | 68.580%      |      |             |      |             |
-| AdaRoundAbsMax_CH_lr0.001         | 67.14% | 67.190%      |      |             |      |             |
-| AdaRoundMinMax_CH_lr0.01          | 69.06% | 69.154%      |      | 68.994%     |      |             |
-| AdaRoundMinMax_CH_lr0.001         | 68.01% | 68.096%      |      |             |      |             |
-| AdaRoundNorm_CH_lr0.01_p2.4       | 68.86% | 68.994%      |      |             |      |             |
-| AdaRoundNorm_CH_lr0.001_p2.4      | 68.08% | 68.210%      |      |             |      |             |
-| AdaRoundOrgNorm_CH_lr0.01_p2.4    | 68.55% | 68.684%      |      |             |      |             |
-| AdaRoundOrgNorm_CH_lr0.001_p2.4   | 68.44% | 68.360%      |      |             |      |             |
+| Quantization Scheme (Per-Channel) | W4A32   | W4A32_Folded | W4A8    | W4A8_Folded | W4A4    | W4A4_Folded |
+| --------------------------------- | ------- | ------------ | ------- | ----------- | ------- | ----------- |
+| AdaRoundAbsMax_CH_lr0.01          | 68.992% | 68.692%      | 68.834% | 68.482%     | 25.476% | 22.928%     |
+| AdaRoundAbsMax_CH_lr0.001         | 68.124% | 67.128%      | 67.966% | 66.848%     | 24.698% | 25.412%     |
+| AdaRoundMinMax_CH_lr0.01          | 69.176% | 69.046%      | 69.212% | 68.994%     | 48.010% | 49.414%     |
+| AdaRoundMinMax_CH_lr0.001         | 68.634% | 68.038%      | 68.438% | 67.764%     | 46.804% | 47.298%     |
+| AdaRoundNorm_CH_lr0.01_p2.4       | 68.86%  | 68.994%      |         |             |         | 39.374%     |
+| AdaRoundNorm_CH_lr0.001_p2.4      | 68.08%  | 68.210%      |         |             |         |             |
+| AdaRoundOrgNorm_CH_lr0.01_p2.4    | 68.55%  | 68.684%      |         |             |         |             |
+| AdaRoundOrgNorm_CH_lr0.001_p2.4   | 68.44%  | 68.360%      |         |             |         |             |
 
 
 # Made by
