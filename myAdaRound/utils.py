@@ -129,43 +129,47 @@ import torch.nn.functional as F
 
 
 class UniformAffineQuantizer(nn.Module):
-    ## Public variables :
-    # - (bool) signed
-    # - (bool) per-channel
-    ## Public methods :
-    # - compute_qparams(_min, _max)
-    # - forward(x: Tensor) -> Tensor
     def __init__(self, org_weight, args):
         super(UniformAffineQuantizer, self).__init__()
 
         _DtypeStr = args.get("dstDtype")
         assert _DtypeStr in [
             "INT8",
-            "UINT8",
             "INT4",
-            "UINT4",
-        ], f"Unknown quantization type: {_DtypeStr}"
+        ], f"Unknown quantization type: {_DtypeStr}. Only support INT8, INT4. \n \
+            If using INT8 with output of the ReLU activation function, we will use UINT8 instead. \n \
+            Therefore, please only determine the BIT WITDH."
 
         self._n_bits = int(_DtypeStr[-1])  # "INT8" -> 8
-        self.signed = True if _DtypeStr[0] == "I" else False  # "INT8" -> True
-
-        # the below code runtime is 300ms in resnet18 with i7-9700k with RTX3090
-        if self.signed == False and org_weight.min() < 0:
-            raise ValueError("Unsigned quantization does not support negative values.")
-
         self._repr_min, self._repr_max = None, None
-        if self.signed:
-            self._repr_min = -(2 ** (self._n_bits - 1))  # "INT8" -> -128
-            self._repr_max = 2 ** (self._n_bits - 1) - 1  # "INT8" -> 127
-        else:
-            self._repr_min = 0  # "UINT8" -> 0
-            self._repr_max = 2 ** (self._n_bits) - 1  # "UINT8" -> 255
 
-        # per_ch option is "store_true"
         self.per_channel = args.get("per_channel") if args.get("per_channel") else False
         self._n_ch = len(org_weight.size()) if self.per_channel else 1
         self._scaler = None
         self._zero_point = None
+        self.one_side_dist = None  # {"pos", "neg", "no"}
+
+        self._define_repr_min_max(org_weight)
+
+    def _define_repr_min_max(self, input: Tensor):
+        if self.one_side_dist is None:
+            self.one_side_dist = (
+                "pos" if input.min() >= 0.0 else "neg" if input.max() <= 0.0 else "no"
+            )
+        if self.one_side_dist != "no":
+            self._repr_min = 0  # "UINT8" -> 0
+            self._repr_max = 2 ** (self._n_bits) - 1  # "UINT8" -> 255
+            print(f"    1D search with UINT{self._n_bits}")
+        else:  # 2-d search
+            self._repr_min = -(2 ** (self._n_bits - 1))  # "INT8" -> -128
+            self._repr_max = 2 ** (self._n_bits - 1) - 1  # "INT8" -> 127
+            print(f"    2D search with INT{self._n_bits}")
+
+    def round_ste(self, input: torch.Tensor):
+        """
+        Implement Straight-Through Estimator for rounding operation.
+        """
+        return (input.round() - input).detach() + input
 
     def compute_qparams(self, _min, _max) -> None:
         # Origin tensor shape: [out_channel, in_channel, k, k]
@@ -175,11 +179,11 @@ class UniformAffineQuantizer(nn.Module):
         self._scaler = scaler.view(-1, *([1] * (self._n_ch - 1)))
 
         _min = _min.view(-1, *([1] * (self._n_ch - 1)))
-        self._zero_point = -(_min / self._scaler).round() + self._repr_min
+        self._zero_point = -self.round_ste(_min / self._scaler) + self._repr_min
 
     def _quantize(self, input: Tensor) -> Tensor:
         return torch.clamp(
-            (input / self._scaler).round() + self._zero_point,
+            self.round_ste(input / self._scaler) + self._zero_point,
             self._repr_min,
             self._repr_max,
         )
@@ -207,13 +211,19 @@ class AbsMaxQuantizer(UniformAffineQuantizer):
         else:
             _AbsMax = org_weight.abs().max()
 
-        if self.signed == True:
+        if self.one_side_dist == "no":
             # if s8, scaler = 2 * org_weight.abs().max() / (127 - (-128))
             #               = org_weight.abs().max() - (-org_weight.abs().max()) / (127 - (-128))
             self.compute_qparams(-_AbsMax, _AbsMax)
-        else:
+            # will convert to (-max, max) -> (-128, 127)
+        elif self.one_side_dist == "pos":
             # if u8, scaler = org_weight.abs().max() / (255 - 0)
             self.compute_qparams(torch.zeros_like(_AbsMax), _AbsMax)
+            # will convert to (0, max) -> (0, 255)
+        else:
+            print("This distribution is unexpected. plaese check the input data.")
+            # self.compute_qparams(_AbsMax, torch.zeros_like(_AbsMax))
+            raise ValueError("Unknown distribution type.")
 
         # if s8 or u8, zero_point = 0
         self.zero_point = torch.zeros_like(self._scaler)
@@ -236,14 +246,14 @@ class MinMaxQuantizer(UniformAffineQuantizer):
             _min = org_weight.min()
             _max = org_weight.max()
 
-        if self.signed == True:
-            # if s8, scaler = (_max - _min) / (127 - (-128))
-            # if s8, zero_point = -_min / scaler + (-128)
-            self.compute_qparams(_min, _max)
-        else:
-            # if u8, scaler = (_max - _min) / (255 - 0)
-            # if u8, zero_point = -_min / scaler + 0
-            self.compute_qparams(_min, _max)
+        # if s8, scaler = (_max - _min) / (127 - (-128))
+        # if s8, zero_point = -_min / scaler + (-128)
+
+        # if u8, scaler = (_max - _min) / (255 - 0)
+        # if u8, zero_point = -_min / scaler + 0
+
+        # Always using same equation.
+        self.compute_qparams(_min, _max)
 
 
 class NormQuantizer(UniformAffineQuantizer):
@@ -275,13 +285,13 @@ class NormQuantizer(UniformAffineQuantizer):
         # L_p norm minimization as described in LAPQ
         # https://arxiv.org/abs/1911.07190
         self._p = args.get("p") if args.get("p") else 2.4
-        print(f"p = {self._p}")
+        print(f"    p = {self._p}")
 
         def forward_copy(input: Tensor) -> Tensor:
             # Avoid override errors when using AdaRound's self.forward function to perform the initialization process.
             return self._dequantize(
                 torch.clamp(
-                    (input / self._scaler).round() + self._zero_point,
+                    self.round_ste(input / self._scaler) + self._zero_point,
                     self._repr_min,
                     self._repr_max,
                 )
@@ -342,74 +352,136 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
     def __init__(self, org_weight, args):
         """ORIGIN SOURCE CODE"""
         super(OrgNormQuantizerCode, self).__init__(org_weight, args)
+        self.channel_wise = self.per_channel
+        self.num = 100
 
-        if self.signed == True:
-            self.channel_wise = self.per_channel
+        x = org_weight
+        best_min, best_max = self.get_x_min_x_max(x)
+        self.compute_qparams(best_min, best_max)
+        return None
 
-            def lp_loss(pred, tgt, p=2.0):
-                x = (pred - tgt).abs().pow(p)
-                if not self.channel_wise:
-                    return x.mean()
-                else:
-                    y = torch.flatten(x, 1)
-                    return y.mean(1)
+    def get_x_min_x_max(self, x):
+        # if self.scale_method != "mse":
+        #     raise NotImplementedError
+        if self.one_side_dist is None:
+            self.one_side_dist = (
+                "pos" if x.min() >= 0.0 else "neg" if x.max() <= 0.0 else "no"
+            )
+        if (
+            self.one_side_dist != "no"  # or self.sym
+        ):  # one-side distribution or symmetric value for 1-d search
+            best_min, best_max = self.perform_1D_search(x)
+        else:  # 2-d search
+            best_min, best_max = self.perform_2D_search(x)
+        # if self.leaf_param:
+        #     return self.update_quantize_range(best_min, best_max)
+        return best_min, best_max
 
-            x = org_weight
-            if self.channel_wise:
-                y = torch.flatten(x, 1)
-                x_min, x_max = torch.aminmax(y, dim=1)
-                # may also have the one side distribution in some channels
-                x_max = torch.max(x_max, torch.zeros_like(x_max))
-                x_min = torch.min(x_min, torch.zeros_like(x_min))
-            else:
-                x_min, x_max = torch.aminmax(x)
-            xrange = x_max - x_min
-            best_score = torch.zeros_like(x_min) + (1e10)
-            best_min = x_min.clone()
-            best_max = x_max.clone()
-            # enumerate xrange
-            self.num = 100
+    def forward_copy(self, input: Tensor) -> Tensor:
+        # Avoid override errors when using AdaRound's self.forward function to perform the initialization process.
+        return self._dequantize(
+            torch.clamp(
+                self.round_ste(input / self._scaler) + self._zero_point,
+                self._repr_min,
+                self._repr_max,
+            )
+        )
 
-            for i in range(1, self.num + 1):
-                tmp_min = torch.zeros_like(x_min)
-                tmp_max = xrange / self.num * i
-                # tmp_delta = (tmp_max - tmp_min) / (2**self.n_bits - 1)
-                tmp_delta = (tmp_max - tmp_min) / (self._repr_max - self._repr_min)
-                # enumerate zp
-                # for zp in range(0, self.n_levels):
-                for zp in range(0, (self._repr_max - self._repr_min + 1)):
-                    new_min = tmp_min - zp * tmp_delta
-                    new_max = tmp_max - zp * tmp_delta
-                    self.compute_qparams(new_max, new_min)
-                    # x_q = self.forward(x)
-                    x_q = torch.clamp(
-                        (x / self._scaler).round() + self._zero_point,
-                        self._repr_min,
-                        self._repr_max,
-                    )
-                    x_q = self._dequantize(x_q)
-
-                    score = lp_loss(x, x_q, 2.4)
-                    best_min = torch.where(score < best_score, new_min, best_min)
-                    best_max = torch.where(score < best_score, new_max, best_max)
-                    best_score = torch.min(best_score, score)
-
-            self.compute_qparams(best_min, best_max)
+    def lp_loss(self, pred, tgt, p=2.0):
+        x = (pred - tgt).abs().pow(p)
+        if not self.channel_wise:
+            return x.mean()
         else:
-            # perform_1D_search [0, max]
-            ...
+            y = torch.flatten(x, 1)
+            return y.mean(1)
+
+    def perform_2D_search(self, x):
+        """(1) init the min, max value"""
+        if self.channel_wise:
+            y = torch.flatten(x, 1)
+            x_min, x_max = torch.aminmax(y, dim=1)
+            # may also have the one side distribution in some channels
+            x_max = torch.max(x_max, torch.zeros_like(x_max))
+            x_min = torch.min(x_min, torch.zeros_like(x_min))
+        else:
+            x_min, x_max = torch.aminmax(x)
+        """(2) define the xrange of the input"""
+        xrange = x_max - x_min
+        best_score = torch.zeros_like(x_min) + (1e10)
+        best_min = x_min.clone()
+        best_max = x_max.clone()
+        # enumerate xrange
+        for i in range(1, self.num + 1):
+            """(3) define smaller xrange using percentage"""
+            tmp_min = torch.zeros_like(x_min)
+            tmp_max = xrange / self.num * i
+            # tmp_delta = (tmp_max - tmp_min) / (2**self.n_bits - 1)
+            tmp_delta = (tmp_max - tmp_min) / (self._repr_max - self._repr_min)
+            """(4) delta is become smaller scaler 
+                (more resolution but narrow range)"""
+            # enumerate zp
+            # for zp in range(0, self.n_levels):
+            for zp in range(0, (self._repr_max - self._repr_min + 1)):
+                """(5) when using INT8, zp is 0 ~ 255
+                    shift the min, max value using zp * delta
+                    tmp_min is [0 -> 0 - 255 * delta]
+                    tmp_max is [max -> max - 255 * delta]
+                    once, [-max/2, max/2] will be the test range.
+                    >> Sliding window !!!
+                """
+                new_min = tmp_min - zp * tmp_delta
+                new_max = tmp_max - zp * tmp_delta
+                """(6) compute the L 2.4 norm with new min, max"""
+                self.compute_qparams(new_max, new_min)
+                x_q = self.forward_copy(x)
+                score = self.lp_loss(x, x_q, 2.4)
+                best_min = torch.where(score < best_score, new_min, best_min)
+                best_max = torch.where(score < best_score, new_max, best_max)
+                best_score = torch.min(best_score, score)
+        """(6) return best min, max"""
+        return best_min, best_max
+
+    def perform_1D_search(self, x):
+        """(1) init the min, max value"""
+        if self.channel_wise:
+            y = torch.flatten(x, 1)
+            x_min, x_max = torch.aminmax(y, dim=1)
+        else:
+            x_min, x_max = torch.aminmax(x)
+        """(2) define the xrange of the input"""
+        xrange = torch.max(x_min.abs(), x_max)
+        best_score = torch.zeros_like(x_min) + (1e10)
+        best_min = x_min.clone()
+        best_max = x_max.clone()
+        # enumerate xrange
+        for i in range(1, self.num + 1):
+            """(3) define smaller xrange using percentage"""
+            thres = xrange / self.num * i
+            """(4) threshold will be the 1% ~ 100% range of the xrange 
+                (more resolution but narrow range)"""
+            new_min = torch.zeros_like(x_min) if self.one_side_dist == "pos" else -thres
+            new_max = torch.zeros_like(x_max) if self.one_side_dist == "neg" else thres
+            """(5) compute the L 2.4 norm with new min, max"""
+            self.compute_qparams(new_max, new_min)
+            x_q = self.forward_copy(x)
+            score = self.lp_loss(x, x_q, 2.4)
+            best_min = torch.where(score < best_score, new_min, best_min)
+            best_max = torch.where(score < best_score, new_max, best_max)
+            best_score = torch.min(score, best_score)
+        """(6) return best min, max"""
+        return best_min, best_max
 
 
-def create_AdaRound_Quantizer(base_class_name, org_weight, args):
+def create_AdaRound_Quantizer(scheme, org_weight, args):
     base_classes = {
         "AbsMaxQuantizer": AbsMaxQuantizer,
         "MinMaxQuantizer": MinMaxQuantizer,
         "NormQuantizer": NormQuantizer,
         "OrgNormQuantizerCode": OrgNormQuantizerCode,
     }
-    base_class = base_classes.get(base_class_name)
+    base_class = base_classes.get(scheme)
     if not base_class:
-        raise ValueError(f"Unknown base class: {base_class_name}")
+        raise ValueError(f"Unknown base class: {scheme}")
 
     class AdaRoundQuantizer(base_class):
         def __init__(self, org_weight, args):
@@ -418,7 +490,7 @@ def create_AdaRound_Quantizer(base_class_name, org_weight, args):
             - https://proceedings.mlr.press/v119/nagel20a/nagel20a.pdf
             """
             super(AdaRoundQuantizer, self).__init__(org_weight, args)
-            print(f"Parent class is {self.__class__.__bases__[0].__name__}")
+            print(f"    Parent class is {self.__class__.__bases__[0].__name__}")
 
             self.fp_outputs = None
             # -> Now, We have AbsMaxQuantizer's scaler and zero_point!
@@ -457,7 +529,7 @@ def create_AdaRound_Quantizer(base_class_name, org_weight, args):
             self._v = nn.Parameter(_v, requires_grad=True)
             assert (_residual - self._h()).abs().sum() == 0
 
-            print("Initiated the V")
+            print("    Initiated the V")
 
         def _h(self) -> Tensor:
             # Rectified_sigmoid (strached sigmoid function)
@@ -499,8 +571,63 @@ def create_AdaRound_Quantizer(base_class_name, org_weight, args):
     return AdaRoundQuantizer(org_weight, args)
 
 
+# Origin Bn fonlding function (2)
+def _fold_bn(conv_module, bn_module):
+    w = conv_module.weight.data
+    y_mean = bn_module.running_mean
+    y_var = bn_module.running_var
+    safe_std = torch.sqrt(y_var + bn_module.eps)
+    w_view = (conv_module.out_channels, 1, 1, 1)
+    if bn_module.affine:
+        weight = w * (bn_module.weight / safe_std).view(w_view)
+        beta = bn_module.bias - bn_module.weight * y_mean / safe_std
+        if conv_module.bias is not None:
+            bias = bn_module.weight * conv_module.bias / safe_std + beta
+        else:
+            bias = beta
+    else:
+        weight = w / safe_std.view(w_view)
+        beta = -y_mean / safe_std
+        if conv_module.bias is not None:
+            bias = conv_module.bias / safe_std + beta
+        else:
+            bias = beta
+    return weight, bias
+
+
+# Origin Bn fonlding function (1)
+def fold_bn_into_conv(conv_module, bn_module):
+    w, b = _fold_bn(conv_module, bn_module)
+    if conv_module.bias is None:
+        conv_module.bias = nn.Parameter(b)
+    else:
+        conv_module.bias.data = b
+    conv_module.weight.data = w
+    # set bn running stats
+    bn_module.running_mean = bn_module.bias.data
+    bn_module.running_var = bn_module.weight.data**2
+
+
+quantizerDict = {
+    "AbsMaxQuantizer": AbsMaxQuantizer,
+    "MinMaxQuantizer": MinMaxQuantizer,
+    "NormQuantizer": NormQuantizer,
+    "OrgNormQuantizerCode": OrgNormQuantizerCode,
+}
+
+
+class StraightThrough(nn.Module):
+    def __int__(self):
+        super().__init__()
+
+    def forward(self, input):
+        return input
+
+
 class QuantModule(nn.Module):
-    def __init__(self, org_module, w_params, act_quant_params):
+    def __init__(
+        self, org_module, w_quant_args, a_quant_args, bn_module=None, folding=False
+    ):
         super(QuantModule, self).__init__()
         """forward function setting"""
         if isinstance(org_module, nn.Conv2d):
@@ -517,37 +644,108 @@ class QuantModule(nn.Module):
 
         self.weight = org_module.weight.clone().detach()
 
+        if org_module.bias != None:
+            self.bias = org_module.bias.clone().detach()
+        else:
+            self.bias = torch.zeros(org_module.weight.size(0)).to(
+                org_module.weight.device
+            )
+
+        self.act_func = StraightThrough()
+
+        """Bn folding"""
+        self.folding = folding
+        # conv + bn
+        if self.folding == True and bn_module != None:
+            ## (1) My folding code / org_resnet18 : 69.758%
+            _safe_std = torch.sqrt(bn_module.running_var + bn_module.eps)
+            w_view = (org_module.out_channels, 1, 1, 1)
+            _gamma = bn_module.weight
+
+            self.weight = self.weight * (_gamma / _safe_std).view(w_view)
+
+            self.bias = (
+                _gamma * (self.bias - bn_module.running_mean) / _safe_std
+                + bn_module.bias
+            )
+
+            ## (2) Origin bn folding code / org_resnet18: 69.758%
+            # fold_bn_into_conv(org_module, bn_module)
+            # self.weight = org_module.weight
+            # if org_module.bias is not None:
+            #     self.bias = org_module.bias
+            self.bn_func = StraightThrough()
+            print("    BN Folded!")
+        elif self.folding == False and bn_module == None:
+            # FC layer dose not have bn layer
+            self.bn_func = StraightThrough()
+        elif self.folding == False and bn_module != None:
+            # conv and bn are not folded!!!
+            self.bn_func = bn_module
+        else:
+            raise ValueError("Unknown folding option")
+
         """weight quantizer"""
-        self.w_quant_enable = True  # default is True. Need false option when only compute adaround values.
+        # default is True. Need false option when only compute adaround values.
+        self.w_quant_enable = True
 
         try:
-            if w_params.get("scheme") == "AdaRoundQuantizer":
+            if w_quant_args.get("AdaRound") == True:
                 self.weight_quantizer = create_AdaRound_Quantizer(
-                    base_class_name=w_params.get("BaseScheme"),
+                    scheme=w_quant_args.get("scheme"),
                     org_weight=self.weight,
-                    args=w_params,
+                    args=w_quant_args,
                 )
             else:
-                quantizerDict = {
-                    "AbsMaxQuantizer": AbsMaxQuantizer,
-                    "MinMaxQuantizer": MinMaxQuantizer,
-                    "NormQuantizer": NormQuantizer,
-                    "OrgNormQuantizerCode": OrgNormQuantizerCode,
-                }
-                self.weight_quantizer = quantizerDict[w_params.get("scheme")](
-                    self.weight, w_params
+                self.weight_quantizer = quantizerDict[w_quant_args.get("scheme")](
+                    org_weight=self.weight, args=w_quant_args
                 )
         except KeyError:
-            raise ValueError(f"Unknown weight quantizer type: {w_params.get('scheme')}")
+            raise ValueError(f"Unknown quantizer type: {w_quant_args.get('scheme')}")
 
         """activation quantizer"""
-        # [ ] add activation quantizer
+        if a_quant_args == {}:
+            self.a_quant_enable = False
+            self.a_quant_inited = False
+        else:
+            self.a_quant_enable = True
+            self.a_quant_inited = False
+            self.a_quant_args = a_quant_args
+            self.act_quantizer = None
+
+    def init_act_quantizer(self, calib):
+        try:
+            self.act_quantizer = quantizerDict[self.a_quant_args.get("scheme")](
+                org_weight=calib, args=self.a_quant_args
+            )
+            self.act_quantizer._scaler = nn.Parameter(
+                self.act_quantizer._scaler, requires_grad=True
+            )
+        except KeyError:
+            raise ValueError(
+                f"Unknown quantizer type: {self.a_quant_args.get('scheme')}"
+            )
 
     def forward(self, x: Tensor) -> Tensor:
+        """convolution"""
         if self.w_quant_enable == True:
             # print("q", end="")
             weight = self.weight_quantizer(self.weight)
         else:
             print(".", end="")
             weight = self.weight
-        return self.fwd_func(x, weight, **self.fwd_kwargs)
+        _Z = self.fwd_func(x, weight, self.bias, **self.fwd_kwargs)
+
+        """ batch normalization """
+        _Z = self.bn_func(_Z)
+
+        """ activation """
+        # If first conv of first block of each stage, it is ReLU.
+        # Otherwise, it is StraightThrough.
+        _A = self.act_func(_Z)
+
+        if self.a_quant_inited == True and self.a_quant_enable == True:
+            # print("A", end="")
+            return self.act_quantizer(_A)
+        else:
+            return _A

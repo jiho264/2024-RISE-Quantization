@@ -1,0 +1,72 @@
+
+Case: [ resnet18_NormQuantizer_Layer_W8A32_p2.4 ]
+    - arch: resnet18
+    - batch_size: 128
+    - num_samples: 1024
+    - folding: False
+
+- weight params:
+    - scheme: NormQuantizer
+    - dstDtype: INT8
+    - per_channel: False
+    - p: 2.4
+
+- activation params:
+
+Replace to QuantModule
+    p = 2.4
+    ReLU merged
+    p = 2.4
+    ReLU merged
+    p = 2.4
+    p = 2.4
+    ReLU merged
+    p = 2.4
+    p = 2.4
+    ReLU merged
+    p = 2.4
+    p = 2.4
+    p = 2.4
+    ReLU merged
+    p = 2.4
+    p = 2.4
+    ReLU merged
+    p = 2.4
+    p = 2.4
+    p = 2.4
+    ReLU merged
+    p = 2.4
+    p = 2.4
+    ReLU merged
+    p = 2.4
+    p = 2.4
+    p = 2.4
+    ReLU merged
+    p = 2.4
+    p = 2.4
+Qparams computing done!
+    QuantModule: conv1, torch.Size([64, 3, 7, 7])
+    QuantModule: layer1.0.conv1, torch.Size([64, 64, 3, 3])
+    QuantModule: layer1.0.conv2, torch.Size([64, 64, 3, 3])
+    QuantModule: layer1.1.conv1, torch.Size([64, 64, 3, 3])
+    QuantModule: layer1.1.conv2, torch.Size([64, 64, 3, 3])
+    QuantModule: layer2.0.conv1, torch.Size([128, 64, 3, 3])
+    QuantModule: layer2.0.conv2, torch.Size([128, 128, 3, 3])
+    QuantModule: layer2.0.downsample.0, torch.Size([128, 64, 1, 1])
+    QuantModule: layer2.1.conv1, torch.Size([128, 128, 3, 3])
+    QuantModule: layer2.1.conv2, torch.Size([128, 128, 3, 3])
+    QuantModule: layer3.0.conv1, torch.Size([256, 128, 3, 3])
+    QuantModule: layer3.0.conv2, torch.Size([256, 256, 3, 3])
+    QuantModule: layer3.0.downsample.0, torch.Size([256, 128, 1, 1])
+    QuantModule: layer3.1.conv1, torch.Size([256, 256, 3, 3])
+    QuantModule: layer3.1.conv2, torch.Size([256, 256, 3, 3])
+    QuantModule: layer4.0.conv1, torch.Size([512, 256, 3, 3])
+    QuantModule: layer4.0.conv2, torch.Size([512, 512, 3, 3])
+    QuantModule: layer4.0.downsample.0, torch.Size([512, 256, 1, 1])
+    QuantModule: layer4.1.conv1, torch.Size([512, 512, 3, 3])
+    QuantModule: layer4.1.conv2, torch.Size([512, 512, 3, 3])
+    QuantModule: fc, torch.Size([1000, 512])
+Total QuantModule: 21, Folded BN layers : 0
+
+    Quantized model Evaluation accuracy on 50000 images, 69.614%
+Total time: 57.68 sec

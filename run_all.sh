@@ -1,0 +1,2 @@
+bash run_quantizer_cases.sh
+bash run_myAdaRound.sh
