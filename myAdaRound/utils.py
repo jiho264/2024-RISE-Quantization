@@ -396,6 +396,7 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
             return y.mean(1)
 
     def perform_2D_search(self, x):
+        """(1) init the min, max value"""
         if self.channel_wise:
             y = torch.flatten(x, 1)
             x_min, x_max = torch.aminmax(y, dim=1)
@@ -404,50 +405,70 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
             x_min = torch.min(x_min, torch.zeros_like(x_min))
         else:
             x_min, x_max = torch.aminmax(x)
+        """(2) define the xrange of the input"""
         xrange = x_max - x_min
         best_score = torch.zeros_like(x_min) + (1e10)
         best_min = x_min.clone()
         best_max = x_max.clone()
         # enumerate xrange
         for i in range(1, self.num + 1):
+            """(3) define smaller xrange using percentage"""
             tmp_min = torch.zeros_like(x_min)
             tmp_max = xrange / self.num * i
             # tmp_delta = (tmp_max - tmp_min) / (2**self.n_bits - 1)
             tmp_delta = (tmp_max - tmp_min) / (self._repr_max - self._repr_min)
+            """(4) delta is become smaller scaler 
+                (more resolution but narrow range)"""
             # enumerate zp
             # for zp in range(0, self.n_levels):
             for zp in range(0, (self._repr_max - self._repr_min + 1)):
+                """(5) when using INT8, zp is 0 ~ 255
+                    shift the min, max value using zp * delta
+                    tmp_min is [0 -> 0 - 255 * delta]
+                    tmp_max is [max -> max - 255 * delta]
+                    once, [-max/2, max/2] will be the test range.
+                    >> Sliding window !!!
+                """
                 new_min = tmp_min - zp * tmp_delta
                 new_max = tmp_max - zp * tmp_delta
+                """(6) compute the L 2.4 norm with new min, max"""
                 self.compute_qparams(new_max, new_min)
                 x_q = self.forward_copy(x)
                 score = self.lp_loss(x, x_q, 2.4)
                 best_min = torch.where(score < best_score, new_min, best_min)
                 best_max = torch.where(score < best_score, new_max, best_max)
                 best_score = torch.min(best_score, score)
+        """(6) return best min, max"""
         return best_min, best_max
 
     def perform_1D_search(self, x):
+        """(1) init the min, max value"""
         if self.channel_wise:
             y = torch.flatten(x, 1)
             x_min, x_max = torch.aminmax(y, dim=1)
         else:
             x_min, x_max = torch.aminmax(x)
+        """(2) define the xrange of the input"""
         xrange = torch.max(x_min.abs(), x_max)
         best_score = torch.zeros_like(x_min) + (1e10)
         best_min = x_min.clone()
         best_max = x_max.clone()
         # enumerate xrange
         for i in range(1, self.num + 1):
+            """(3) define smaller xrange using percentage"""
             thres = xrange / self.num * i
+            """(4) threshold will be the 1% ~ 100% range of the xrange 
+                (more resolution but narrow range)"""
             new_min = torch.zeros_like(x_min) if self.one_side_dist == "pos" else -thres
             new_max = torch.zeros_like(x_max) if self.one_side_dist == "neg" else thres
+            """(5) compute the L 2.4 norm with new min, max"""
             self.compute_qparams(new_max, new_min)
             x_q = self.forward_copy(x)
             score = self.lp_loss(x, x_q, 2.4)
             best_min = torch.where(score < best_score, new_min, best_min)
             best_max = torch.where(score < best_score, new_max, best_max)
             best_score = torch.min(score, best_score)
+        """(6) return best min, max"""
         return best_min, best_max
 
 
