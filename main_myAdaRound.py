@@ -337,7 +337,7 @@ if __name__ == "__main__":
         default="FP32",
         type=str,
         help="destination data type",
-        choices=["UINT4", "UINT8", "INT4", "INT8", "FP32"],
+        choices=["INT4", "INT8", "FP32"],
     )
 
     ##### Setup
