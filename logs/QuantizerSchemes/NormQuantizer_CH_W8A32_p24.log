@@ -14,35 +14,56 @@ Case: [ resnet18_NormQuantizer_CH_W8A32_p2.4 ]
 - activation params:
 
 Replace to QuantModule
+    2D search with INT8
     p = 2.4
     ReLU merged
+    2D search with INT8
     p = 2.4
     ReLU merged
+    2D search with INT8
     p = 2.4
-    p = 2.4
-    ReLU merged
-    p = 2.4
-    p = 2.4
-    ReLU merged
-    p = 2.4
-    p = 2.4
+    2D search with INT8
     p = 2.4
     ReLU merged
+    2D search with INT8
     p = 2.4
-    p = 2.4
-    ReLU merged
-    p = 2.4
-    p = 2.4
+    2D search with INT8
     p = 2.4
     ReLU merged
+    2D search with INT8
     p = 2.4
+    2D search with INT8
+    p = 2.4
+    2D search with INT8
     p = 2.4
     ReLU merged
+    2D search with INT8
     p = 2.4
-    p = 2.4
+    2D search with INT8
     p = 2.4
     ReLU merged
+    2D search with INT8
     p = 2.4
+    2D search with INT8
+    p = 2.4
+    2D search with INT8
+    p = 2.4
+    ReLU merged
+    2D search with INT8
+    p = 2.4
+    2D search with INT8
+    p = 2.4
+    ReLU merged
+    2D search with INT8
+    p = 2.4
+    2D search with INT8
+    p = 2.4
+    2D search with INT8
+    p = 2.4
+    ReLU merged
+    2D search with INT8
+    p = 2.4
+    2D search with INT8
     p = 2.4
 Qparams computing done!
     QuantModule: conv1, torch.Size([64, 3, 7, 7])
@@ -69,4 +90,4 @@ Qparams computing done!
 Total QuantModule: 21, Folded BN layers : 0
 
     Quantized model Evaluation accuracy on 50000 images, 69.744%
-Total time: 46.13 sec
+Total time: 46.64 sec

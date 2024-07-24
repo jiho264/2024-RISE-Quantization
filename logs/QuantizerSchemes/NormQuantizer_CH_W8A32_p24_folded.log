@@ -15,54 +15,75 @@ Case: [ resnet18_NormQuantizer_CH_W8A32_BNFold_p2.4 ]
 
 Replace to QuantModule
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.4
+    2D search with INT8
     p = 2.4
 Qparams computing done!
     QuantModule: conv1, torch.Size([64, 3, 7, 7])
@@ -89,4 +110,4 @@ Qparams computing done!
 Total QuantModule: 21, Folded BN layers : 20
 
     Quantized model Evaluation accuracy on 50000 images, 69.744%
-Total time: 45.55 sec
+Total time: 46.35 sec

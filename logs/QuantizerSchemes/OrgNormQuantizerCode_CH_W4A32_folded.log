@@ -14,34 +14,55 @@ Case: [ resnet18_OrgNormQuantizerCode_CH_W4A32_BNFold ]
 
 Replace to QuantModule
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT4
+    2D search with INT4
 Qparams computing done!
     QuantModule: conv1, torch.Size([64, 3, 7, 7])
     QuantModule: layer1.0.conv1, torch.Size([64, 64, 3, 3])
@@ -67,4 +88,4 @@ Qparams computing done!
 Total QuantModule: 21, Folded BN layers : 20
 
     Quantized model Evaluation accuracy on 50000 images, 57.606%
-Total time: 54.25 sec
+Total time: 54.79 sec
