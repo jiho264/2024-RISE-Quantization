@@ -1,5 +1,6 @@
 # W8A32 or W4A32
-SCHEMES=( "AbsMaxQuantizer" "MinMaxQuantizer" "NormQuantizer" "OrgNormQuantizerCode" )
+# SCHEMES=( "AbsMaxQuantizer" "MinMaxQuantizer" "NormQuantizer" "OrgNormQuantizerCode" )
+SCHEMES=( "NormQuantizer" "OrgNormQuantizerCode" )
 DSTDTYPEW=( "INT4" "INT8" )
 FOLDING=( "True" "False" )
 PERCHANNEL=( "False" "True" )

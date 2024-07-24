@@ -15,54 +15,75 @@ Case: [ resnet18_NormQuantizer_Layer_W8A32_BNFold_p2.0 ]
 
 Replace to QuantModule
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
     ReLU merged
     Conv2d <- BatchNorm2d    BN Folded!
+    2D search with INT8
     p = 2.0
+    2D search with INT8
     p = 2.0
 Qparams computing done!
     QuantModule: conv1, torch.Size([64, 3, 7, 7])
@@ -88,5 +109,5 @@ Qparams computing done!
     QuantModule: fc, torch.Size([1000, 512])
 Total QuantModule: 21, Folded BN layers : 20
 
-    Quantized model Evaluation accuracy on 50000 images, 69.462%
-Total time: 57.22 sec
+    Quantized model Evaluation accuracy on 50000 images, 69.534%
+Total time: 45.70 sec

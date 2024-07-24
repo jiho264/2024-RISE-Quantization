@@ -266,54 +266,73 @@ class NormQuantizer(UniformAffineQuantizer):
             - I think that considering about 0.01% ~ 0.00001% is enough. (inspired by the percentile method)
         """
         super(NormQuantizer, self).__init__(org_weight, args)
+        with torch.cuda.device(0):
 
-        if self.per_channel == True:
-            _argsorted = torch.argsort(org_weight.view(org_weight.size(0), -1))
-            best_min = org_weight.view(org_weight.size(0), -1)[
-                torch.arange(org_weight.size(0)), _argsorted[:, 0]
-            ]
-            best_max = org_weight.view(org_weight.size(0), -1)[
-                torch.arange(org_weight.size(0)), _argsorted[:, -1]
-            ]
+            if self.per_channel == True:
+                _argsorted = torch.argsort(org_weight.view(org_weight.size(0), -1))
+                best_min = org_weight.view(org_weight.size(0), -1)[
+                    torch.arange(org_weight.size(0)), _argsorted[:, 0]
+                ]
+                best_max = org_weight.view(org_weight.size(0), -1)[
+                    torch.arange(org_weight.size(0)), _argsorted[:, -1]
+                ]
 
-        else:
-            _argsorted = torch.argsort(org_weight.view(-1))
-            best_min = org_weight.view(-1)[_argsorted[0]].clone()
-            best_max = org_weight.view(-1)[_argsorted[-1]].clone()
+            else:
+                _argsorted = torch.argsort(org_weight.view(-1))
+                best_min = org_weight.view(-1)[_argsorted[0]].clone()
+                best_max = org_weight.view(-1)[_argsorted[-1]].clone()
 
-        # Default p is 2.4
-        # L_p norm minimization as described in LAPQ
-        # https://arxiv.org/abs/1911.07190
-        self._p = args.get("p") if args.get("p") else 2.4
-        print(f"    p = {self._p}")
+            # Default p is 2.4
+            # L_p norm minimization as described in LAPQ
+            # https://arxiv.org/abs/1911.07190
+            self._p = args.get("p") if args.get("p") else 2.4
+            print(f"    p = {self._p}")
 
-        def forward_copy(input: Tensor) -> Tensor:
-            # Avoid override errors when using AdaRound's self.forward function to perform the initialization process.
-            return self._dequantize(
-                torch.clamp(
-                    self.round_ste(input / self._scaler) + self._zero_point,
-                    self._repr_min,
-                    self._repr_max,
+            """prepare the search loop"""
+            best_score = None
+
+            def _update_best_min_max(_tmp_min, _tmp_max):
+                self.compute_qparams(_tmp_min, _tmp_max)
+                # -> Changed the scaler and zero_point
+                nonlocal best_min, best_max, best_score
+                _tmp_score = (self.forward_copy(org_weight) - org_weight).norm(
+                    p=self._p
                 )
+                if best_score == None:
+                    best_score = _tmp_score
+
+                best_min = torch.where(_tmp_score < best_score, _tmp_min, best_min)
+                best_max = torch.where(_tmp_score < best_score, _tmp_max, best_max)
+                best_score = torch.min(_tmp_score, best_score)
+
+            _lenlen = (
+                torch.tensor(len(_argsorted))
+                if self.per_channel == False
+                else torch.tensor(len(_argsorted[1]))
             )
+            _update_best_min_max(best_min, best_max)
 
-        if self.signed == True:
-            # perform_2D_search [min, max]
-            self.compute_qparams(best_min, best_max)
-            # best_score = (self.forward(org_weight) - org_weight).norm(p=self._p)
-            best_score = (forward_copy(org_weight) - org_weight).norm(p=self._p)
+            """define the candicates"""
+            _check_len = int(_lenlen * 0.00001)  # 0.01% of the length
 
-            _iter_len = int((len(_argsorted / 2) + 1) * 0.001) + 10
-            # the combination of smallest 0.05% and largest 0.05% is enough.
-            # if compute all combination, there are huge overhead without significant improvement.
-            for _idx in range(1, _iter_len):
-                for i, j in {(0, 1), (1, 0), (1, 1)}:
-                    # Consider the combination with +- 1 index value
-                    # init : (0, -1)
-                    # loop : (0, -2), (1, -1), (1, -2)
-                    # next : (1, -3), (2, -2), (2, -3).. not duplicated.
-                    lowidx = _idx - 1 + i
-                    highidx = -_idx - j
+            if self.one_side_dist == "no":
+                # perform_2D_search [min, max]
+                _high_iters = (
+                    (torch.linspace(99.9, 99.9999999, _check_len) / 100 * _lenlen)
+                    .int()
+                    .unique()
+                    - 1
+                    if _check_len > 32
+                    else torch.arange(_lenlen, _lenlen - 32, -1) - 1
+                )
+                _low_iters = (
+                    (torch.linspace(0, 0.1, _check_len) / 100 * _lenlen).int().unique()
+                    if _check_len > 32
+                    else torch.arange(0, 32)
+                )
+                for i in range(len(_low_iters)):
+                    lowidx = _low_iters[i]
+                    highidx = _high_iters[i]
 
                     if self.per_channel == True:
                         _tmp_min = org_weight.view(org_weight.size(0), -1)[
@@ -327,25 +346,43 @@ class NormQuantizer(UniformAffineQuantizer):
                         _tmp_min = org_weight.view(-1)[_argsorted[lowidx]]
                         _tmp_max = org_weight.view(-1)[_argsorted[highidx]]
 
-                    self.compute_qparams(_tmp_min, _tmp_max)
-                    # -> Changed the scaler and zero_point
+                    _update_best_min_max(_tmp_min, _tmp_max)
+            elif self.one_side_dist == "pos":
+                # perform_1D_search [0, max]
+                _high_iters = (
+                    (torch.linspace(99.9, 99.9999999, _check_len * 2) / 100 * _lenlen)
+                    .int()
+                    .unique()
+                    - 1
+                    if _check_len > 32
+                    else torch.arange(_lenlen, _lenlen - 32, -1) - 1
+                )
+                for i in range(len(_high_iters)):
+                    highidx = _high_iters[i]
 
-                    # _tmp_score = (self.forward(org_weight) - org_weight).norm(p=self._p)
-                    _tmp_score = (forward_copy(org_weight) - org_weight).norm(p=self._p)
+                    if self.per_channel == True:
+                        _tmp_max = org_weight.view(org_weight.size(0), -1)[
+                            torch.arange(org_weight.size(0)), _argsorted[:, highidx]
+                        ]
+                    else:
+                        _tmp_max = org_weight.view(-1)[_argsorted[highidx]]
 
-                    best_min = torch.where(_tmp_score < best_score, _tmp_min, best_min)
-                    best_max = torch.where(_tmp_score < best_score, _tmp_max, best_max)
-                    best_score = torch.min(_tmp_score, best_score)
+                    _update_best_min_max(best_min, _tmp_max)
+            else:
+                print("Dose not support the negative distribution.")
+                raise ValueError("Unknown distribution type.")
 
-            # -> Findinf the best_min, best_max is done..
-            self.compute_qparams(best_min, best_max)
+        self.compute_qparams(best_min, best_max)
 
-        else:
-            # perform_1D_search [0, max]
-            # [ ] perform_1D_search >> NOT YET
-            raise NotImplementedError(
-                "Unsigned L2DistanceQuantizer is not implemented yet."
+    def forward_copy(self, input: Tensor) -> Tensor:
+        # Avoid override errors when using AdaRound's self.forward function to perform the initialization process.
+        return self._dequantize(
+            torch.clamp(
+                self.round_ste(input / self._scaler) + self._zero_point,
+                self._repr_min,
+                self._repr_max,
             )
+        )
 
 
 class OrgNormQuantizerCode(UniformAffineQuantizer):
@@ -356,8 +393,9 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
         self.num = 100
 
         x = org_weight
-        best_min, best_max = self.get_x_min_x_max(x)
-        self.compute_qparams(best_min, best_max)
+        with torch.cuda.device(0):
+            best_min, best_max = self.get_x_min_x_max(x)
+            self.compute_qparams(best_min, best_max)
         return None
 
     def get_x_min_x_max(self, x):
@@ -423,11 +461,11 @@ class OrgNormQuantizerCode(UniformAffineQuantizer):
             # for zp in range(0, self.n_levels):
             for zp in range(0, (self._repr_max - self._repr_min + 1)):
                 """(5) when using INT8, zp is 0 ~ 255
-                    shift the min, max value using zp * delta
-                    tmp_min is [0 -> 0 - 255 * delta]
-                    tmp_max is [max -> max - 255 * delta]
-                    once, [-max/2, max/2] will be the test range.
-                    >> Sliding window !!!
+                shift the min, max value using zp * delta
+                tmp_min is [0 -> 0 - 255 * delta]
+                tmp_max is [max -> max - 255 * delta]
+                once, [-max/2, max/2] will be the test range.
+                >> Sliding window !!!
                 """
                 new_min = tmp_min - zp * tmp_delta
                 new_max = tmp_max - zp * tmp_delta
