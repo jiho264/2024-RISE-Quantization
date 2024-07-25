@@ -244,6 +244,37 @@ def main(weight_quant_params, act_quant_params, args):
             print(f"    QuantModule: {name}, {module.weight.shape}")
             if module.folding == True:
                 num_bn += 1
+            # ### for BN folding effect viewer
+            # _str = None
+            # if name == "conv1":
+            #     if args["folding"] == True:
+            #         _str = (
+            #             f"weights_firstconv_org_folded_{weight_quant_params["dstDtype"]}.pt"
+            #         )
+            #     else:
+            #         _str = (
+            #             f"weights_firstconv_org_nonfold_{weight_quant_params["dstDtype"]}.pt"
+            #         )
+
+            # if name == "layer4.1.conv2":
+            #     if args["folding"] == True:
+            #         _str = (
+            #             f"weights_lastconv_org_folded_{weight_quant_params["dstDtype"]}.pt"
+            #         )
+            #     else:
+            #         _str = (
+            #             f"weights_lastconv_org_nonfold_{weight_quant_params["dstDtype"]}.pt"
+            #         )
+            # if _str != None:
+            #     torch.save(
+            #         [
+            #             module.weight,
+            #             module.weight_quantizer._scaler,
+            #             module.weight_quantizer._zero_point,
+            #             module.weight_quantizer._n_bits,
+            #         ],
+            #         _str,
+            #     )
     print(f"Total QuantModule: {num_layers}, Folded BN layers : {num_bn}")
 
     if "AdaRound" in weight_quant_params:

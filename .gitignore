@@ -8,3 +8,5 @@ data/
 tempCodeRunnerFile.py
 tempCodeRunnerFile.sh
 tempCodeRunnerFile.python
+**.pt
+**.pth
