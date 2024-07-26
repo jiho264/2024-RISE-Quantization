@@ -1,7 +1,8 @@
 import torch, time, argparse
 import torch.nn as nn
+from myAdaRound.quant_layer import QuantLayer
+from myAdaRound.quant_block import QuantBasicBlock
 from myAdaRound.utils import (
-    QuantModule,
     GetDataset,
     evaluate,
     quantizerDict,
@@ -95,7 +96,7 @@ def runAdaRound(
     # Optaining the ORIGIN input and output data of each layer
     def _getFpInputOutput(module: nn.Module):
         for name, module in module.named_children():
-            if isinstance(module, QuantModule):
+            if isinstance(module, QuantLayer):
                 module.w_quant_enable = False  # FP inference
                 _, FP_OUTPUTS = save_inp_oup_data(model, module, cali_data)
                 module.fp_outputs = FP_OUTPUTS
@@ -112,7 +113,7 @@ def runAdaRound(
     def _runAdaRound(module: nn.Module, batch_size):
         nonlocal _layer_cnt
         for name, module in module.named_children():
-            if isinstance(module, QuantModule):
+            if isinstance(module, QuantLayer):
                 _layer_cnt += 1
                 print(f"\n[{_layer_cnt}/{num_layers}] AdaRound computing: {name}")
                 _computeAdaRoundValues(model, module, cali_data, batch_size, lr)
@@ -149,6 +150,64 @@ def main(weight_quant_params, act_quant_params, args):
     else:
         raise NotImplementedError
     model.eval().to("cuda")
+
+    # def block_refactor(module, weight_quant_params, act_quant_params):
+    #     first_conv, first_bn = None, None
+    #     for name, child_module in module.named_children():
+    #         print(name)
+    #         if isinstance(child_module, nn.Conv2d):
+    #             if name == "conv1":
+    #                 first_conv = child_module
+    #                 setattr(module, name, StraightThrough())
+    #         elif isinstance(child_module, (nn.BatchNorm2d)):
+    #             if name == "bn1":
+    #                 first_bn = child_module
+    #                 setattr(module, name, StraightThrough())
+    #         elif isinstance(child_module, (nn.ReLU)):
+    #             setattr(
+    #                 module,
+    #                 "conv1",
+    #                 QuantLayer(
+    #                     conv_module=first_conv,
+    #                     bn_module=first_bn,
+    #                     relu_module=child_module,
+    #                     w_quant_args=weight_quant_params,
+    #                     a_quant_args=act_quant_params,
+    #                     folding=args["folding"],
+    #                 ),
+    #             )
+    #             setattr(module, name, StraightThrough())
+    #             print("fconv done")
+    #         elif isinstance(child_module, (nn.Sequential)):
+    #             for blockname, blockmodule in child_module.named_children():
+    #                 if isinstance(blockmodule, (resnet.BasicBlock)):
+    #                     setattr(
+    #                         child_module,
+    #                         blockname,
+    #                         QuantBasicBlock(
+    #                             org_basicblock=blockmodule,  # prev == conv2d or linear
+    #                             w_quant_args=weight_quant_params,
+    #                             a_quant_args=act_quant_params,
+    #                             folding=args["folding"],
+    #                         ),
+    #                     )
+    #         elif isinstance(child_module, (nn.Linear)):
+    #             # only for FC layer
+    #             if name == "fc":
+    #                 setattr(
+    #                     module,
+    #                     name,
+    #                     QuantLayer(
+    #                         conv_module=child_module,
+    #                         w_quant_args=weight_quant_params,
+    #                         a_quant_args=act_quant_params,
+    #                     ),
+    #                 )
+
+    # block_refactor(model, weight_quant_params, act_quant_params)
+
+    # for name, module in model.named_children():
+    #     print(name, module)
 
     _batch_size = args["batch_size"]
 
@@ -188,7 +247,7 @@ def main(weight_quant_params, act_quant_params, args):
                         f"    {prev_module._get_name()} <- {child_module._get_name()}",
                         end="",
                     )
-                _quant_module = QuantModule(
+                _quant_module = QuantLayer(
                     org_module=prev_module,  # prev == conv2d or linear
                     w_quant_args=weight_quant_params,
                     a_quant_args=act_quant_params,
@@ -207,7 +266,7 @@ def main(weight_quant_params, act_quant_params, args):
                 setattr(
                     module,
                     name,
-                    QuantModule(
+                    QuantLayer(
                         org_module=child_module,
                         w_quant_args=weight_quant_params,
                         a_quant_args=act_quant_params,
@@ -228,20 +287,20 @@ def main(weight_quant_params, act_quant_params, args):
                     child_module, weight_quant_params, act_quant_params
                 )
 
-    print("Replace to QuantModule")
+    print("Replace to QuantLayer")
     with torch.no_grad():
         _quant_module_refactor_with_bn_folding(
             model, weight_quant_params, act_quant_params
         )
     print("Qparams computing done!")
 
-    # Count the number of QuantModule
+    # Count the number of QuantMoQuantLayerdule
     num_layers = 0
     num_bn = 0
     for name, module in model.named_modules():
-        if isinstance(module, QuantModule):
+        if isinstance(module, QuantLayer):
             num_layers += 1
-            print(f"    QuantModule: {name}, {module.weight.shape}")
+            print(f"    QuantLayer: {name}, {module.weight.shape}")
             if module.folding == True:
                 num_bn += 1
             # ### for BN folding effect viewer
