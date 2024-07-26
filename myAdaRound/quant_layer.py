@@ -78,7 +78,7 @@ class QuantLayer(nn.Module):
         self.w_quant_enable = True
 
         try:
-            if w_quant_args.get("AdaRound") == True:
+            if w_quant_args.get("AdaRound") or w_quant_args.get("BRECQ"):
                 self.weight_quantizer = create_AdaRound_Quantizer(
                     scheme=w_quant_args.get("scheme"),
                     org_weight=self.weight,
@@ -109,6 +109,7 @@ class QuantLayer(nn.Module):
             self.act_quantizer._scaler = nn.Parameter(
                 self.act_quantizer._scaler, requires_grad=True
             )
+            print("Activation quantizer initialized from QuantLayer")
         except KeyError:
             raise ValueError(
                 f"Unknown quantizer type: {self.a_quant_args.get('scheme')}"

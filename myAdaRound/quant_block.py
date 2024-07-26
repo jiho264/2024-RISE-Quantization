@@ -17,6 +17,10 @@ class QuantBasicBlock(nn.Module):
     ):
         super(QuantBasicBlock, self).__init__()
 
+        self.w_quant_enable = False
+        self.a_quant_enable = False
+        self.a_quant_inited = False
+
         self.relu = nn.ReLU()
 
         conv_1, bn_1 = None, None
@@ -68,7 +72,74 @@ class QuantBasicBlock(nn.Module):
         else:
             self.conv_bn_down = None
 
+    def init_act_quantizer(self, calib):
+        self.conv_bn_relu_1.init_act_quantizer(calib)
+
+        self.conv_bn_2.init_act_quantizer(calib)
+
+        if self.conv_bn_down != None:
+            self.conv_bn_down.init_act_quantizer(calib)
+
+        self.a_quant_inited = True
+
+        print("Activation quantizer initialized from QuantBasicBlock")
+
+    def get_rounding_parameter(self):
+        _list = [
+            self.conv_bn_relu_1.weight_quantizer._v,
+            self.conv_bn_2.weight_quantizer._v,
+        ]
+        if self.conv_bn_down != None:
+            _list += self.conv_bn_down.weight_quantizer._v
+        return _list
+
+    def get_scaler_parameter(self):
+        _list = [
+            self.conv_bn_relu_1.act_quantizer._scaler,
+            self.conv_bn_2.act_quantizer._scaler,
+        ]
+        if self.conv_bn_down != None:
+            _list += self.conv_bn_down.act_quantizer._scaler
+        return _list
+
+    def get_sum_of_f_reg_with_lambda(self, beta):
+        _sum = (
+            self.conv_bn_relu_1.weight_quantizer.lamda
+            * self.conv_bn_relu_1.weight_quantizer.f_reg(beta=beta)
+        )
+        _sum += (
+            self.conv_bn_2.weight_quantizer.lamda
+            * self.conv_bn_2.weight_quantizer.f_reg(beta=beta)
+        )
+        if self.conv_bn_down != None:
+            _sum += (
+                self.conv_bn_down.weight_quantizer.lamda
+                * self.conv_bn_down.weight_quantizer.f_reg(beta=beta)
+            )
+
+        return _sum
+
+    def setRoundingValues(self):
+        self.conv_bn_relu_1.weight_quantizer.setRoundingValues()
+        self.conv_bn_2.weight_quantizer.setRoundingValues()
+
+        if self.conv_bn_down != None:
+            self.conv_bn_2.conv_bn_down.setRoundingValues()
+
+    def _quant_enabler(self):
+        self.conv_bn_relu_1.w_quant_enable = self.w_quant_enable
+        self.conv_bn_relu_1.a_quant_enable = self.a_quant_enable
+
+        self.conv_bn_2.w_quant_enable = self.w_quant_enable
+        self.conv_bn_2.a_quant_enable = self.a_quant_enable
+
+        if self.conv_bn_down != None:
+            self.conv_bn_down.w_quant_enable = self.w_quant_enable
+            self.conv_bn_down.a_quant_enable = self.a_quant_enable
+
     def forward(self, input: Tensor) -> Tensor:
+        self._quant_enabler()
+
         _identity = input.clone()
         _out = self.conv_bn_relu_1(input)
         _out = self.conv_bn_2(_out)
