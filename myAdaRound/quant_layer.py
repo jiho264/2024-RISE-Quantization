@@ -6,34 +6,40 @@ from torch import Tensor
 from .utils import quantizerDict, create_AdaRound_Quantizer, StraightThrough
 
 
-class QuantModule(nn.Module):
+class QuantLayer(nn.Module):
     def __init__(
-        self, org_module, w_quant_args, a_quant_args, bn_module=None, folding=False
+        self,
+        conv_module,
+        bn_module=StraightThrough(),
+        act_module=StraightThrough(),
+        w_quant_args=None,
+        a_quant_args=None,
+        folding=False,
     ):
-        super(QuantModule, self).__init__()
+        super(QuantLayer, self).__init__()
         """forward function setting"""
-        if isinstance(org_module, nn.Conv2d):
+        if isinstance(conv_module, nn.Conv2d):
             self.fwd_kwargs = dict(
-                stride=org_module.stride,
-                padding=org_module.padding,
-                dilation=org_module.dilation,
-                groups=org_module.groups,
+                stride=conv_module.stride,
+                padding=conv_module.padding,
+                dilation=conv_module.dilation,
+                groups=conv_module.groups,
             )
             self.fwd_func = F.conv2d
         else:
             self.fwd_kwargs = dict()
             self.fwd_func = F.linear
 
-        self.weight = org_module.weight.clone().detach()
+        self.weight = conv_module.weight.clone().detach()
 
-        if org_module.bias != None:
-            self.bias = org_module.bias.clone().detach()
+        if conv_module.bias != None:
+            self.bias = conv_module.bias.clone().detach()
         else:
-            self.bias = torch.zeros(org_module.weight.size(0)).to(
-                org_module.weight.device
+            self.bias = torch.zeros(conv_module.weight.size(0)).to(
+                conv_module.weight.device
             )
 
-        self.act_func = StraightThrough()
+        self.act_func = act_module
 
         """Bn folding"""
         self.folding = folding
@@ -41,7 +47,7 @@ class QuantModule(nn.Module):
         if self.folding == True and bn_module != None:
             ## (1) My folding code / org_resnet18 : 69.758%
             _safe_std = torch.sqrt(bn_module.running_var + bn_module.eps)
-            w_view = (org_module.out_channels, 1, 1, 1)
+            w_view = (conv_module.out_channels, 1, 1, 1)
             _gamma = bn_module.weight
 
             self.weight = self.weight * (_gamma / _safe_std).view(w_view)

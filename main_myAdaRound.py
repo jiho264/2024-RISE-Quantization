@@ -151,64 +151,6 @@ def main(weight_quant_params, act_quant_params, args):
         raise NotImplementedError
     model.eval().to("cuda")
 
-    # def block_refactor(module, weight_quant_params, act_quant_params):
-    #     first_conv, first_bn = None, None
-    #     for name, child_module in module.named_children():
-    #         print(name)
-    #         if isinstance(child_module, nn.Conv2d):
-    #             if name == "conv1":
-    #                 first_conv = child_module
-    #                 setattr(module, name, StraightThrough())
-    #         elif isinstance(child_module, (nn.BatchNorm2d)):
-    #             if name == "bn1":
-    #                 first_bn = child_module
-    #                 setattr(module, name, StraightThrough())
-    #         elif isinstance(child_module, (nn.ReLU)):
-    #             setattr(
-    #                 module,
-    #                 "conv1",
-    #                 QuantLayer(
-    #                     conv_module=first_conv,
-    #                     bn_module=first_bn,
-    #                     relu_module=child_module,
-    #                     w_quant_args=weight_quant_params,
-    #                     a_quant_args=act_quant_params,
-    #                     folding=args["folding"],
-    #                 ),
-    #             )
-    #             setattr(module, name, StraightThrough())
-    #             print("fconv done")
-    #         elif isinstance(child_module, (nn.Sequential)):
-    #             for blockname, blockmodule in child_module.named_children():
-    #                 if isinstance(blockmodule, (resnet.BasicBlock)):
-    #                     setattr(
-    #                         child_module,
-    #                         blockname,
-    #                         QuantBasicBlock(
-    #                             org_basicblock=blockmodule,  # prev == conv2d or linear
-    #                             w_quant_args=weight_quant_params,
-    #                             a_quant_args=act_quant_params,
-    #                             folding=args["folding"],
-    #                         ),
-    #                     )
-    #         elif isinstance(child_module, (nn.Linear)):
-    #             # only for FC layer
-    #             if name == "fc":
-    #                 setattr(
-    #                     module,
-    #                     name,
-    #                     QuantLayer(
-    #                         conv_module=child_module,
-    #                         w_quant_args=weight_quant_params,
-    #                         a_quant_args=act_quant_params,
-    #                     ),
-    #                 )
-
-    # block_refactor(model, weight_quant_params, act_quant_params)
-
-    # for name, module in model.named_children():
-    #     print(name, module)
-
     _batch_size = args["batch_size"]
 
     train_loader, test_loader = GetDataset(batch_size=_batch_size)
@@ -228,70 +170,66 @@ def main(weight_quant_params, act_quant_params, args):
     #         f"\n    Original model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.3f}%"
     #     )
 
-    def _quant_module_refactor_with_bn_folding(
-        module: nn.Module,
-        weight_quant_params: dict = {},
-        act_quant_params: dict = {},
-    ):
-        """
-        Recursively replace the normal conv2d and Linear layer to QuantModule
-        """
-        prev_module = None
+    def block_refactor(module, weight_quant_params, act_quant_params):
+        first_conv, first_bn = None, None
         for name, child_module in module.named_children():
-            if isinstance(child_module, (nn.Conv2d)):
-                prev_module = child_module
-                prev_name = name
-            elif isinstance(child_module, nn.BatchNorm2d):
-                if args["folding"] == True:
-                    print(
-                        f"    {prev_module._get_name()} <- {child_module._get_name()}",
-                        end="",
-                    )
-                _quant_module = QuantLayer(
-                    org_module=prev_module,  # prev == conv2d or linear
-                    w_quant_args=weight_quant_params,
-                    a_quant_args=act_quant_params,
-                    bn_module=child_module,  # child == BN
-                    folding=args["folding"],
-                )
+            if isinstance(child_module, nn.Conv2d):
+                """ For first ConvBnRelu """
+                if name == "conv1":
+                    first_conv = child_module
+                    setattr(module, name, StraightThrough())
+            elif isinstance(child_module, (nn.BatchNorm2d)):
+                """ For first ConvBnRelu """
+                if name == "bn1":
+                    first_bn = child_module
+                    setattr(module, name, StraightThrough())
+            elif isinstance(child_module, (nn.ReLU)):
+                """ For first ConvBnRelu """
                 setattr(
                     module,
-                    prev_name,
-                    _quant_module,
-                )
-                # remove bn layer
-                setattr(module, name, StraightThrough())
-                prev_module = _quant_module
-            elif isinstance(child_module, nn.Linear):
-                setattr(
-                    module,
-                    name,
+                    "conv1",
                     QuantLayer(
-                        org_module=child_module,
+                        conv_module=first_conv,
+                        bn_module=first_bn,
+                        act_module=child_module,
                         w_quant_args=weight_quant_params,
                         a_quant_args=act_quant_params,
-                        bn_module=None,  # FC layer does not have BN
-                        folding=False,  # FC layer does not have BN
+                        folding=args["folding"],
                     ),
                 )
-            elif isinstance(child_module, nn.ReLU):
-                prev_module.act_func = child_module
-                # 9 ConvBNRelu layers in resnet18
-                # 8 ConvBn
-                # 1 FC (Linear)
-                print(f"    {child_module._get_name()} merged")
-                # for the first conv layer which first block of each stage.
-                # run only 9 times.
-            else:
-                _quant_module_refactor_with_bn_folding(
-                    child_module, weight_quant_params, act_quant_params
-                )
+                setattr(module, name, StraightThrough())
+            elif isinstance(child_module, (nn.Sequential)):
+                """ For each Blocks """
+                for blockname, blockmodule in child_module.named_children():
+                    if isinstance(blockmodule, (resnet.BasicBlock)):
+                        setattr(
+                            child_module,
+                            blockname,
+                            QuantBasicBlock(
+                                org_basicblock=blockmodule,
+                                w_quant_args=weight_quant_params,
+                                a_quant_args=act_quant_params,
+                                folding=args["folding"],
+                            ),
+                        )
+                        print(f"- Quant Block {blockname} making done !")
+            elif isinstance(child_module, (nn.Linear)):
+                # only for FC layer
+                if name == "fc":
+                    setattr(
+                        module,
+                        name,
+                        QuantLayer(
+                            conv_module=child_module,
+                            w_quant_args=weight_quant_params,
+                            a_quant_args=act_quant_params,
+                        ),
+                    )
 
     print("Replace to QuantLayer")
     with torch.no_grad():
-        _quant_module_refactor_with_bn_folding(
-            model, weight_quant_params, act_quant_params
-        )
+        block_refactor(model, weight_quant_params, act_quant_params)
+
     print("Qparams computing done!")
 
     # Count the number of QuantMoQuantLayerdule

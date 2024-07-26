@@ -17,7 +17,7 @@ class QuantBasicBlock(nn.Module):
     ):
         super(QuantBasicBlock, self).__init__()
 
-        self.relu = nn.ReLU
+        self.relu = nn.ReLU()
 
         conv_1, bn_1 = None, None
         conv_2, bn_2 = None, None
@@ -45,7 +45,7 @@ class QuantBasicBlock(nn.Module):
         self.conv_bn_relu_1 = QuantLayer(
             conv_module=conv_1,
             bn_module=bn_1,
-            relu_module=nn.ReLU,
+            act_module=nn.ReLU(),
             w_quant_args=w_quant_args,
             a_quant_args=a_quant_args,
             folding=folding,
@@ -65,14 +65,15 @@ class QuantBasicBlock(nn.Module):
                 a_quant_args=a_quant_args,
                 folding=folding,
             )
-        print("Quant Block making done !")
+        else:
+            self.conv_bn_down = None
 
     def forward(self, input: Tensor) -> Tensor:
         _identity = input.clone()
         _out = self.conv_bn_relu_1(input)
         _out = self.conv_bn_2(_out)
 
-        if self.conv_bn_down is not None:
+        if self.conv_bn_down != None:
             _identity = self.conv_bn_down(_identity)
 
         _out += _identity
