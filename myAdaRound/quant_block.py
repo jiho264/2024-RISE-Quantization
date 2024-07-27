@@ -90,7 +90,7 @@ class QuantBasicBlock(nn.Module):
             self.conv_bn_2.weight_quantizer._v,
         ]
         if self.conv_bn_down != None:
-            _list += self.conv_bn_down.weight_quantizer._v
+            _list.append(self.conv_bn_down.weight_quantizer._v)
         return _list
 
     def get_scaler_parameter(self):
@@ -124,7 +124,7 @@ class QuantBasicBlock(nn.Module):
         self.conv_bn_2.weight_quantizer.setRoundingValues()
 
         if self.conv_bn_down != None:
-            self.conv_bn_2.conv_bn_down.setRoundingValues()
+            self.conv_bn_down.weight_quantizer.setRoundingValues()
 
     def _quant_enabler(self):
         self.conv_bn_relu_1.w_quant_enable = self.w_quant_enable
@@ -140,7 +140,7 @@ class QuantBasicBlock(nn.Module):
     def forward(self, input: Tensor) -> Tensor:
         self._quant_enabler()
 
-        _identity = input.clone()
+        _identity = input
         _out = self.conv_bn_relu_1(input)
         _out = self.conv_bn_2(_out)
 
