@@ -47,18 +47,6 @@
 | AdaRoundNorm_CH_lr1e-2_p2.4       | 68.832%     | 68.182%      | 68.610%     | 68.046%     |
 | AdaRoundOrgNorm_CH_lr1e-2_p2.4    | **69.050%** | **68.190%**  | **68.878%** | **69.030%** |
 
-### BRECQ with different base quantization schemes (The lr for AdaRound is 1e-2 or 1e-3) 
-| Quantization Scheme       | W4A32 | W4A32_Folded | W4A8    | W4A8_Folded | W4A4    | W4A4_Folded | W4A4_8bit |
-| ------------------------- | ----- | ------------ | ------- | ----------- | ------- | ----------- | --------- |
-| BRECQ_MinMax_CH_lr1e-2    |       |              | 69.116% |             | 47.006% | -           | 69.220%   |
-| BRECQ_Norm_CH_lr1e-2_p2.4 |       |              |         | -           | 46.790% |             | 69.332%   |
-
-- BRECQ W4A32 : 70.70%
-- BRECQ W3A32 : 69.81%
-- BRECQ W2A32 : 66.30%
-- BRECQ W4A4 with hean/stem are 8 Bit  : 69.60%
-- BRECQ W2A4 with hean/stem are 8 Bit  : 64.80%
-
 - Weight : Per-Channel
 - Activation : Per-Layer
 - The quantization for Weight and Activation are using same quantization scheme.
@@ -69,11 +57,6 @@
   - OrgNorm에서도 ReLU인 부분 1D로 변경시 0.1%p미만의 미미한 성능 향상.
 - Weight는 AdaRound에서 항상 Per-Channel로 Qparams를 구함. Activation은 항상 Per-Layer로 Qparams를 구함. 각 Batch에 따라 ch에 대한 정보가 크게 달라질 수 있기 때문임.
 - Activation에 대한 Scaler는 1024장의 Calibration set으로부터 256장의 sample로 구함. Qparams를 구하는 수식은 각 scheme을 따르며, AdaRound를 진행하면서 Scaler_A도 Gradient descent를 통해 개선해 나감.
-
-### Todo
-- [ ] Add the W4A4 results using only AdaRound.
-- [ ] Add the results about BRECQ with many different scheme and bit-witdh cases.
-- [ ] Implement the PD-Quant. need adding "prediction diffence loss"
 
 # Made by
 - LEE, JIHO
