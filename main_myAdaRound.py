@@ -297,7 +297,7 @@ def main(weight_quant_params, act_quant_params, args):
         print(
             f"\n    Quantized model Evaluation accuracy on 50000 images, {_top1.avg:2.3f}%"
         )
-    # for debugging
+    # for debugging.
     else:
         print(
             f"\n    Quantized model Evaluation accuracy on {_len_eval_batches * _batch_size} images, {_top1.avg:2.3f}%"
