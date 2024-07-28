@@ -120,7 +120,7 @@ def runAdaRound(
                 print(f"\n[{_layer_cnt}/{num_layers}] AdaRound computing: {name}")
                 _computeAdaRoundValues(model, module, cali_data, batch_size, lr)
                 # the len of cali_data = num_samples
-                # the GD batch size = batch_size
+                # the GD batch size = batch_size.
             else:
                 _runAdaRound(module, batch_size)
 
