@@ -303,6 +303,14 @@ def main(weight_quant_params, act_quant_params, args):
 
     def block_refactor(module, weight_quant_params, act_quant_params):
         first_conv, first_bn = None, None
+        # if W4A4 with head_stem_8bit
+        head_stem_weight_quant_params = weight_quant_params.copy()
+        head_stem_act_quant_params = act_quant_params.copy()
+
+        if args.get("head_stem_8bit") == True:
+            head_stem_weight_quant_params.update(dict(dstDtype="INT8"))
+            head_stem_act_quant_params.update(dict(dstDtype="INT8"))
+
         for name, child_module in module.named_children():
             if isinstance(child_module, nn.Conv2d):
                 """For first ConvBnRelu"""
@@ -323,8 +331,8 @@ def main(weight_quant_params, act_quant_params, args):
                         conv_module=first_conv,
                         bn_module=first_bn,
                         act_module=child_module,
-                        w_quant_args=weight_quant_params,
-                        a_quant_args=act_quant_params,
+                        w_quant_args=head_stem_weight_quant_params,
+                        a_quant_args=head_stem_act_quant_params,
                         folding=args["folding"],
                     ),
                 )
@@ -352,8 +360,8 @@ def main(weight_quant_params, act_quant_params, args):
                         name,
                         QuantLayer(
                             conv_module=child_module,
-                            w_quant_args=weight_quant_params,
-                            a_quant_args=act_quant_params,
+                            w_quant_args=head_stem_weight_quant_params,
+                            a_quant_args=head_stem_act_quant_params,
                         ),
                     )
 
@@ -507,10 +515,15 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeA",
-        default="INT8",
+        default="FP32",
         type=str,
         help="destination data type",
         choices=["INT4", "INT8", "FP32"],
+    )
+    parser.add_argument(
+        "--head_stem_8bit",
+        action="store_true",
+        help="Head and stem are 8 bit. default is 4 bit (fully quantized)",
     )
 
     """ Setup """
@@ -558,6 +571,12 @@ if __name__ == "__main__":
                 exit()
             weight_quant_params["per_channel"] = True
             args.per_channel = True  # always Per-CH when using AdaRound for weights
+        if (
+            args.head_stem_8bit
+            and args.dstDtypeW == "INT4"
+            and args.dstDtypeA == "INT4"
+        ):
+            main_args.update(dict(head_stem_8bit=True))
 
         return weight_quant_params, act_quant_params, main_args
 
@@ -569,7 +588,9 @@ if __name__ == "__main__":
         _case_name += "AdaRound_"
     if args.BRECQ:
         _case_name += "BRECQ_"
-    _case_name += args.scheme_w
+    _case_name += args.scheme_w + "_"
+    if args.head_stem_8bit and args.dstDtypeW == "INT4" and args.dstDtypeA == "INT4":
+        _case_name += "head_stem_8bit"
     _case_name += "_CH" if args.per_channel else "_Layer"
     _case_name += "_W" + args.dstDtypeW[-1]
     _case_name += "A" + "32" if args.dstDtypeA == "FP32" else "A" + args.dstDtypeA[-1]
