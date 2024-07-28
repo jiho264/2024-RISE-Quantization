@@ -17,7 +17,7 @@ class QuantBasicBlock(nn.Module):
     ):
         super(QuantBasicBlock, self).__init__()
 
-        self.w_quant_enable = False
+        self.w_quant_enable = True
         self.a_quant_enable = False
         self.a_quant_inited = False
 

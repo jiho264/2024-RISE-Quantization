@@ -484,11 +484,14 @@ if __name__ == "__main__":
         help="destination data type",
         choices=["INT4", "INT8"],
     )
+
     parser.add_argument(
-        "--AdaRound", default=False, type=bool, help="AdaRound for weights"
+        "--paper",
+        default="BRECQ",
+        type=str,
+        help="paper name",
+        choices=["AdaRound", "BRECQ", "PD-Quant"],
     )
-    # parser.add_argument("--BRECQ", default=False, type=bool, help="BRECQ for weights")
-    parser.add_argument("--BRECQ", default=True, type=bool, help="BRECQ for weights")
 
     parser.add_argument(
         "--per_channel",
@@ -515,7 +518,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeA",
-        default="FP32",
+        default="INT8",
         type=str,
         help="destination data type",
         choices=["INT4", "INT8", "FP32"],
@@ -542,7 +545,7 @@ if __name__ == "__main__":
         """ activation """
         act_quant_params = {}
         if args.dstDtypeA != "FP32":
-            if args.AdaRound or args.BRECQ:
+            if args.paper:
                 act_quant_params = dict(
                     scheme=args.scheme_a,
                     dstDtype=args.dstDtypeA,
@@ -559,13 +562,15 @@ if __name__ == "__main__":
             folding=args.folding,
         )
 
-        if args.AdaRound or args.BRECQ:
+        if args.paper:
             main_args.update(dict(batch_size_AdaRound=args.batch_size_AdaRound))
             main_args.update(dict(lr=args.lr))
-            if args.AdaRound:
+            if args.paper == "AdaRound":
                 weight_quant_params.update(dict(AdaRound=True))
-            elif args.BRECQ:
+            elif args.paper == "BRECQ":
                 weight_quant_params.update(dict(BRECQ=True))
+            elif args.paper == "PD-Quant":
+                weight_quant_params.update(dict(PDQuant=True))
             else:
                 print("error")
                 exit()
@@ -584,20 +589,18 @@ if __name__ == "__main__":
 
     """ case naming """
     _case_name = f"{args.arch}_"
-    if args.AdaRound:
-        _case_name += "AdaRound_"
-    if args.BRECQ:
-        _case_name += "BRECQ_"
+    if args.paper:
+        _case_name += args.paper + "_"
     _case_name += args.scheme_w + "_"
-    if args.head_stem_8bit and args.dstDtypeW == "INT4" and args.dstDtypeA == "INT4":
+    if args.head_stem_8bit:
         _case_name += "head_stem_8bit"
-    _case_name += "_CH" if args.per_channel else "_Layer"
-    _case_name += "_W" + args.dstDtypeW[-1]
+    _case_name += "CH_" if args.per_channel else "Layer_"
+    _case_name += "W" + args.dstDtypeW[-1]
     _case_name += "A" + "32" if args.dstDtypeA == "FP32" else "A" + args.dstDtypeA[-1]
     _case_name += "_BNFold" if args.folding else ""
     if args.scheme_w == "NormQuantizer":
         _case_name += "_p" + str(args.p)
-    if args.AdaRound or args.BRECQ:
+    if args.paper:
         _case_name += "_RoundingLR" + str(args.lr)
 
     print(f"\nCase: [ {_case_name} ]")
