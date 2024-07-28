@@ -1,0 +1,603 @@
+
+Case: [ resnet18_BRECQ_NormQuantizer_head_stem_8bit_CH_W4A4_p2.4_RoundingLR0.01 ]
+    - arch: resnet18
+    - batch_size: 128
+    - num_samples: 1024
+    - folding: False
+    - batch_size_AdaRound: 32
+    - lr: 0.01
+    - head_stem_8bit: True
+
+- weight params:
+    - scheme: NormQuantizer
+    - dstDtype: INT4
+    - per_channel: True
+    - p: 2.4
+    - BRECQ: True
+
+- activation params:
+    - scheme: NormQuantizer
+    - dstDtype: INT4
+    - per_channel: False
+    - p: 2.4
+
+Replace to QuantLayer
+    2D search with INT8
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 0 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 1 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 0 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 1 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 0 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 1 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 0 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 1 making done !
+    2D search with INT8
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+Qparams computing done!
+    QuantLayer: conv1, torch.Size([64, 3, 7, 7])
+    QuantLayer: layer1.0.conv_bn_relu_1, torch.Size([64, 64, 3, 3])
+    QuantLayer: layer1.0.conv_bn_2, torch.Size([64, 64, 3, 3])
+    QuantLayer: layer1.1.conv_bn_relu_1, torch.Size([64, 64, 3, 3])
+    QuantLayer: layer1.1.conv_bn_2, torch.Size([64, 64, 3, 3])
+    QuantLayer: layer2.0.conv_bn_relu_1, torch.Size([128, 64, 3, 3])
+    QuantLayer: layer2.0.conv_bn_2, torch.Size([128, 128, 3, 3])
+    QuantLayer: layer2.0.conv_bn_down, torch.Size([128, 64, 1, 1])
+    QuantLayer: layer2.1.conv_bn_relu_1, torch.Size([128, 128, 3, 3])
+    QuantLayer: layer2.1.conv_bn_2, torch.Size([128, 128, 3, 3])
+    QuantLayer: layer3.0.conv_bn_relu_1, torch.Size([256, 128, 3, 3])
+    QuantLayer: layer3.0.conv_bn_2, torch.Size([256, 256, 3, 3])
+    QuantLayer: layer3.0.conv_bn_down, torch.Size([256, 128, 1, 1])
+    QuantLayer: layer3.1.conv_bn_relu_1, torch.Size([256, 256, 3, 3])
+    QuantLayer: layer3.1.conv_bn_2, torch.Size([256, 256, 3, 3])
+    QuantLayer: layer4.0.conv_bn_relu_1, torch.Size([512, 256, 3, 3])
+    QuantLayer: layer4.0.conv_bn_2, torch.Size([512, 512, 3, 3])
+    QuantLayer: layer4.0.conv_bn_down, torch.Size([512, 256, 1, 1])
+    QuantLayer: layer4.1.conv_bn_relu_1, torch.Size([512, 512, 3, 3])
+    QuantLayer: layer4.1.conv_bn_2, torch.Size([512, 512, 3, 3])
+    QuantLayer: fc, torch.Size([1000, 512])
+Total QuantModule: 21, Folded BN layers : 0
+conv1........ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 112, 112])
+conv_bn_relu_1................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+conv_bn_2........................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+conv_bn_relu_1................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+conv_bn_2........................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+conv_bn_relu_1................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+conv_bn_2........................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+conv_bn_down................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+conv_bn_relu_1........................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+conv_bn_2................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+conv_bn_relu_1........................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+conv_bn_2................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+conv_bn_down........................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+conv_bn_relu_1................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+conv_bn_2........................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+conv_bn_relu_1................................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+conv_bn_2........................................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+conv_bn_down................................................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+conv_bn_relu_1........................................................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+conv_bn_2................................................................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+fc........................................................................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 1000])
+0........................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+1........................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+0................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+1................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+0........................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+1........................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+0................................................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+1................................................................................................................................................................ <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+
+[1/21] AdaRound computing: conv1
+ <- Commas indicate the INT inference.
+    1D search with UINT8
+    p = 2.4
+Activation quantizer initialized from QuantLayer
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.001
+    maximize: False
+    weight_decay: 0
+)
+Iter     1 | Total loss: 0.0008 (MSE:0.0008, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.0005 (MSE:0.0005, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0004 (MSE:0.0004, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.0009 (MSE:0.0009, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 1335.5054 (MSE:0.0005, Reg:1335.5049) beta=20.00
+Iter  5000 | Total loss: 20.0003 (MSE:0.0003, Reg:20.0000) beta=18.88
+Iter  6000 | Total loss: 4.0009 (MSE:0.0009, Reg:4.0000) beta=17.75
+Iter  7000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 0.0004 (MSE:0.0004, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 0.0005 (MSE:0.0005, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 0.0004 (MSE:0.0004, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 0.0007 (MSE:0.0007, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 0.0004 (MSE:0.0004, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 0.0009 (MSE:0.0009, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 0.0004 (MSE:0.0004, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.0002 (MSE:0.0002, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.0021 (MSE:0.0021, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.0008 (MSE:0.0008, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.0005 (MSE:0.0005, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.0001 (MSE:0.0001, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.0005 (MSE:0.0005, Reg:0.0000) beta=2.00
+
+[2/21] BRECQ computing: 0
+,,,,,,,, <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0032 (MSE:0.0032, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.0014 (MSE:0.0014, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.0013 (MSE:0.0013, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 10503.7295 (MSE:0.0021, Reg:10503.7275) beta=20.00
+Iter  5000 | Total loss: 895.2185 (MSE:0.0015, Reg:895.2170) beta=18.88
+Iter  6000 | Total loss: 483.9764 (MSE:0.0023, Reg:483.9742) beta=17.75
+Iter  7000 | Total loss: 340.8155 (MSE:0.0019, Reg:340.8137) beta=16.62
+Iter  8000 | Total loss: 235.0487 (MSE:0.0016, Reg:235.0471) beta=15.50
+Iter  9000 | Total loss: 158.0011 (MSE:0.0012, Reg:158.0000) beta=14.38
+Iter 10000 | Total loss: 99.0015 (MSE:0.0015, Reg:99.0000) beta=13.25
+Iter 11000 | Total loss: 57.9478 (MSE:0.0012, Reg:57.9466) beta=12.12
+Iter 12000 | Total loss: 28.0015 (MSE:0.0015, Reg:28.0000) beta=11.00
+Iter 13000 | Total loss: 14.0013 (MSE:0.0013, Reg:14.0000) beta=9.88
+Iter 14000 | Total loss: 2.9961 (MSE:0.0020, Reg:2.9941) beta=8.75
+Iter 15000 | Total loss: 0.0012 (MSE:0.0012, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.0028 (MSE:0.0028, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.0014 (MSE:0.0014, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.0015 (MSE:0.0015, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.0015 (MSE:0.0015, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=2.00
+
+[3/21] BRECQ computing: 1
+,,,,,,,,,,,,,,,,,,,,,,,, <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0053 (MSE:0.0053, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.0022 (MSE:0.0022, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0022 (MSE:0.0022, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.0026 (MSE:0.0026, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 18298.8613 (MSE:0.0020, Reg:18298.8594) beta=20.00
+Iter  5000 | Total loss: 2039.9141 (MSE:0.0025, Reg:2039.9116) beta=18.88
+Iter  6000 | Total loss: 1250.2462 (MSE:0.0029, Reg:1250.2434) beta=17.75
+Iter  7000 | Total loss: 864.0564 (MSE:0.0031, Reg:864.0533) beta=16.62
+Iter  8000 | Total loss: 611.2533 (MSE:0.0024, Reg:611.2509) beta=15.50
+Iter  9000 | Total loss: 391.4520 (MSE:0.0026, Reg:391.4494) beta=14.38
+Iter 10000 | Total loss: 234.0806 (MSE:0.0026, Reg:234.0781) beta=13.25
+Iter 11000 | Total loss: 126.2085 (MSE:0.0025, Reg:126.2060) beta=12.12
+Iter 12000 | Total loss: 65.4156 (MSE:0.0025, Reg:65.4131) beta=11.00
+Iter 13000 | Total loss: 32.0028 (MSE:0.0028, Reg:32.0000) beta=9.88
+Iter 14000 | Total loss: 9.0028 (MSE:0.0028, Reg:9.0000) beta=8.75
+Iter 15000 | Total loss: 1.0027 (MSE:0.0027, Reg:1.0000) beta=7.62
+Iter 16000 | Total loss: 0.0028 (MSE:0.0028, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.0026 (MSE:0.0026, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.0026 (MSE:0.0026, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.0027 (MSE:0.0027, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.0029 (MSE:0.0029, Reg:0.0000) beta=2.00
+
+[4/21] BRECQ computing: 0
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0023 (MSE:0.0023, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0012 (MSE:0.0012, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.0010 (MSE:0.0010, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 71502.2656 (MSE:0.0012, Reg:71502.2656) beta=20.00
+Iter  5000 | Total loss: 6570.1333 (MSE:0.0013, Reg:6570.1318) beta=18.88
+Iter  6000 | Total loss: 4300.4033 (MSE:0.0012, Reg:4300.4023) beta=17.75
+Iter  7000 | Total loss: 3219.9666 (MSE:0.0014, Reg:3219.9651) beta=16.62
+Iter  8000 | Total loss: 2410.6794 (MSE:0.0015, Reg:2410.6780) beta=15.50
+Iter  9000 | Total loss: 1666.5068 (MSE:0.0013, Reg:1666.5055) beta=14.38
+Iter 10000 | Total loss: 1123.8700 (MSE:0.0015, Reg:1123.8684) beta=13.25
+Iter 11000 | Total loss: 733.4783 (MSE:0.0015, Reg:733.4767) beta=12.12
+Iter 12000 | Total loss: 385.2499 (MSE:0.0017, Reg:385.2482) beta=11.00
+Iter 13000 | Total loss: 206.3391 (MSE:0.0014, Reg:206.3377) beta=9.88
+Iter 14000 | Total loss: 72.5996 (MSE:0.0014, Reg:72.5982) beta=8.75
+Iter 15000 | Total loss: 18.8898 (MSE:0.0017, Reg:18.8881) beta=7.62
+Iter 16000 | Total loss: 1.0016 (MSE:0.0016, Reg:1.0000) beta=6.50
+Iter 17000 | Total loss: 0.0013 (MSE:0.0013, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.0014 (MSE:0.0014, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.0015 (MSE:0.0015, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.0014 (MSE:0.0014, Reg:0.0000) beta=2.00
+
+[5/21] BRECQ computing: 1
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0024 (MSE:0.0024, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.0016 (MSE:0.0016, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0016 (MSE:0.0016, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.0017 (MSE:0.0017, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 84039.4219 (MSE:0.0015, Reg:84039.4219) beta=20.00
+Iter  5000 | Total loss: 10585.0400 (MSE:0.0016, Reg:10585.0381) beta=18.88
+Iter  6000 | Total loss: 7141.1841 (MSE:0.0018, Reg:7141.1821) beta=17.75
+Iter  7000 | Total loss: 5260.2046 (MSE:0.0018, Reg:5260.2026) beta=16.62
+Iter  8000 | Total loss: 3957.7141 (MSE:0.0017, Reg:3957.7124) beta=15.50
+Iter  9000 | Total loss: 2913.2849 (MSE:0.0016, Reg:2913.2832) beta=14.38
+Iter 10000 | Total loss: 2015.4729 (MSE:0.0018, Reg:2015.4712) beta=13.25
+Iter 11000 | Total loss: 1238.6353 (MSE:0.0016, Reg:1238.6337) beta=12.12
+Iter 12000 | Total loss: 689.6900 (MSE:0.0018, Reg:689.6882) beta=11.00
+Iter 13000 | Total loss: 295.3071 (MSE:0.0019, Reg:295.3052) beta=9.88
+Iter 14000 | Total loss: 74.9785 (MSE:0.0018, Reg:74.9768) beta=8.75
+Iter 15000 | Total loss: 10.0018 (MSE:0.0019, Reg:9.9999) beta=7.62
+Iter 16000 | Total loss: 0.0017 (MSE:0.0017, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.0017 (MSE:0.0017, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.0019 (MSE:0.0019, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.0019 (MSE:0.0019, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.0017 (MSE:0.0017, Reg:0.0000) beta=2.00
+
+[6/21] BRECQ computing: 0
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0016 (MSE:0.0016, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.0012 (MSE:0.0012, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.0010 (MSE:0.0010, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 222092.4062 (MSE:0.0011, Reg:222092.4062) beta=20.00
+Iter  5000 | Total loss: 16156.3096 (MSE:0.0016, Reg:16156.3076) beta=18.88
+Iter  6000 | Total loss: 9848.2402 (MSE:0.0011, Reg:9848.2393) beta=17.75
+Iter  7000 | Total loss: 6942.4258 (MSE:0.0011, Reg:6942.4248) beta=16.62
+Iter  8000 | Total loss: 5124.7158 (MSE:0.0010, Reg:5124.7148) beta=15.50
+Iter  9000 | Total loss: 3727.0859 (MSE:0.0011, Reg:3727.0847) beta=14.38
+Iter 10000 | Total loss: 2675.5103 (MSE:0.0011, Reg:2675.5090) beta=13.25
+Iter 11000 | Total loss: 1764.1345 (MSE:0.0013, Reg:1764.1333) beta=12.12
+Iter 12000 | Total loss: 1001.2223 (MSE:0.0013, Reg:1001.2209) beta=11.00
+Iter 13000 | Total loss: 485.1717 (MSE:0.0011, Reg:485.1707) beta=9.88
+Iter 14000 | Total loss: 153.7646 (MSE:0.0013, Reg:153.7633) beta=8.75
+Iter 15000 | Total loss: 30.5893 (MSE:0.0014, Reg:30.5880) beta=7.62
+Iter 16000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.0012 (MSE:0.0012, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.0012 (MSE:0.0012, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.0015 (MSE:0.0015, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.0013 (MSE:0.0013, Reg:0.0000) beta=2.00
+
+[7/21] BRECQ computing: 1
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0016 (MSE:0.0016, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.0012 (MSE:0.0012, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0012 (MSE:0.0012, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.0012 (MSE:0.0012, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 238727.7812 (MSE:0.0011, Reg:238727.7812) beta=20.00
+Iter  5000 | Total loss: 13733.8564 (MSE:0.0011, Reg:13733.8555) beta=18.88
+Iter  6000 | Total loss: 7300.6611 (MSE:0.0011, Reg:7300.6602) beta=17.75
+Iter  7000 | Total loss: 4877.7529 (MSE:0.0011, Reg:4877.7520) beta=16.62
+Iter  8000 | Total loss: 3443.7395 (MSE:0.0012, Reg:3443.7383) beta=15.50
+Iter  9000 | Total loss: 2510.7285 (MSE:0.0012, Reg:2510.7273) beta=14.38
+Iter 10000 | Total loss: 1768.5011 (MSE:0.0012, Reg:1768.5000) beta=13.25
+Iter 11000 | Total loss: 1206.9312 (MSE:0.0012, Reg:1206.9299) beta=12.12
+Iter 12000 | Total loss: 723.9443 (MSE:0.0011, Reg:723.9432) beta=11.00
+Iter 13000 | Total loss: 326.3719 (MSE:0.0011, Reg:326.3709) beta=9.88
+Iter 14000 | Total loss: 121.5458 (MSE:0.0011, Reg:121.5447) beta=8.75
+Iter 15000 | Total loss: 21.9774 (MSE:0.0011, Reg:21.9762) beta=7.62
+Iter 16000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.0011 (MSE:0.0011, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.0013 (MSE:0.0013, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.0013 (MSE:0.0013, Reg:0.0000) beta=2.00
+
+[8/21] BRECQ computing: 0
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.0025 (MSE:0.0025, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.0019 (MSE:0.0019, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0015 (MSE:0.0015, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.0019 (MSE:0.0019, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 624235.9375 (MSE:0.0017, Reg:624235.9375) beta=20.00
+Iter  5000 | Total loss: 26735.4727 (MSE:0.0017, Reg:26735.4707) beta=18.88
+Iter  6000 | Total loss: 11826.7773 (MSE:0.0016, Reg:11826.7754) beta=17.75
+Iter  7000 | Total loss: 7226.5059 (MSE:0.0017, Reg:7226.5039) beta=16.62
+Iter  8000 | Total loss: 4918.8740 (MSE:0.0017, Reg:4918.8726) beta=15.50
+Iter  9000 | Total loss: 3476.6279 (MSE:0.0022, Reg:3476.6257) beta=14.38
+Iter 10000 | Total loss: 2385.3054 (MSE:0.0016, Reg:2385.3037) beta=13.25
+Iter 11000 | Total loss: 1475.5448 (MSE:0.0017, Reg:1475.5431) beta=12.12
+Iter 12000 | Total loss: 789.8292 (MSE:0.0016, Reg:789.8275) beta=11.00
+Iter 13000 | Total loss: 343.0716 (MSE:0.0016, Reg:343.0699) beta=9.88
+Iter 14000 | Total loss: 96.9883 (MSE:0.0021, Reg:96.9862) beta=8.75
+Iter 15000 | Total loss: 6.0018 (MSE:0.0018, Reg:6.0000) beta=7.62
+Iter 16000 | Total loss: 0.0016 (MSE:0.0016, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.0019 (MSE:0.0019, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.0019 (MSE:0.0019, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.0021 (MSE:0.0021, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.0017 (MSE:0.0017, Reg:0.0000) beta=2.00
+
+[9/21] BRECQ computing: 1
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.2126 (MSE:0.2126, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.1599 (MSE:0.1599, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.1785 (MSE:0.1785, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.1567 (MSE:0.1567, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 528356.3750 (MSE:0.1520, Reg:528356.2500) beta=20.00
+Iter  5000 | Total loss: 87247.9688 (MSE:0.1719, Reg:87247.7969) beta=18.88
+Iter  6000 | Total loss: 53772.8633 (MSE:0.1654, Reg:53772.6992) beta=17.75
+Iter  7000 | Total loss: 33086.2461 (MSE:0.1602, Reg:33086.0859) beta=16.62
+Iter  8000 | Total loss: 19120.2031 (MSE:0.1460, Reg:19120.0566) beta=15.50
+Iter  9000 | Total loss: 10312.1865 (MSE:0.1434, Reg:10312.0430) beta=14.38
+Iter 10000 | Total loss: 4793.4922 (MSE:0.1581, Reg:4793.3340) beta=13.25
+Iter 11000 | Total loss: 1734.4291 (MSE:0.1590, Reg:1734.2700) beta=12.12
+Iter 12000 | Total loss: 517.5637 (MSE:0.1548, Reg:517.4089) beta=11.00
+Iter 13000 | Total loss: 70.8845 (MSE:0.1621, Reg:70.7224) beta=9.88
+Iter 14000 | Total loss: 2.1458 (MSE:0.1462, Reg:1.9996) beta=8.75
+Iter 15000 | Total loss: 0.1384 (MSE:0.1384, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.1365 (MSE:0.1365, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.1582 (MSE:0.1582, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.1543 (MSE:0.1543, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.1593 (MSE:0.1593, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.1485 (MSE:0.1485, Reg:0.0000) beta=2.00
+
+[10/21] AdaRound computing: fc
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, <- Commas indicate the INT inference.
+    2D search with INT8
+    p = 2.4
+Activation quantizer initialized from QuantLayer
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.01
+    maximize: False
+    weight_decay: 0
+) 20000
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.001
+    maximize: False
+    weight_decay: 0
+)
+Iter     1 | Total loss: 0.1085 (MSE:0.1085, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.0457 (MSE:0.0457, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.0453 (MSE:0.0453, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.0463 (MSE:0.0463, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 73102.5156 (MSE:0.0440, Reg:73102.4688) beta=20.00
+Iter  5000 | Total loss: 8519.7578 (MSE:0.0484, Reg:8519.7090) beta=18.88
+Iter  6000 | Total loss: 5335.6338 (MSE:0.0420, Reg:5335.5918) beta=17.75
+Iter  7000 | Total loss: 3296.8022 (MSE:0.0394, Reg:3296.7627) beta=16.62
+Iter  8000 | Total loss: 1853.9301 (MSE:0.0421, Reg:1853.8879) beta=15.50
+Iter  9000 | Total loss: 911.8210 (MSE:0.0453, Reg:911.7758) beta=14.38
+Iter 10000 | Total loss: 375.8167 (MSE:0.0441, Reg:375.7726) beta=13.25
+Iter 11000 | Total loss: 114.1911 (MSE:0.0425, Reg:114.1486) beta=12.12
+Iter 12000 | Total loss: 27.0458 (MSE:0.0458, Reg:27.0000) beta=11.00
+Iter 13000 | Total loss: 4.0434 (MSE:0.0434, Reg:4.0000) beta=9.88
+Iter 14000 | Total loss: 0.0404 (MSE:0.0404, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.0439 (MSE:0.0439, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.0423 (MSE:0.0423, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.0438 (MSE:0.0438, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.0415 (MSE:0.0415, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.0405 (MSE:0.0405, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.0478 (MSE:0.0478, Reg:0.0000) beta=2.00
+BRECQ values computing done!
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+    Quantized model Evaluation accuracy on 50000 images, 69.332%
+Total time: 1088.25 sec
