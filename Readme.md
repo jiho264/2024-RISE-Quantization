@@ -1,4 +1,4 @@
-# MyAdaRound
+****# MyAdaRound
 > [Nagel, Markus, et al. "Up or down? adaptive rounding for post-training quantization." International Conference on Machine Learning. PMLR, 2020.]
 
 - Pytorch Base 
@@ -58,6 +58,12 @@
 - BRECQ W2A32 : 66.30%
 - BRECQ W4A4 with hean/stem are 8 Bit  : 69.60%
 - BRECQ W2A4 with hean/stem are 8 Bit  : 64.80%
+
+### PD-Quant with different base quantization schemes (The lr for AdaRound is 1e-2 or 1e-3) 
+| Quantization Scheme       | W4A32 | W4A32_Folded | W4A8 | W4A8_Folded | W4A4 | W4A4_Folded | W4A4_8bit |
+| ------------------------- | ----- | ------------ | ---- | ----------- | ---- | ----------- | --------- |
+| BRECQ_MinMax_CH_lr1e-2    |       |              |      |             |      | -           |           |
+| BRECQ_Norm_CH_lr1e-2_p2.4 |       |              |      | -           |      |             |           |
 
 - Weight : Per-Channel
 - Activation : Per-Layer

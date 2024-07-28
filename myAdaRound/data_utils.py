@@ -63,6 +63,16 @@ class GetLayerInpOut:
         )
 
 
+def _get_train_samples(train_loader, num_samples):
+    # calibration data loader code in AdaRound
+    train_data = []
+    for batch in train_loader:
+        train_data.append(batch[0])
+        if len(train_data) * batch[0].size(0) >= num_samples:
+            break
+    return torch.cat(train_data, dim=0)[:num_samples]
+
+
 def save_inp_oup_data(
     model,
     layer,

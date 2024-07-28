@@ -8,21 +8,13 @@ from myAdaRound.utils import (
     quantizerDict,
     StraightThrough,
 )
-from myAdaRound.data_utils import save_inp_oup_data
+from myAdaRound.data_utils import save_inp_oup_data, _get_train_samples
 import torchvision.models.resnet as resnet
 
 
 #################################################################################################
 ## (option) 4. Compute AdaRound values
 #################################################################################################
-def _get_train_samples(train_loader, num_samples):
-    # calibration data loader code in AdaRound
-    train_data = []
-    for batch in train_loader:
-        train_data.append(batch[0])
-        if len(train_data) * batch[0].size(0) >= num_samples:
-            break
-    return torch.cat(train_data, dim=0)[:num_samples]
 
 
 def _decayed_beta(i, n_iter, _warmup=0.2):
@@ -35,7 +27,9 @@ def _decayed_beta(i, n_iter, _warmup=0.2):
         return _beta
 
 
-def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
+def _computeAdaRoundValues(
+    model, layer, cali_data, batch_size, lr, _fp_prediction=None
+):
     model.eval()
     # [1] get {Origin FP output(A_fp_lth), Quantized input and output(X_q_lth, A_q_lth)}
     layer.w_quant_enable = True
@@ -58,6 +52,10 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
 
     model.train()
 
+    _pd_loss_func = None
+    if _fp_prediction != None:
+        _pd_loss_func = torch.nn.KLDivLoss(reduction="batchmean")
+
     for i in range(1, n_iter + 1):
 
         idx = torch.randperm(X_q_lth.size(0))[:batch_size]
@@ -66,20 +64,37 @@ def _computeAdaRoundValues(model, layer, cali_data, batch_size, lr):
         if optimizer_a != None:
             optimizer_a.zero_grad()
 
+        """ Layer reconstruction loss"""
         _tmp_A_q_lth = layer.forward(X_q_lth[idx])
         _mse = (A_fp_lth[idx] - _tmp_A_q_lth).abs().pow(2).mean()
         _beta = _decayed_beta(i, n_iter)
         _reg_loss = layer.weight_quantizer.f_reg(beta=_beta)
 
         loss = _mse + layer.weight_quantizer.lamda * _reg_loss
+
+        """ PD loss """
+        if _fp_prediction != None:
+            _fp_prediction_idx = _fp_prediction[idx]
+            _int_prediction_idx = model.forward(X_q_lth[idx])
+            _pd_loss = _pd_loss_func(
+                nn.functional.log_softmax(_int_prediction_idx, dim=1),
+                nn.functional.softmax(_fp_prediction_idx, dim=1),
+            )
+            loss += _pd_loss * 0.001
+
         loss.backward()
         optimizer_w.step()
         if optimizer_a != None:
             optimizer_a.step()
         if i % 1000 == 0 or i == 1:
-            print(
-                f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
-            )
+            if _fp_prediction == None:
+                print(
+                    f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
+                )
+            else:
+                print(
+                    f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, PD: {_pd_loss}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
+                )
 
     torch.cuda.empty_cache()
     layer.weight_quantizer.setRoundingValues()
@@ -132,15 +147,7 @@ def runAdaRound(
 #################################################################################################
 ## (option) 5. Compute BRECQ values
 #################################################################################################
-def _computeBRECQValues(model, block, cali_data, batch_size, lr):
-    """
-    - [ ] 여기 들어왓을 때, 이게 레이어인지 블록인지 확인하기
-    - [ ] 블록인 경우 추가적인 코드 처리 필요함
-
-
-    Returns:
-        _type_: _description_
-    """
+def _computeBRECQValues(model, block, cali_data, batch_size, lr, _fp_prediction=None):
     model.eval()
     # [1] get {Origin FP output(A_fp_lth), Quantized input and output(X_q_lth, A_q_lth)}
     block.w_quant_enable = True
@@ -165,6 +172,10 @@ def _computeBRECQValues(model, block, cali_data, batch_size, lr):
 
     model.train()
 
+    _pd_loss_func = None
+    if _fp_prediction != None:
+        _pd_loss_func = torch.nn.KLDivLoss(reduction="batchmean")
+
     for i in range(1, n_iter + 1):
 
         idx = torch.randperm(X_q_lth.size(0))[:batch_size]
@@ -173,6 +184,7 @@ def _computeBRECQValues(model, block, cali_data, batch_size, lr):
         if optimizer_a != None:
             optimizer_a.zero_grad()
 
+        """ Block reconstruction loss """
         _tmp_A_q_lth = block.forward(X_q_lth[idx])
         _mse = (A_fp_lth[idx] - _tmp_A_q_lth).abs().pow(2).mean()
         _beta = _decayed_beta(i, n_iter)
@@ -181,14 +193,30 @@ def _computeBRECQValues(model, block, cali_data, batch_size, lr):
 
         # loss = _mse + block.weight_quantizer.lamda * _reg_loss
         loss = _mse + _reg_loss  # already computed lambda * f_reg
+
+        """ PD loss """
+        if _fp_prediction != None:
+            _fp_prediction_idx = _fp_prediction[idx]
+            _int_prediction_idx = model.forward(X_q_lth[idx])
+            _pd_loss = _pd_loss_func(
+                nn.functional.log_softmax(_int_prediction_idx, dim=1),
+                nn.functional.softmax(_fp_prediction_idx, dim=1),
+            )
+            loss += _pd_loss * 1
+
         loss.backward()
         optimizer_w.step()
         if optimizer_a != None:
             optimizer_a.step()
         if i % 1000 == 0 or i == 1:
-            print(
-                f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
-            )
+            if _fp_prediction == None:
+                print(
+                    f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
+                )
+            else:
+                print(
+                    f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, PD: {_pd_loss}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
+                )
 
     torch.cuda.empty_cache()
     # layer.weight_quantizer.setRoundingValues()
@@ -197,10 +225,16 @@ def _computeBRECQValues(model, block, cali_data, batch_size, lr):
 
 
 def runBRECQ(
-    model, train_loader, num_samples=1024, batch_size=32, lr=0.01, num_layers=None
+    model,
+    train_loader,
+    num_samples=1024,
+    batch_size=32,
+    lr=0.01,
+    num_layers=None,
+    PDquant=False,
 ):
     model.eval()
-
+    _fp_prediction = None
     cali_data = _get_train_samples(train_loader, num_samples)
 
     # Optaining the ORIGIN input and output data of each layer
@@ -213,6 +247,9 @@ def runBRECQ(
                 module.fp_outputs = FP_OUTPUTS.to("cpu")
                 print(" <- Dots indicate the Original FP inference.")
                 print("   FP_OUTPUTS shape", module.fp_outputs.shape)
+                if name == "fc" and PDquant == True:
+                    nonlocal _fp_prediction
+                    _fp_prediction = FP_OUTPUTS.to("cuda")
             else:
                 _getFpInputOutput(module)
 
@@ -233,6 +270,9 @@ def runBRECQ(
                 _getFpInputOutput_block(module)
 
     _getFpInputOutput_block(model)
+
+    if PDquant == True:
+        return model, cali_data, _fp_prediction
 
     _layer_cnt = 0
 
@@ -256,6 +296,44 @@ def runBRECQ(
                 _runBRECQ(module, batch_size)
 
     _runBRECQ(model, batch_size)
+
+
+#################################################################################################
+## (option) 5. Compute PDquant values
+#################################################################################################
+def runPDquant(
+    model, train_loader, num_samples=1024, batch_size=32, lr=0.01, num_layers=None
+):
+    model, cali_data, _fp_prediction = runBRECQ(
+        model, train_loader, num_samples, batch_size, lr, num_layers, PDquant=True
+    )
+
+    _layer_cnt = 0
+
+    # Compute the AdaRound values
+    def _runPDquant(module: nn.Module, batch_size):
+        nonlocal _layer_cnt
+        for name, module in module.named_children():
+            if isinstance(module, QuantLayer):
+                _layer_cnt += 1
+                print(f"\n[{_layer_cnt}/{num_layers}] PDquant computing: {name}")
+                _computeAdaRoundValues(
+                    model, module, cali_data, batch_size, lr, _fp_prediction
+                )
+                # the len of cali_data = num_samples
+                # the GD batch size = batch_size
+            elif isinstance(module, QuantBasicBlock):
+                _layer_cnt += 1
+                print(f"\n[{_layer_cnt}/{num_layers}] PDquant computing: {name}")
+                _computeBRECQValues(
+                    model, module, cali_data, batch_size, lr, _fp_prediction
+                )
+                # the len of cali_data = num_samples
+                # the GD batch size = batch_size
+            else:
+                _runPDquant(module, batch_size)
+
+    _runPDquant(model, batch_size)
 
 
 #################################################################################################
@@ -435,6 +513,17 @@ def main(weight_quant_params, act_quant_params, args):
                 lr=args["lr"],
             )
             print(f"BRECQ values computing done!")
+    if "PDquant" in weight_quant_params:
+        if weight_quant_params["PDquant"] == True:
+            runPDquant(
+                model,
+                train_loader,
+                num_samples=args["num_samples"],
+                batch_size=args["batch_size_AdaRound"],
+                num_layers=num_layers,
+                lr=args["lr"],
+            )
+            print("PDQuant computing done!")
 
     _top1, _ = evaluate(
         model, test_loader, neval_batches=_len_eval_batches, device="cuda"
@@ -487,10 +576,10 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--paper",
-        default="",
+        default="PDquant",
         type=str,
         help="paper name",
-        choices=["AdaRound", "BRECQ", "PD-Quant"],
+        choices=["AdaRound", "BRECQ", "PDquant"],
     )
 
     parser.add_argument(
@@ -518,7 +607,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dstDtypeA",
-        default="FP32",
+        default="INT4",
         type=str,
         help="destination data type",
         choices=["INT4", "INT8", "FP32"],
@@ -569,8 +658,8 @@ if __name__ == "__main__":
                 weight_quant_params.update(dict(AdaRound=True))
             elif args.paper == "BRECQ":
                 weight_quant_params.update(dict(BRECQ=True))
-            elif args.paper == "PD-Quant":
-                weight_quant_params.update(dict(PDQuant=True))
+            elif args.paper == "PDquant":
+                weight_quant_params.update(dict(PDquant=True))
             else:
                 print("error")
                 exit()
@@ -593,7 +682,7 @@ if __name__ == "__main__":
         _case_name += args.paper + "_"
     _case_name += args.scheme_w + "_"
     if args.head_stem_8bit:
-        _case_name += "head_stem_8bit"
+        _case_name += "head_stem_8bit_"
     _case_name += "CH_" if args.per_channel else "Layer_"
     _case_name += "W" + args.dstDtypeW[-1]
     _case_name += "A" + "32" if args.dstDtypeA == "FP32" else "A" + args.dstDtypeA[-1]
