@@ -125,7 +125,7 @@ class QuantLayer(nn.Module):
             # print("q", end="")
             weight = self.weight_quantizer(self.weight)
         else:
-            print(".", end="")
+            #print(".", end="")
             weight = self.weight
         _Z = self.fwd_func(x, weight, self.bias, **self.fwd_kwargs)
 

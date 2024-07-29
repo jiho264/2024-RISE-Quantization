@@ -44,7 +44,7 @@ def _computeAdaRoundValues(
         idx = torch.randperm(A_q_lth.size(0))[: max(256, batch_size)]
         layer.init_act_quantizer(A_q_lth[idx])
         layer.a_quant_inited = True
-        optimizer_a = torch.optim.Adam([layer.act_quantizer._scaler])
+        optimizer_a = torch.optim.Adam([layer.act_quantizer._scaler], lr=4e-5)
 
     print(optimizer_w, n_iter)
     if optimizer_a != None:
@@ -75,12 +75,12 @@ def _computeAdaRoundValues(
         """ PD loss """
         if _fp_prediction != None:
             _fp_prediction_idx = _fp_prediction[idx]
-            _int_prediction_idx = model.forward(X_q_lth[idx])
+            _int_prediction_idx = model.forward(cali_data[idx].to("cuda"))
             _pd_loss = _pd_loss_func(
                 nn.functional.log_softmax(_int_prediction_idx, dim=1),
                 nn.functional.softmax(_fp_prediction_idx, dim=1),
             )
-            loss += _pd_loss * 0.001
+            loss += _pd_loss * 1
 
         loss.backward()
         optimizer_w.step()
@@ -93,11 +93,88 @@ def _computeAdaRoundValues(
                 )
             else:
                 print(
-                    f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, PD: {_pd_loss}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
+                    f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, PD: {_pd_loss:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
                 )
 
     torch.cuda.empty_cache()
     layer.weight_quantizer.setRoundingValues()
+    return None
+
+
+def _computeBRECQValues(model, block, cali_data, batch_size, lr, _fp_prediction=None):
+    model.eval()
+    # [1] get {Origin FP output(A_fp_lth), Quantized input and output(X_q_lth, A_q_lth)}
+    block.w_quant_enable = True
+    A_fp_lth = block.fp_outputs.to("cuda")
+    X_q_lth, A_q_lth = save_inp_oup_data(model, block, cali_data)
+    print(" <- Commas indicate the INT inference.")
+
+    # [2] Define the optimizer and loss function
+    # optimizer_w, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=lr), 20000
+    optimizer_w, n_iter = torch.optim.Adam(block.get_rounding_parameter(), lr=lr), 20000
+    optimizer_a = None
+    if block.a_quant_inited == False and block.a_quant_enable == True:
+        idx = torch.randperm(A_q_lth.size(0))[: max(256, batch_size)]
+        block.init_act_quantizer(A_q_lth[idx])
+        block.a_quant_inited = True
+        # optimizer_a = torch.optim.Adam([layer.act_quantizer._scaler])
+        optimizer_a = torch.optim.Adam([block.get_scaler_parameter()], lr=4e-5)
+
+    print(optimizer_w, n_iter)
+    if optimizer_a != None:
+        print(optimizer_a)
+
+    model.train()
+
+    _pd_loss_func = None
+    if _fp_prediction != None:
+        _pd_loss_func = torch.nn.KLDivLoss(reduction="batchmean")
+
+    for i in range(1, n_iter + 1):
+
+        idx = torch.randperm(X_q_lth.size(0))[:batch_size]
+
+        optimizer_w.zero_grad()
+        if optimizer_a != None:
+            optimizer_a.zero_grad()
+
+        """ Block reconstruction loss """
+        _tmp_A_q_lth = block.forward(X_q_lth[idx])
+        _mse = (A_fp_lth[idx] - _tmp_A_q_lth).abs().pow(2).mean()
+        _beta = _decayed_beta(i, n_iter)
+        # _reg_loss = block.weight_quantizer.f_reg(beta=_beta)
+        _reg_loss = block.get_sum_of_f_reg_with_lambda(beta=_beta)
+
+        # loss = _mse + block.weight_quantizer.lamda * _reg_loss
+        loss = _mse + _reg_loss  # already computed lambda * f_reg
+
+        """ PD loss """
+        if _fp_prediction != None:
+            _fp_prediction_idx = _fp_prediction[idx]
+            _int_prediction_idx = model.forward(cali_data[idx].to("cuda"))
+            _pd_loss = _pd_loss_func(
+                nn.functional.log_softmax(_int_prediction_idx, dim=1),
+                nn.functional.softmax(_fp_prediction_idx, dim=1),
+            )
+            loss += _pd_loss * 1
+
+        loss.backward()
+        optimizer_w.step()
+        if optimizer_a != None:
+            optimizer_a.step()
+        if i % 1000 == 0 or i == 1:
+            if _fp_prediction == None:
+                print(
+                    f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
+                )
+            else:
+                print(
+                    f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, PD: {_pd_loss:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
+                )
+
+    torch.cuda.empty_cache()
+    # layer.weight_quantizer.setRoundingValues()
+    block.setRoundingValues()
     return None
 
 
@@ -141,86 +218,6 @@ def runAdaRound(
 
     _runAdaRound(model, batch_size)
 
-    return None
-
-
-#################################################################################################
-## (option) 5. Compute BRECQ values
-#################################################################################################
-def _computeBRECQValues(model, block, cali_data, batch_size, lr, _fp_prediction=None):
-    model.eval()
-    # [1] get {Origin FP output(A_fp_lth), Quantized input and output(X_q_lth, A_q_lth)}
-    block.w_quant_enable = True
-    A_fp_lth = block.fp_outputs.to("cuda")
-    X_q_lth, A_q_lth = save_inp_oup_data(model, block, cali_data)
-    print(" <- Commas indicate the INT inference.")
-
-    # [2] Define the optimizer and loss function
-    # optimizer_w, n_iter = torch.optim.Adam([layer.weight_quantizer._v], lr=lr), 20000
-    optimizer_w, n_iter = torch.optim.Adam(block.get_rounding_parameter(), lr=lr), 20000
-    optimizer_a = None
-    if block.a_quant_inited == False and block.a_quant_enable == True:
-        idx = torch.randperm(A_q_lth.size(0))[: max(256, batch_size)]
-        block.init_act_quantizer(A_q_lth[idx])
-        block.a_quant_inited = True
-        # optimizer_a = torch.optim.Adam([layer.act_quantizer._scaler])
-        optimizer_a = torch.optim.Adam([block.get_scaler_parameter()])
-
-    print(optimizer_w, n_iter)
-    if optimizer_a != None:
-        print(optimizer_a)
-
-    model.train()
-
-    _pd_loss_func = None
-    if _fp_prediction != None:
-        _pd_loss_func = torch.nn.KLDivLoss(reduction="batchmean")
-
-    for i in range(1, n_iter + 1):
-
-        idx = torch.randperm(X_q_lth.size(0))[:batch_size]
-
-        optimizer_w.zero_grad()
-        if optimizer_a != None:
-            optimizer_a.zero_grad()
-
-        """ Block reconstruction loss """
-        _tmp_A_q_lth = block.forward(X_q_lth[idx])
-        _mse = (A_fp_lth[idx] - _tmp_A_q_lth).abs().pow(2).mean()
-        _beta = _decayed_beta(i, n_iter)
-        # _reg_loss = block.weight_quantizer.f_reg(beta=_beta)
-        _reg_loss = block.get_sum_of_f_reg_with_lambda(beta=_beta)
-
-        # loss = _mse + block.weight_quantizer.lamda * _reg_loss
-        loss = _mse + _reg_loss  # already computed lambda * f_reg
-
-        """ PD loss """
-        if _fp_prediction != None:
-            _fp_prediction_idx = _fp_prediction[idx]
-            _int_prediction_idx = model.forward(X_q_lth[idx])
-            _pd_loss = _pd_loss_func(
-                nn.functional.log_softmax(_int_prediction_idx, dim=1),
-                nn.functional.softmax(_fp_prediction_idx, dim=1),
-            )
-            loss += _pd_loss * 1
-
-        loss.backward()
-        optimizer_w.step()
-        if optimizer_a != None:
-            optimizer_a.step()
-        if i % 1000 == 0 or i == 1:
-            if _fp_prediction == None:
-                print(
-                    f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
-                )
-            else:
-                print(
-                    f"Iter {i:5d} | Total loss: {loss:.4f} (MSE:{_mse:.4f}, PD: {_pd_loss}, Reg:{_reg_loss:.4f}) beta={_beta:.2f}"
-                )
-
-    torch.cuda.empty_cache()
-    # layer.weight_quantizer.setRoundingValues()
-    block.setRoundingValues()
     return None
 
 
@@ -296,11 +293,9 @@ def runBRECQ(
                 _runBRECQ(module, batch_size)
 
     _runBRECQ(model, batch_size)
+    return None
 
 
-#################################################################################################
-## (option) 5. Compute PDquant values
-#################################################################################################
 def runPDquant(
     model, train_loader, num_samples=1024, batch_size=32, lr=0.01, num_layers=None
 ):
@@ -334,6 +329,7 @@ def runPDquant(
                 _runPDquant(module, batch_size)
 
     _runPDquant(model, batch_size)
+    return None
 
 
 #################################################################################################
@@ -561,7 +557,7 @@ if __name__ == "__main__":
     """ weight quantization"""
     parser.add_argument(
         "--scheme_w",
-        default="MinMaxQuantizer",
+        default="NormQuantizer",
         type=str,
         help="quantization scheme for weights",
         choices=quantizerDict,
@@ -576,7 +572,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--paper",
-        default="PDquant",
+        default="AdaRound",
         type=str,
         help="paper name",
         choices=["AdaRound", "BRECQ", "PDquant"],
@@ -594,13 +590,13 @@ if __name__ == "__main__":
         "--p", default=2.4, type=float, help="L_p norm for NormQuantizer"
     )
     parser.add_argument(
-        "--lr", default=0.01, type=float, help="learning rate for AdaRound"
+        "--lr", default=0.001, type=float, help="learning rate for AdaRound"
     )
 
     """ Activation quantization """
     parser.add_argument(
         "--scheme_a",
-        default="MinMaxQuantizer",
+        default="NormQuantizer",
         type=str,
         help="quantization scheme for activations",
         choices=quantizerDict,

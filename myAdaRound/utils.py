@@ -589,7 +589,7 @@ def create_AdaRound_Quantizer(scheme, org_weight, args):
                 )
             else:
                 # return INT
-                print(",", end="")
+                #print(",", end="")
                 return torch.clamp(
                     (input / self._scaler).floor()
                     + self._zero_point
