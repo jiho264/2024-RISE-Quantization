@@ -599,8 +599,8 @@ def create_AdaRound_Quantizer(scheme, org_weight, args):
                 )
 
         def setRoundingValues(self):
-            FIXED_ROUNDDING_VALUE = self._h().clone().detach()
-            self.rouning_value = FIXED_ROUNDDING_VALUE
+            FIXED_ROUNDING_VALUE = self._h().clone().detach()
+            self.rouning_value = FIXED_ROUNDING_VALUE
 
             assert torch.all(
                 (self.rouning_value == 0) | (self.rouning_value == 1)
