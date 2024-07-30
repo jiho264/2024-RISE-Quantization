@@ -78,7 +78,11 @@ class QuantLayer(nn.Module):
         self.w_quant_enable = True
 
         try:
-            if w_quant_args.get("AdaRound") or w_quant_args.get("BRECQ"):
+            if (
+                w_quant_args.get("AdaRound")
+                or w_quant_args.get("BRECQ")
+                or w_quant_args.get("PDquant")
+            ):
                 self.weight_quantizer = create_AdaRound_Quantizer(
                     scheme=w_quant_args.get("scheme"),
                     org_weight=self.weight,
@@ -121,7 +125,7 @@ class QuantLayer(nn.Module):
             # print("q", end="")
             weight = self.weight_quantizer(self.weight)
         else:
-            print(".", end="")
+            #print(".", end="")
             weight = self.weight
         _Z = self.fwd_func(x, weight, self.bias, **self.fwd_kwargs)
 

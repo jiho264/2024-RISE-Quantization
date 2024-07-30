@@ -1,0 +1,603 @@
+
+Case: [ resnet18_PDquant_NormQuantizer_head_stem_8bit_CH_W4A4_p2.4_RoundingLR0.0001 ]
+    - arch: resnet18
+    - batch_size: 128
+    - num_samples: 1024
+    - folding: False
+    - batch_size_AdaRound: 32
+    - lr: 0.0001
+    - head_stem_8bit: True
+
+- weight params:
+    - scheme: NormQuantizer
+    - dstDtype: INT4
+    - per_channel: True
+    - p: 2.4
+    - PDquant: True
+
+- activation params:
+    - scheme: NormQuantizer
+    - dstDtype: INT4
+    - per_channel: False
+    - p: 2.4
+
+Replace to QuantLayer
+    2D search with INT8
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 0 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 1 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 0 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 1 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 0 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 1 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 0 making done !
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+    2D search with INT4
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+- Quant Block 1 making done !
+    2D search with INT8
+    p = 2.4
+    Parent class is NormQuantizer
+    Initiated the V
+Qparams computing done!
+    QuantLayer: conv1, torch.Size([64, 3, 7, 7])
+    QuantLayer: layer1.0.conv_bn_relu_1, torch.Size([64, 64, 3, 3])
+    QuantLayer: layer1.0.conv_bn_2, torch.Size([64, 64, 3, 3])
+    QuantLayer: layer1.1.conv_bn_relu_1, torch.Size([64, 64, 3, 3])
+    QuantLayer: layer1.1.conv_bn_2, torch.Size([64, 64, 3, 3])
+    QuantLayer: layer2.0.conv_bn_relu_1, torch.Size([128, 64, 3, 3])
+    QuantLayer: layer2.0.conv_bn_2, torch.Size([128, 128, 3, 3])
+    QuantLayer: layer2.0.conv_bn_down, torch.Size([128, 64, 1, 1])
+    QuantLayer: layer2.1.conv_bn_relu_1, torch.Size([128, 128, 3, 3])
+    QuantLayer: layer2.1.conv_bn_2, torch.Size([128, 128, 3, 3])
+    QuantLayer: layer3.0.conv_bn_relu_1, torch.Size([256, 128, 3, 3])
+    QuantLayer: layer3.0.conv_bn_2, torch.Size([256, 256, 3, 3])
+    QuantLayer: layer3.0.conv_bn_down, torch.Size([256, 128, 1, 1])
+    QuantLayer: layer3.1.conv_bn_relu_1, torch.Size([256, 256, 3, 3])
+    QuantLayer: layer3.1.conv_bn_2, torch.Size([256, 256, 3, 3])
+    QuantLayer: layer4.0.conv_bn_relu_1, torch.Size([512, 256, 3, 3])
+    QuantLayer: layer4.0.conv_bn_2, torch.Size([512, 512, 3, 3])
+    QuantLayer: layer4.0.conv_bn_down, torch.Size([512, 256, 1, 1])
+    QuantLayer: layer4.1.conv_bn_relu_1, torch.Size([512, 512, 3, 3])
+    QuantLayer: layer4.1.conv_bn_2, torch.Size([512, 512, 3, 3])
+    QuantLayer: fc, torch.Size([1000, 512])
+Total QuantModule: 21, Folded BN layers : 0
+conv1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 112, 112])
+conv_bn_relu_1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+conv_bn_2 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+conv_bn_relu_1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+conv_bn_2 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+conv_bn_relu_1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+conv_bn_2 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+conv_bn_down <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+conv_bn_relu_1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+conv_bn_2 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+conv_bn_relu_1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+conv_bn_2 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+conv_bn_down <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+conv_bn_relu_1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+conv_bn_2 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+conv_bn_relu_1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+conv_bn_2 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+conv_bn_down <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+conv_bn_relu_1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+conv_bn_2 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+fc <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 1000])
+0 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 64, 56, 56])
+0 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 128, 28, 28])
+0 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 256, 14, 14])
+0 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+1 <- Dots indicate the Original FP inference.
+   FP_OUTPUTS shape torch.Size([1024, 512, 7, 7])
+
+[1/21] PDquant computing: conv1
+ <- Commas indicate the INT inference.
+    1D search with UINT8
+    p = 2.4
+Activation quantizer initialized from QuantLayer
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+) 20000
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 4e-05
+    maximize: False
+    weight_decay: 0
+)
+Iter     1 | Total loss: 0.4684 (MSE:0.0008, PD: 0.4677, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.6434 (MSE:0.0005, PD: 0.6428, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.4639 (MSE:0.0004, PD: 0.4635, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.6479 (MSE:0.0009, PD: 0.6470, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 324.0423 (MSE:0.0005, PD: 0.4251, Reg:323.6167) beta=20.00
+Iter  5000 | Total loss: 0.5882 (MSE:0.0003, PD: 0.5879, Reg:0.0000) beta=18.88
+Iter  6000 | Total loss: 0.5083 (MSE:0.0009, PD: 0.5074, Reg:0.0000) beta=17.75
+Iter  7000 | Total loss: 0.5101 (MSE:0.0011, PD: 0.5090, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 0.5011 (MSE:0.0005, PD: 0.5006, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 0.5392 (MSE:0.0005, PD: 0.5387, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 0.6730 (MSE:0.0005, PD: 0.6725, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 0.5023 (MSE:0.0007, PD: 0.5016, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 0.4311 (MSE:0.0004, PD: 0.4306, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 0.5675 (MSE:0.0009, PD: 0.5666, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 0.4199 (MSE:0.0004, PD: 0.4195, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.5571 (MSE:0.0002, PD: 0.5569, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.5478 (MSE:0.0021, PD: 0.5458, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.7835 (MSE:0.0008, PD: 0.7827, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.4378 (MSE:0.0005, PD: 0.4373, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.7026 (MSE:0.0001, PD: 0.7025, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.4764 (MSE:0.0005, PD: 0.4759, Reg:0.0000) beta=2.00
+
+[2/21] PDquant computing: 0
+ <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.3902 (MSE:0.0032, PD: 0.3870, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.5369 (MSE:0.0035, PD: 0.5334, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.6482 (MSE:0.0030, PD: 0.6453, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.4023 (MSE:0.0032, PD: 0.3990, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 2544.8328 (MSE:0.0040, PD: 0.3637, Reg:2544.4648) beta=20.00
+Iter  5000 | Total loss: 1.0149 (MSE:0.0032, PD: 0.5631, Reg:0.4486) beta=18.88
+Iter  6000 | Total loss: 0.5030 (MSE:0.0039, PD: 0.4991, Reg:0.0000) beta=17.75
+Iter  7000 | Total loss: 0.5285 (MSE:0.0037, PD: 0.5249, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 0.4768 (MSE:0.0033, PD: 0.4735, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 0.6183 (MSE:0.0030, PD: 0.6153, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 0.6025 (MSE:0.0032, PD: 0.5992, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 0.8133 (MSE:0.0029, PD: 0.8104, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 0.3100 (MSE:0.0031, PD: 0.3069, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 0.6908 (MSE:0.0031, PD: 0.6877, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 0.5508 (MSE:0.0039, PD: 0.5470, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.3894 (MSE:0.0030, PD: 0.3864, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.8058 (MSE:0.0044, PD: 0.8014, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.4504 (MSE:0.0031, PD: 0.4473, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.7617 (MSE:0.0033, PD: 0.7584, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.5384 (MSE:0.0032, PD: 0.5352, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.7165 (MSE:0.0028, PD: 0.7137, Reg:0.0000) beta=2.00
+
+[3/21] PDquant computing: 1
+ <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.3817 (MSE:0.0083, PD: 0.3734, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.4191 (MSE:0.0084, PD: 0.4106, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.5117 (MSE:0.0082, PD: 0.5035, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.5149 (MSE:0.0090, PD: 0.5060, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 2695.5820 (MSE:0.0081, PD: 0.4717, Reg:2695.1023) beta=20.00
+Iter  5000 | Total loss: 0.9588 (MSE:0.0084, PD: 0.5521, Reg:0.3983) beta=18.88
+Iter  6000 | Total loss: 0.5363 (MSE:0.0090, PD: 0.5273, Reg:0.0000) beta=17.75
+Iter  7000 | Total loss: 0.3502 (MSE:0.0090, PD: 0.3413, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 0.4949 (MSE:0.0080, PD: 0.4869, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 0.5666 (MSE:0.0088, PD: 0.5578, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 0.6136 (MSE:0.0085, PD: 0.6051, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 0.6661 (MSE:0.0083, PD: 0.6577, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 0.5062 (MSE:0.0083, PD: 0.4978, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 0.6582 (MSE:0.0084, PD: 0.6497, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 0.3832 (MSE:0.0086, PD: 0.3745, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.5010 (MSE:0.0087, PD: 0.4923, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.4358 (MSE:0.0091, PD: 0.4266, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.4607 (MSE:0.0082, PD: 0.4524, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.4752 (MSE:0.0086, PD: 0.4666, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.4572 (MSE:0.0082, PD: 0.4490, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.6019 (MSE:0.0088, PD: 0.5931, Reg:0.0000) beta=2.00
+
+[4/21] PDquant computing: 0
+ <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.4509 (MSE:0.0040, PD: 0.4469, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.6138 (MSE:0.0041, PD: 0.6097, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.4420 (MSE:0.0042, PD: 0.4378, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.4898 (MSE:0.0040, PD: 0.4858, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 8210.5645 (MSE:0.0041, PD: 0.5441, Reg:8210.0166) beta=20.00
+Iter  5000 | Total loss: 3.9737 (MSE:0.0042, PD: 0.5179, Reg:3.4516) beta=18.88
+Iter  6000 | Total loss: 0.5047 (MSE:0.0038, PD: 0.5009, Reg:0.0000) beta=17.75
+Iter  7000 | Total loss: 0.4267 (MSE:0.0041, PD: 0.4226, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 0.6227 (MSE:0.0043, PD: 0.6185, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 0.5024 (MSE:0.0039, PD: 0.4985, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 0.4138 (MSE:0.0042, PD: 0.4096, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 0.6448 (MSE:0.0041, PD: 0.6406, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 0.5377 (MSE:0.0047, PD: 0.5330, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 0.5410 (MSE:0.0040, PD: 0.5370, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 0.7417 (MSE:0.0040, PD: 0.7377, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.4214 (MSE:0.0044, PD: 0.4170, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.4940 (MSE:0.0042, PD: 0.4898, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.6274 (MSE:0.0038, PD: 0.6236, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.5394 (MSE:0.0041, PD: 0.5354, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.3897 (MSE:0.0042, PD: 0.3855, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.5368 (MSE:0.0040, PD: 0.5328, Reg:0.0000) beta=2.00
+
+[5/21] PDquant computing: 1
+ <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.4474 (MSE:0.0055, PD: 0.4420, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.4599 (MSE:0.0055, PD: 0.4544, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.6222 (MSE:0.0057, PD: 0.6165, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.3962 (MSE:0.0058, PD: 0.3905, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 11047.6074 (MSE:0.0054, PD: 0.3924, Reg:11047.2090) beta=20.00
+Iter  5000 | Total loss: 3.7888 (MSE:0.0054, PD: 0.3817, Reg:3.4017) beta=18.88
+Iter  6000 | Total loss: 0.4448 (MSE:0.0058, PD: 0.4390, Reg:0.0000) beta=17.75
+Iter  7000 | Total loss: 0.3993 (MSE:0.0058, PD: 0.3935, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 0.4991 (MSE:0.0056, PD: 0.4936, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 0.5334 (MSE:0.0054, PD: 0.5279, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 0.5266 (MSE:0.0057, PD: 0.5209, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 0.4398 (MSE:0.0054, PD: 0.4344, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 0.5994 (MSE:0.0056, PD: 0.5938, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 0.4964 (MSE:0.0057, PD: 0.4907, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 0.5626 (MSE:0.0056, PD: 0.5570, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.4245 (MSE:0.0059, PD: 0.4186, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.5382 (MSE:0.0055, PD: 0.5327, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.5155 (MSE:0.0054, PD: 0.5101, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.4940 (MSE:0.0058, PD: 0.4882, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.6237 (MSE:0.0057, PD: 0.6180, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.5959 (MSE:0.0056, PD: 0.5904, Reg:0.0000) beta=2.00
+
+[6/21] PDquant computing: 0
+ <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.7949 (MSE:0.0031, PD: 0.7919, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.5493 (MSE:0.0030, PD: 0.5463, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.4551 (MSE:0.0030, PD: 0.4520, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.5275 (MSE:0.0030, PD: 0.5245, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 37182.1055 (MSE:0.0032, PD: 0.4527, Reg:37181.6484) beta=20.00
+Iter  5000 | Total loss: 9.5947 (MSE:0.0034, PD: 0.4743, Reg:9.1170) beta=18.88
+Iter  6000 | Total loss: 0.5793 (MSE:0.0031, PD: 0.5762, Reg:0.0000) beta=17.75
+Iter  7000 | Total loss: 0.2517 (MSE:0.0030, PD: 0.2487, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 0.4550 (MSE:0.0030, PD: 0.4520, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 0.4679 (MSE:0.0031, PD: 0.4648, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 0.6237 (MSE:0.0031, PD: 0.6206, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 0.6180 (MSE:0.0032, PD: 0.6148, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 0.5525 (MSE:0.0033, PD: 0.5492, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 0.6144 (MSE:0.0029, PD: 0.6114, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 0.4501 (MSE:0.0033, PD: 0.4468, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.2825 (MSE:0.0032, PD: 0.2793, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.3828 (MSE:0.0030, PD: 0.3798, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.3925 (MSE:0.0031, PD: 0.3894, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.3309 (MSE:0.0031, PD: 0.3278, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.4220 (MSE:0.0034, PD: 0.4187, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.4771 (MSE:0.0032, PD: 0.4739, Reg:0.0000) beta=2.00
+
+[7/21] PDquant computing: 1
+ <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.4002 (MSE:0.0035, PD: 0.3967, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.4040 (MSE:0.0039, PD: 0.4001, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.5232 (MSE:0.0036, PD: 0.5195, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.5135 (MSE:0.0040, PD: 0.5095, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 41844.5156 (MSE:0.0039, PD: 0.4695, Reg:41844.0430) beta=20.00
+Iter  5000 | Total loss: 10.7329 (MSE:0.0037, PD: 0.5689, Reg:10.1604) beta=18.88
+Iter  6000 | Total loss: 0.4658 (MSE:0.0038, PD: 0.4621, Reg:0.0000) beta=17.75
+Iter  7000 | Total loss: 0.4579 (MSE:0.0038, PD: 0.4541, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 0.3625 (MSE:0.0036, PD: 0.3590, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 0.4109 (MSE:0.0037, PD: 0.4072, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 0.5066 (MSE:0.0040, PD: 0.5026, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 0.5072 (MSE:0.0038, PD: 0.5034, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 0.2801 (MSE:0.0037, PD: 0.2764, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 0.3869 (MSE:0.0036, PD: 0.3833, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 0.4159 (MSE:0.0035, PD: 0.4124, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.3309 (MSE:0.0038, PD: 0.3270, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.4482 (MSE:0.0038, PD: 0.4444, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.5049 (MSE:0.0036, PD: 0.5013, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.3826 (MSE:0.0035, PD: 0.3790, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.4716 (MSE:0.0036, PD: 0.4680, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.3593 (MSE:0.0040, PD: 0.3553, Reg:0.0000) beta=2.00
+
+[8/21] PDquant computing: 0
+ <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.3576 (MSE:0.0049, PD: 0.3527, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.5550 (MSE:0.0049, PD: 0.5502, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.4465 (MSE:0.0047, PD: 0.4418, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 0.4956 (MSE:0.0047, PD: 0.4909, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 119944.7031 (MSE:0.0047, PD: 0.4507, Reg:119944.2422) beta=20.00
+Iter  5000 | Total loss: 4.2564 (MSE:0.0048, PD: 0.5511, Reg:3.7005) beta=18.88
+Iter  6000 | Total loss: 0.4961 (MSE:0.0047, PD: 0.4914, Reg:0.0000) beta=17.75
+Iter  7000 | Total loss: 0.4476 (MSE:0.0047, PD: 0.4428, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 0.3337 (MSE:0.0047, PD: 0.3290, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 0.5290 (MSE:0.0051, PD: 0.5239, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 0.4781 (MSE:0.0047, PD: 0.4734, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 0.4730 (MSE:0.0047, PD: 0.4684, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 0.4634 (MSE:0.0046, PD: 0.4588, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 0.4881 (MSE:0.0047, PD: 0.4834, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 0.6166 (MSE:0.0051, PD: 0.6115, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.5199 (MSE:0.0047, PD: 0.5152, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.4511 (MSE:0.0045, PD: 0.4466, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.4743 (MSE:0.0049, PD: 0.4693, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.4663 (MSE:0.0049, PD: 0.4614, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.6711 (MSE:0.0053, PD: 0.6658, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.5889 (MSE:0.0049, PD: 0.5840, Reg:0.0000) beta=2.00
+
+[9/21] PDquant computing: 1
+ <- Commas indicate the INT inference.
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+) 20000
+Iter     1 | Total loss: 0.7887 (MSE:0.3599, PD: 0.4287, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 0.8344 (MSE:0.3551, PD: 0.4793, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 0.7068 (MSE:0.3903, PD: 0.3164, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 1.0767 (MSE:0.3777, PD: 0.6991, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 179581.4531 (MSE:0.3542, PD: 0.4510, Reg:179580.6406) beta=20.00
+Iter  5000 | Total loss: 14.9456 (MSE:0.3796, PD: 0.3875, Reg:14.1785) beta=18.88
+Iter  6000 | Total loss: 0.7322 (MSE:0.3663, PD: 0.3660, Reg:0.0000) beta=17.75
+Iter  7000 | Total loss: 0.6918 (MSE:0.3602, PD: 0.3316, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 0.7926 (MSE:0.3451, PD: 0.4474, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 0.7357 (MSE:0.3469, PD: 0.3889, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 0.7212 (MSE:0.3597, PD: 0.3615, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 0.8947 (MSE:0.3674, PD: 0.5273, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 0.7375 (MSE:0.3495, PD: 0.3880, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 0.8443 (MSE:0.3679, PD: 0.4764, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 0.8858 (MSE:0.3482, PD: 0.5376, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 0.7718 (MSE:0.3501, PD: 0.4217, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 0.6859 (MSE:0.3527, PD: 0.3332, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 0.7748 (MSE:0.3579, PD: 0.4169, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 0.9571 (MSE:0.3593, PD: 0.5978, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 0.8200 (MSE:0.3834, PD: 0.4366, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 0.8639 (MSE:0.3685, PD: 0.4954, Reg:0.0000) beta=2.00
+
+[10/21] PDquant computing: fc
+ <- Commas indicate the INT inference.
+    2D search with INT8
+    p = 2.4
+Activation quantizer initialized from QuantLayer
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 0.0001
+    maximize: False
+    weight_decay: 0
+) 20000
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    capturable: False
+    differentiable: False
+    eps: 1e-08
+    foreach: None
+    fused: None
+    lr: 4e-05
+    maximize: False
+    weight_decay: 0
+)
+Iter     1 | Total loss: 1.6783 (MSE:1.2513, PD: 0.4270, Reg:0.0000) beta=0.00
+Iter  1000 | Total loss: 1.8499 (MSE:1.1680, PD: 0.6819, Reg:0.0000) beta=0.00
+Iter  2000 | Total loss: 1.6719 (MSE:1.0991, PD: 0.5728, Reg:0.0000) beta=0.00
+Iter  3000 | Total loss: 1.4176 (MSE:1.0963, PD: 0.3213, Reg:0.0000) beta=0.00
+Iter  4000 | Total loss: 116418.4531 (MSE:1.1202, PD: 0.4473, Reg:116416.8906) beta=20.00
+Iter  5000 | Total loss: 30010.1562 (MSE:1.0030, PD: 0.4419, Reg:30008.7109) beta=18.88
+Iter  6000 | Total loss: 920.4804 (MSE:0.9907, PD: 0.4059, Reg:919.0837) beta=17.75
+Iter  7000 | Total loss: 1.3384 (MSE:0.9913, PD: 0.3471, Reg:0.0000) beta=16.62
+Iter  8000 | Total loss: 1.5246 (MSE:1.0933, PD: 0.4312, Reg:0.0000) beta=15.50
+Iter  9000 | Total loss: 1.6731 (MSE:1.1861, PD: 0.4870, Reg:0.0000) beta=14.38
+Iter 10000 | Total loss: 1.4198 (MSE:1.0588, PD: 0.3610, Reg:0.0000) beta=13.25
+Iter 11000 | Total loss: 1.3494 (MSE:1.0456, PD: 0.3038, Reg:0.0000) beta=12.12
+Iter 12000 | Total loss: 1.5314 (MSE:1.0462, PD: 0.4853, Reg:0.0000) beta=11.00
+Iter 13000 | Total loss: 1.4020 (MSE:1.0388, PD: 0.3632, Reg:0.0000) beta=9.88
+Iter 14000 | Total loss: 1.3878 (MSE:1.0309, PD: 0.3569, Reg:0.0000) beta=8.75
+Iter 15000 | Total loss: 1.6615 (MSE:1.1684, PD: 0.4931, Reg:0.0000) beta=7.62
+Iter 16000 | Total loss: 1.4243 (MSE:1.0187, PD: 0.4057, Reg:0.0000) beta=6.50
+Iter 17000 | Total loss: 1.5163 (MSE:1.0385, PD: 0.4779, Reg:0.0000) beta=5.38
+Iter 18000 | Total loss: 1.5528 (MSE:1.0132, PD: 0.5396, Reg:0.0000) beta=4.25
+Iter 19000 | Total loss: 1.4824 (MSE:0.9616, PD: 0.5208, Reg:0.0000) beta=3.12
+Iter 20000 | Total loss: 1.7737 (MSE:1.1295, PD: 0.6441, Reg:0.0000) beta=2.00
+PDQuant computing done!
+
+    Quantized model Evaluation accuracy on 50000 images, 67.978%
+Total time: 6627.48 sec

@@ -1,20 +1,34 @@
 # MyAdaRound
+- AdaRound, 2020
 > [Nagel, Markus, et al. "Up or down? adaptive rounding for post-training quantization." International Conference on Machine Learning. PMLR, 2020.]
-
-- Pytorch Base 
-  - ResNet18 W32A32 (IMAGENET1K_V1, W32A32) : **69.758%**
-- AdaRoundPaper
-  - ResNet18 W32A32 (base): **69.68%**
-  - ResNet18 W4A32 : **68.71%** +- 0.06
-  - ResNet18 W4A8 : **68.55%** +- 0.01 (Using Learn Step Size quantization a.k.a. LSQ for activation quantization)
-  - Detail : 
-    - Symmetric quantization (AbsMaxQuantizer)
-    - AdaRound GD batch = 32
-    - Optimizer : Defalut Adam (lr=0.001 from pytorch)
+- BRECQ, 2021
+> [Li, Yuhang, et al. "Brecq: Pushing the limit of post-training quantization by block reconstruction." ICLR 2021.]
+- PD-Quant, 2023
+> [Liu, Jiawei, et al. "Pd-quant: Post-training quantization based on prediction difference metric." Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 2023.]
     
-## Results on ResNet18 
+## Paper benckmark
+- AdaRound W4A32 : 68.71% (base 69.68%, -0.97%p)
+- AdaRound W4A8 : 68.55% (base 69.68%, -1.13%p)
+- BRECQ W4A32 : 70.70% (base 71.01%, -0.31%p)
+- BRECQ W4A4 with 8 Bit head/stem : 69.60% (base 71.08%, -1.48%p)
+- PD-Quant W4A4 with 8 Bit head/stem : 69.23% (base 71.01%, -1.78%p)
+
+## My implementation
+| Quantization Scheme           | W4A8             | W4A4              | W4A4_8bit        | W4A4_8bit_paper               |
+| ----------------------------- | ---------------- | ----------------- | ---------------- | ----------------------------- |
+| AdaRound_Norm (lr=1e-2, 1e-3) | 69.202% (-0.556) | 41.040% (-28.718) | 65.250% (-4.508) | None                          |
+| AdaRound_Norm (lr=1e-2, 4e-5) | 64.272% (-5.486) | 42.696% (-27.062) | 65.356% (-4.402) | None                          |
+| BRECQ_Norm    (lr=1e-3, 4e-5) | 67.526% (-2.232) | 42.932% (-26.826) | 67.806% (-1.952) | 69.60% (base 71.08%, -1.48%p) |
+| PDquant_Norm  (lr=1e-3, 4e-5) | 66.632% (-3.216) | 57.852% (-11.906) | 67.978% (-1.780) | 69.23% (base 71.01%, -1.78%p) |
+
+
+- Pytorch Base ResNet18 W32A32 (IMAGENET1K_V1, W32A32) : 69.758%
+- Weight : Per-Channel
+- Activation : Per-Layer
+- The quantization for Weight and Activation are using same quantization scheme.
 - BN folding is referred to https://nathanhubens.github.io/fasterai/misc.bn_folding.html
- 
+
+## Hyper parameter search
 ### Different quantization schemes (Quantize weight only)
 | Quantization Scheme (Per-Layer or Per-CH)  | W8A32       | W8A32_Folded | W4A32       | W4A32_Folded |
 | ------------------------------------------ | ----------- | ------------ | ----------- | ------------ |
@@ -46,35 +60,7 @@
 | AdaRoundMinMax_CH_lr1e-2          | 68.634%     | 68.038%      | 68.438%     | 67.764%     |
 | AdaRoundNorm_CH_lr1e-2_p2.4       | 68.832%     | 68.182%      | 68.610%     | 68.046%     |
 | AdaRoundOrgNorm_CH_lr1e-2_p2.4    | **69.050%** | **68.190%**  | **68.878%** | **69.030%** |
-
-### BRECQ with different base quantization schemes (The lr for AdaRound is 1e-2 or 1e-3) 
-| Quantization Scheme       | W4A32 | W4A32_Folded | W4A8    | W4A8_Folded | W4A4    | W4A4_Folded | W4A4_8bit |
-| ------------------------- | ----- | ------------ | ------- | ----------- | ------- | ----------- | --------- |
-| BRECQ_MinMax_CH_lr1e-2    |       |              | 69.116% |             | 47.006% | -           | 69.220%   |
-| BRECQ_Norm_CH_lr1e-2_p2.4 |       |              |         | -           | 46.790% |             | 69.332%   |
-
-- BRECQ W4A32 : 70.70%
-- BRECQ W3A32 : 69.81%
-- BRECQ W2A32 : 66.30%
-- BRECQ W4A4 with hean/stem are 8 Bit  : 69.60%
-- BRECQ W2A4 with hean/stem are 8 Bit  : 64.80%
-
-- Weight : Per-Channel
-- Activation : Per-Layer
-- The quantization for Weight and Activation are using same quantization scheme.
-
-### 주요 구현 포인트
-- Weight들은 양수와 음수가 모두 있는 분포이지만, ReLU이후의 Activation 값들은 0과 양수만 존재하므로 해당 부분에선 one side distibution 전용 quantization 수식 적용함.
-  - ReLU인 곳에서 1D Search시, AdaRoundAbsMax_CH_lr1e-2_W4A8_Folded 에서 68.482%  -> 68.544%로 성능 향상. 
-  - OrgNorm에서도 ReLU인 부분 1D로 변경시 0.1%p미만의 미미한 성능 향상.
-- Weight는 AdaRound에서 항상 Per-Channel로 Qparams를 구함. Activation은 항상 Per-Layer로 Qparams를 구함. 각 Batch에 따라 ch에 대한 정보가 크게 달라질 수 있기 때문임.
-- Activation에 대한 Scaler는 1024장의 Calibration set으로부터 256장의 sample로 구함. Qparams를 구하는 수식은 각 scheme을 따르며, AdaRound를 진행하면서 Scaler_A도 Gradient descent를 통해 개선해 나감.
-
-### Todo
-- [ ] Add the W4A4 results using only AdaRound.
-- [ ] Add the results about BRECQ with many different scheme and bit-witdh cases.
-- [ ] Implement the PD-Quant. need adding "prediction diffence loss"
-
+ 
 # Made by
 - LEE, JIHO
 - Embedded AI LAB, INU 

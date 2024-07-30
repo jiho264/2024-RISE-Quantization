@@ -126,7 +126,7 @@ class QuantBasicBlock(nn.Module):
         if self.conv_bn_down != None:
             self.conv_bn_down.weight_quantizer.setRoundingValues()
 
-    def _quant_enabler(self):
+    def _quant_switch(self):
         self.conv_bn_relu_1.w_quant_enable = self.w_quant_enable
         self.conv_bn_relu_1.a_quant_enable = self.a_quant_enable
 
@@ -138,7 +138,7 @@ class QuantBasicBlock(nn.Module):
             self.conv_bn_down.a_quant_enable = self.a_quant_enable
 
     def forward(self, input: Tensor) -> Tensor:
-        self._quant_enabler()
+        self._quant_switch()
 
         _identity = input
         _out = self.conv_bn_relu_1(input)
