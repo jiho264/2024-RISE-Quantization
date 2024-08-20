@@ -128,6 +128,23 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class NaiveDynnamicMinMaxQuantizer(nn.Module):
+    def __init__(self):
+        super(NaiveDynnamicMinMaxQuantizer, self).__init__()
+        self._n_bits = 8
+        self._repr_min, self._repr_max = -128, 127
+
+    def forward(self, x: Tensor) -> Tensor:
+        _scaler = x.abs().max() / 127
+        x_int = torch.clamp(
+            (x / _scaler).round(),
+            self._repr_min,
+            self._repr_max,
+        )
+        x_hat = x_int * _scaler
+        return x_hat
+
+
 class UniformAffineQuantizer(nn.Module):
     def __init__(self, org_weight, args):
         super(UniformAffineQuantizer, self).__init__()
@@ -589,7 +606,7 @@ def create_AdaRound_Quantizer(scheme, org_weight, args):
                 )
             else:
                 # return INT
-                #print(",", end="")
+                # print(",", end="")
                 return torch.clamp(
                     (input / self._scaler).floor()
                     + self._zero_point
@@ -651,6 +668,7 @@ quantizerDict = {
     "MinMaxQuantizer": MinMaxQuantizer,
     "NormQuantizer": NormQuantizer,
     "OrgNormQuantizerCode": OrgNormQuantizerCode,
+    "NaiveDynnamicMinMaxQuantizer": NaiveDynnamicMinMaxQuantizer,
 }
 
 
