@@ -242,8 +242,8 @@ class IntLinear(nn.Module):
     def forward(self, x_hat, s_x):
         x_hat = x_hat.to(self.w_int8.device)
 
-        # x_int8 = (x_hat / s_x).round().clamp(self.repr_min, self.repr_max)
-        """범인은 clamp였다"""
+        x_int8 = x_hat / s_x
+        """범인은 clamp였다. 이전 layer에서 지금비트랑 다른 해상도썼었으면 여기서 clamp하면 안된다."""
         x_int8 = (x_hat / s_x).round()
 
         s_a = self.s_w * s_x
