@@ -167,7 +167,7 @@ class QuantAct(nn.Module):
         The mode for quantization. 'none' for no quantization.
     """
 
-    def __init__(self, activation_bit=8):
+    def __init__(self, activation_bit=16):
         super(QuantAct, self).__init__()
         # print("qant!")
         self.activation_bit = activation_bit
@@ -214,25 +214,32 @@ class QuantAct(nn.Module):
 
                 out_int += id_int
 
-        return out_int * s_out, s_out
+        return out_int * s_out.view(-1), s_out
 
 
 class IntLinear(nn.Module):
-    def __init__(self, fwd_func, fwd_kwargs, weight_fp32, bias_fp32, bits=8):
+    def __init__(self, fwd_func, fwd_kwargs, weight_fp32, bias_fp32, bits=16):
         """INT8 GEMM"""
         super(IntLinear, self).__init__()
         self.fwd_func = fwd_func
         self.fwd_kwargs = fwd_kwargs
 
         self.bits = bits
-        self.s_w = weight_fp32.abs().max() / (2 ** (bits - 1) - 1)
+
+        # only per-channel quantization is supported
+        s_w = weight_fp32.view(weight_fp32.size(0), -1).abs().max(dim=1).values / (
+            2 ** (bits - 1) - 1
+        )
+
+        self._n_ch = len(weight_fp32.size())
+        self.s_w = s_w.view(-1, *([1] * (self._n_ch - 1)))
 
         self.w_int8 = (
             (weight_fp32.clone().detach() / self.s_w)
             .round()
             .clamp(-(2 ** (bits - 1)), 2 ** (bits - 1) - 1)
         )
-        self.b_int8 = (bias_fp32.clone().detach() / self.s_w).round()
+        self.b_int8 = (bias_fp32.clone().detach() / self.s_w.squeeze()).round()
 
         self.qact = QuantAct(bits)
 
@@ -241,15 +248,17 @@ class IntLinear(nn.Module):
         x_int = (x_hat / s_x).round()
 
         s_a = self.s_w * s_x
+        if self.s_w.dim() == 4:
+            s_a = s_a.view(1, -1, 1, 1)
+        elif self.s_w.dim() == 2:
+            s_a = s_a.view(1, -1)
 
         b_int32 = (self.b_int8 / s_x).round()
 
         a_int32 = self.fwd_func(x_int, self.w_int8, b_int32, **self.fwd_kwargs)
-
         a_hat = a_int32 * s_a
 
         return self.qact(a_hat, s_a)
-        # return Int32toInt8(a_hat, s_a)
 
 
 class StraightThrough(nn.Module):

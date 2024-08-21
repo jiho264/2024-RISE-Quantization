@@ -55,8 +55,8 @@ def main(weight_quant_params={}, act_quant_params={}, args={}):
     # calib
     # _top1, _ = evaluate(model, test_loader, neval_batches=16, device="cuda")
 
-    # _len_eval_batches = len(test_loader)
-    _len_eval_batches = 1
+    _len_eval_batches = len(test_loader)
+    # _len_eval_batches = 1
 
     _top1, _ = evaluate(
         model, test_loader, neval_batches=_len_eval_batches, device="cuda"
