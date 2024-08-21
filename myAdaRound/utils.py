@@ -224,33 +224,27 @@ class IntLinear(nn.Module):
         self.fwd_func = fwd_func
         self.fwd_kwargs = fwd_kwargs
 
-        self.b_fp32 = bias_fp32
-
         self.bits = bits
-        self.repr_min = -(2 ** (bits - 1))
-        self.repr_max = 2 ** (bits - 1) - 1
         self.s_w = weight_fp32.abs().max() / (2 ** (bits - 1) - 1)
-        self.w_fp32 = weight_fp32
-        self.w_int8 = (
-            (weight_fp32 / self.s_w).round().clamp(self.repr_min, self.repr_max)
-        )
 
-        # print("weight quantizer initialized", self.s_w.shape)
+        self.w_int8 = (
+            (weight_fp32.clone().detach() / self.s_w)
+            .round()
+            .clamp(-(2 ** (bits - 1)), 2 ** (bits - 1) - 1)
+        )
+        self.b_int8 = (bias_fp32.clone().detach() / self.s_w).round()
 
         self.qact = QuantAct(bits)
 
     def forward(self, x_hat, s_x):
-        x_hat = x_hat.to(self.w_int8.device)
-
-        x_int8 = x_hat / s_x
-        """범인은 clamp였다. 이전 layer에서 지금비트랑 다른 해상도썼었으면 여기서 clamp하면 안된다."""
-        x_int8 = (x_hat / s_x).round()
+        # 여기 x의 bit repr는 이전 layer에서 몇으로 줄였느냐에 따라 다름
+        x_int = (x_hat / s_x).round()
 
         s_a = self.s_w * s_x
 
-        b_int32 = (self.b_fp32 / s_a).round()
+        b_int32 = (self.b_int8 / s_x).round()
 
-        a_int32 = self.fwd_func(x_int8, self.w_int8, b_int32, **self.fwd_kwargs)
+        a_int32 = self.fwd_func(x_int, self.w_int8, b_int32, **self.fwd_kwargs)
 
         a_hat = a_int32 * s_a
 
