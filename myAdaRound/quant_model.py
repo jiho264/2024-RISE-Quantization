@@ -2,12 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from .utils import (
-    quantizerDict,
-    create_AdaRound_Quantizer,
-    StraightThrough,
-    NaiveDynnamicMinMaxQuantizer,
-)
+from .utils import *
 from .quant_layer import QuantLayer
 from .quant_block import QuantBasicBlock
 
@@ -45,7 +40,6 @@ class QuantResNet(nn.Module):
     def __init__(self, orgModel, w_quant_args, a_quant_args, main_args):
         super(QuantResNet, self).__init__()
         args = main_args
-        first_conv, first_bn = None, None
 
         self.ConvBnRelu1 = QuantLayer(
             conv_module=orgModel.conv1,
@@ -54,6 +48,9 @@ class QuantResNet(nn.Module):
             w_quant_args=w_quant_args,
             folding=args["folding"],
         )
+        self.ConvBnRelu1.weight = orgModel.conv1.weight.clone().detach()
+        # self.ConvBnRelu1.bias = orgModel.conv1.bias.clone().detach() # ->> None
+
         self.Maxpool = orgModel.maxpool
 
         self.block0_0 = QuantBasicBlock(
@@ -97,27 +94,35 @@ class QuantResNet(nn.Module):
             folding=args["folding"],
         )
         self.Avgpool = orgModel.avgpool
-        self.fc = orgModel.fc
 
-        for name, module in self.named_modules():
-            if hasattr(module, "a_quant_inited"):
-                module.a_quant_inited = True
-                module.a_quant_enable = True
-                module.act_quantizer = NaiveDynnamicMinMaxQuantizer()
-                print(f"{name} a_quant_inited")
+        self.fc = QuantLayer(
+            conv_module=orgModel.fc, w_quant_args=w_quant_args, a_quant_args="fc"
+        )
+        self.fc.weight = orgModel.fc.weight.clone().detach()
+        self.fc.bias = orgModel.fc.bias.clone().detach()
+        self.input_act = QuantAct(16)
 
     def forward(self, x):
-        x = self.ConvBnRelu1(x)
-        x = self.Maxpool(x)
-        x = self.block0_0(x)
-        x = self.block0_1(x)
-        x = self.block1_0(x)
-        x = self.block1_1(x)
-        x = self.block2_0(x)
-        x = self.block2_1(x)
-        x = self.block3_0(x)
-        x = self.block3_1(x)
-        x = self.Avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
+        with torch.device("cuda"):
+            x, s_x = self.input_act(x)
+            x, s_x = self.ConvBnRelu1(x, s_x)
+            x = self.Maxpool(x)
+            x, s_x = self.block0_0(x, s_x)
+            x, s_x = self.block0_1(x, s_x)
+            x, s_x = self.block1_0(x, s_x)
+            x, s_x = self.block1_1(x, s_x)
+            x, s_x = self.block2_0(x, s_x)
+            x, s_x = self.block2_1(x, s_x)
+            x, s_x = self.block3_0(x, s_x)
+            x, s_x = self.block3_1(x, s_x)
+            x = self.Avgpool(x)
+            x = torch.flatten(x, 1)
+            x, s_x = self.fc(x, s_x)
+
         return x
+
+
+"""
+W8A8 : 69.266%
+
+"""

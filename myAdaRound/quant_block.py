@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from .utils import quantizerDict, create_AdaRound_Quantizer, StraightThrough
+from .utils import *
 from .quant_layer import QuantLayer
 
 
@@ -16,10 +16,6 @@ class QuantBasicBlock(nn.Module):
         folding: bool = False,
     ):
         super(QuantBasicBlock, self).__init__()
-
-        self.w_quant_enable = True
-        self.a_quant_enable = False
-        self.a_quant_inited = False
 
         self.relu = nn.ReLU()
 
@@ -51,14 +47,12 @@ class QuantBasicBlock(nn.Module):
             bn_module=bn_1,
             act_module=nn.ReLU(),
             w_quant_args=w_quant_args,
-            a_quant_args=a_quant_args,
             folding=folding,
         )
         self.conv_bn_2 = QuantLayer(
             conv_module=conv_2,
             bn_module=bn_2,
             w_quant_args=w_quant_args,
-            a_quant_args=a_quant_args,
             folding=folding,
         )
         if conv_d != None and bn_d != None:
@@ -66,93 +60,22 @@ class QuantBasicBlock(nn.Module):
                 conv_module=conv_d,
                 bn_module=bn_d,
                 w_quant_args=w_quant_args,
-                a_quant_args=a_quant_args,
                 folding=folding,
             )
         else:
             self.conv_bn_down = None
+        self.idaddition = QuantAct()
 
-    def init_act_quantizer(self, calib):
-        self.conv_bn_relu_1.init_act_quantizer(calib)
-
-        self.conv_bn_2.init_act_quantizer(calib)
-
-        if self.conv_bn_down != None:
-            self.conv_bn_down.init_act_quantizer(calib)
-
-        self.a_quant_inited = True
-
-        print("Activation quantizer initialized from QuantBasicBlock")
-
-    def get_rounding_parameter(self):
-        _list = [
-            self.conv_bn_relu_1.weight_quantizer._v,
-            self.conv_bn_2.weight_quantizer._v,
-        ]
-        if self.conv_bn_down != None:
-            _list.append(self.conv_bn_down.weight_quantizer._v)
-        return _list
-
-    def get_scaler_parameter(self):
-        _list = [
-            self.conv_bn_relu_1.act_quantizer._scaler,
-            self.conv_bn_2.act_quantizer._scaler,
-        ]
-        if self.conv_bn_down != None:
-            _list += self.conv_bn_down.act_quantizer._scaler
-        return _list
-
-    def get_sum_of_f_reg_with_lambda(self, beta):
-        _sum = (
-            self.conv_bn_relu_1.weight_quantizer.lamda
-            * self.conv_bn_relu_1.weight_quantizer.f_reg(beta=beta)
-        )
-        _sum += (
-            self.conv_bn_2.weight_quantizer.lamda
-            * self.conv_bn_2.weight_quantizer.f_reg(beta=beta)
-        )
-        if self.conv_bn_down != None:
-            _sum += (
-                self.conv_bn_down.weight_quantizer.lamda
-                * self.conv_bn_down.weight_quantizer.f_reg(beta=beta)
-            )
-
-        return _sum
-
-    def setRoundingValues(self):
-        self.conv_bn_relu_1.weight_quantizer.setRoundingValues()
-        self.conv_bn_2.weight_quantizer.setRoundingValues()
+    def forward(self, input: Tensor, s_pre) -> Tensor:
+        _identity, _s_id = input, s_pre
+        _out, s_out = self.conv_bn_relu_1(input, s_pre)
+        _out, s_out = self.conv_bn_2(_out, s_out)
 
         if self.conv_bn_down != None:
-            self.conv_bn_down.weight_quantizer.setRoundingValues()
+            _identity, _s_id = self.conv_bn_down(_identity, _s_id)
 
-    def _quant_switch(self):
-        self.conv_bn_relu_1.w_quant_enable = self.w_quant_enable
-        self.conv_bn_relu_1.a_quant_enable = self.a_quant_enable
+        # _out, s_out = Int32toInt8(_out, s_out, _identity, _s_id)
+        _out, s_out = self.idaddition(_out, s_out, _identity, _s_id)
 
-        self.conv_bn_2.w_quant_enable = self.w_quant_enable
-        self.conv_bn_2.a_quant_enable = self.a_quant_enable
-
-        if self.conv_bn_down != None:
-            self.conv_bn_down.w_quant_enable = self.w_quant_enable
-            self.conv_bn_down.a_quant_enable = self.a_quant_enable
-
-    def forward(self, input: Tensor) -> Tensor:
-        self._quant_switch()
-
-        _identity = input
-        _out = self.conv_bn_relu_1(input)
-        _out = self.conv_bn_2(_out)
-
-        if self.conv_bn_down != None:
-            _identity = self.conv_bn_down(_identity)
-
-        _out += _identity
         _out = self.relu(_out)
-        return _out
-
-
-# class QuantBottleneck(nn.Module):
-#     def __init__(self):
-#         super(QuantBottleneck, self).__init__()
-#         raise NotImplementedError("QuantBottleneck is not implemented yet.")
+        return _out, s_out

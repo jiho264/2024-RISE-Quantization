@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models.resnet import BasicBlock, Bottleneck
 from torch import Tensor
-from .utils import quantizerDict, create_AdaRound_Quantizer, StraightThrough
+from .utils import *
 
 
 class QuantLayer(nn.Module):
@@ -57,88 +57,18 @@ class QuantLayer(nn.Module):
                 + bn_module.bias
             )
 
-            ## (2) Origin bn folding code / org_resnet18: 69.758%
-            # fold_bn_into_conv(org_module, bn_module)
-            # self.weight = org_module.weight
-            # if org_module.bias is not None:
-            #     self.bias = org_module.bias
-            self.bn_func = StraightThrough()
-            print("    BN Folded!")
-        elif self.folding == False and bn_module == None:
-            # FC layer dose not have bn layer
-            self.bn_func = StraightThrough()
-        elif self.folding == False and bn_module != None:
-            # conv and bn are not folded!!!
-            self.bn_func = bn_module
-        else:
-            raise ValueError("Unknown folding option")
+            # print("    BN Folded!")
 
-        """weight quantizer"""
-        # default is True. Need false option when only compute adaround values.
-        self.w_quant_enable = True
+        self.IntLinearOperator = IntLinear(
+            fwd_func=self.fwd_func,
+            fwd_kwargs=self.fwd_kwargs,
+            weight_fp32=self.weight,
+            bias_fp32=self.bias,
+        )
 
-        try:
-            if (
-                w_quant_args.get("AdaRound")
-                or w_quant_args.get("BRECQ")
-                or w_quant_args.get("PDquant")
-            ):
-                self.weight_quantizer = create_AdaRound_Quantizer(
-                    scheme=w_quant_args.get("scheme"),
-                    org_weight=self.weight,
-                    args=w_quant_args,
-                )
-            else:
-                self.weight_quantizer = quantizerDict[w_quant_args.get("scheme")](
-                    org_weight=self.weight, args=w_quant_args
-                )
-        except KeyError:
-            raise ValueError(f"Unknown quantizer type: {w_quant_args.get('scheme')}")
+    def forward(self, x: Tensor, s_pre) -> Tensor:
+        a_hat, s_a = self.IntLinearOperator(x, s_pre)
 
-        """activation quantizer"""
-        if a_quant_args == {}:
-            self.a_quant_enable = False
-            self.a_quant_inited = False
-        else:
-            self.a_quant_enable = True
-            self.a_quant_inited = False
-            self.a_quant_args = a_quant_args
-            self.act_quantizer = None
+        a_hat = self.act_func(a_hat)
 
-    def init_act_quantizer(self, calib):
-        try:
-            self.act_quantizer = quantizerDict[self.a_quant_args.get("scheme")](
-                org_weight=calib, args=self.a_quant_args
-            )
-            self.act_quantizer._scaler = nn.Parameter(
-                self.act_quantizer._scaler, requires_grad=True
-            )
-            print("Activation quantizer initialized from QuantLayer")
-        except KeyError:
-            raise ValueError(
-                f"Unknown quantizer type: {self.a_quant_args.get('scheme')}"
-            )
-
-    def forward(self, x: Tensor) -> Tensor:
-        """convolution"""
-        if self.w_quant_enable == True:
-            # print("q", end="")
-            weight = self.weight_quantizer(self.weight)
-        else:
-            # print(".", end="")
-            weight = self.weight
-        _Z = self.fwd_func(x, weight, self.bias, **self.fwd_kwargs)
-
-        """ batch normalization """
-        _Z = self.bn_func(_Z)
-
-        """ activation """
-        # If first conv of first block of each stage, it is ReLU.
-        # Otherwise, it is StraightThrough.
-        _A = self.act_func(_Z)
-
-        if self.a_quant_inited == True and self.a_quant_enable == True:
-            # print("A", end="")
-            return self.act_quantizer(_A)
-        else:
-            return _A
+        return a_hat, s_a

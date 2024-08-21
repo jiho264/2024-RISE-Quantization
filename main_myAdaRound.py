@@ -2,12 +2,7 @@ import torch, time, argparse
 import torch.nn as nn
 from myAdaRound.quant_layer import QuantLayer
 from myAdaRound.quant_block import QuantBasicBlock
-from myAdaRound.utils import (
-    GetDataset,
-    evaluate,
-    quantizerDict,
-    StraightThrough,
-)
+from myAdaRound.utils import *
 from myAdaRound.data_utils import save_inp_oup_data, _get_train_samples
 import torchvision.models.resnet as resnet
 from myAdaRound.quant_model import QuantResNet
@@ -57,7 +52,11 @@ def main(weight_quant_params={}, act_quant_params={}, args={}):
 
     model = QuantResNet(model, weight_quant_params, act_quant_params, main_args)
 
+    # calib
+    # _top1, _ = evaluate(model, test_loader, neval_batches=16, device="cuda")
+
     _len_eval_batches = len(test_loader)
+    # _len_eval_batches = 1
 
     _top1, _ = evaluate(
         model, test_loader, neval_batches=_len_eval_batches, device="cuda"
